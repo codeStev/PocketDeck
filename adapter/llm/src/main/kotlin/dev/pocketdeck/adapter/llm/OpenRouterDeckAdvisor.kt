@@ -64,7 +64,7 @@ class OpenRouterDeckAdvisor(
             put("model", access.model)
             put("max_tokens", MAX_TOKENS)
             // A thinking model spends most of its room on thinking; this keeps that short so the deck still fits.
-            putJsonObject("reasoning") { put("effort", "low") }
+            if (!thinksOnlyWhenAsked(access.model)) putJsonObject("reasoning") { put("effort", "low") }
             putJsonArray("tools") { add(tool()) }
             putJsonObject("tool_choice") {
                 put("type", "function")
@@ -80,6 +80,9 @@ class OpenRouterDeckAdvisor(
             )
         }
     }
+
+    /** Asking such a model for any effort would turn its thinking on, which is what is to be avoided. */
+    private fun thinksOnlyWhenAsked(model: String) = model.startsWith("google/gemma")
 
     private fun tool() =
         buildJsonObject {

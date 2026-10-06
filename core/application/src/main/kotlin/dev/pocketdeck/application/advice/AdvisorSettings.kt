@@ -4,13 +4,27 @@ import kotlinx.coroutines.flow.Flow
 
 /** The AI services a deck can be asked from. [defaultModel] is used until the player chooses another. */
 enum class AdvisorProvider(
-    val defaultModel: String,
+    /** The models asked, in this order, until one gives a deck, when the player has not chosen a model. */
+    val defaultModels: List<String>,
 ) {
     /** Claude, directly from Anthropic. Strongest, costs money. */
-    ANTHROPIC("claude-opus-5-5"),
+    ANTHROPIC(listOf("claude-opus-5-5")),
 
-    /** Many models behind one key, including free ones; `openrouter/free` lets OpenRouter pick a free model. */
-    OPENROUTER("openrouter/free"),
+    /**
+     * Many models behind one key. The defaults are free models that take tools and a very long prompt: Gemma 4 does
+     * not think unless asked, and Nemotron Super is the fallback that does think (kept short). The `openrouter/free`
+     * router is avoided on purpose: it hands the request to any free model, including ones that think for minutes.
+     */
+    OPENROUTER(
+        listOf(
+            "google/gemma-4-31b-it:free",
+            "google/gemma-4-26b-a4b-it:free",
+            "nvidia/nemotron-3-super-120b-a12b:free",
+        ),
+    ),
+    ;
+
+    val defaultModel: String get() = defaultModels.first()
 }
 
 /** What the player has set up for the advisors: keys, chosen models and which provider is tried first. */
@@ -23,6 +37,10 @@ data class AdvisorSettings(
 
     fun modelOf(provider: AdvisorProvider): String =
         models[provider]?.takeIf { it.isNotBlank() } ?: provider.defaultModel
+
+    /** The models to ask, in order: the one the player chose, or else the provider's defaults. */
+    fun modelsToTry(provider: AdvisorProvider): List<String> =
+        chosenModelOf(provider)?.let { listOf(it) } ?: provider.defaultModels
 
     /** The model the player typed in, if any (the default does not count). */
     fun chosenModelOf(provider: AdvisorProvider): String? = models[provider]?.takeIf { it.isNotBlank() }

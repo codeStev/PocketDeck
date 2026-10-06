@@ -36,6 +36,20 @@ class ConfiguredDeckAdvisorTest {
         }
     }
 
+    private class Scripted(
+        private val answers: List<Outcome<DeckAdvice, AdvisorFailure>>,
+    ) : ProviderDeckAdvisor {
+        val models = mutableListOf<String>()
+
+        override suspend fun advise(
+            request: AdviceRequest,
+            access: ProviderAccess,
+        ): Outcome<DeckAdvice, AdvisorFailure> {
+            models += access.model
+            return answers[minOf(models.size - 1, answers.lastIndex)]
+        }
+    }
+
     private class Recording(
         private val answer: Outcome<DeckAdvice, AdvisorFailure>,
     ) : ProviderDeckAdvisor {
@@ -174,9 +188,59 @@ class ConfiguredDeckAdvisorTest {
                 AdvisorDiagnostics { notes += it },
             ).advise(request)
 
-            notes.any { "OPENROUTER" in it && "openrouter/free" in it } shouldBe true
+            notes.any { "OPENROUTER" in it && AdvisorProvider.OPENROUTER.defaultModel in it } shouldBe true
             notes.any { "Busy" in it || "busy" in it } shouldBe true
             notes.any { "ANTHROPIC" in it } shouldBe true
             notes.none { "secret" in it } shouldBe true
+        }
+
+    @Test
+    fun `tries the next default model of a provider when the first one gives no deck`() =
+        runTest {
+            val openRouter =
+                Scripted(listOf(Outcome.Failure(AdvisorFailure.Unusable("ran out of room")), Outcome.Success(advice)))
+
+            val outcome = advisor(settings(AdvisorProvider.OPENROUTER to "o"), openRouter = openRouter).advise(request)
+
+            outcome shouldBe Outcome.Success(advice)
+            openRouter.models shouldBe AdvisorProvider.OPENROUTER.defaultModels.take(2)
+        }
+
+    @Test
+    fun `asks only the model the player chose`() =
+        runTest {
+            val openRouter = Scripted(listOf(Outcome.Failure(AdvisorFailure.Busy("limit"))))
+            val chosen = settings(AdvisorProvider.OPENROUTER to "o").withModel(AdvisorProvider.OPENROUTER, "my/model")
+
+            advisor(chosen, openRouter = openRouter).advise(request)
+
+            openRouter.models shouldBe listOf("my/model")
+        }
+
+    @Test
+    fun `stops trying more models of a provider whose key is refused`() =
+        runTest {
+            val openRouter = Scripted(listOf(Outcome.Failure(AdvisorFailure.InvalidKey)))
+
+            advisor(settings(AdvisorProvider.OPENROUTER to "o"), openRouter = openRouter).advise(request)
+
+            openRouter.models.size shouldBe 1
+        }
+
+    @Test
+    fun `gives up after every default model failed and reports the first failure`() =
+        runTest {
+            val openRouter =
+                Scripted(
+                    listOf(
+                        Outcome.Failure(AdvisorFailure.Unusable("first")),
+                        Outcome.Failure(AdvisorFailure.Busy("later")),
+                    ),
+                )
+
+            val outcome = advisor(settings(AdvisorProvider.OPENROUTER to "o"), openRouter = openRouter).advise(request)
+
+            outcome shouldBe Outcome.Failure(AdvisorFailure.Unusable("first"))
+            openRouter.models shouldBe AdvisorProvider.OPENROUTER.defaultModels
         }
 }

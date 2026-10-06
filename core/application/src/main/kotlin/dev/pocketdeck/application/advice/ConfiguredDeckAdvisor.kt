@@ -42,19 +42,29 @@ class ConfiguredDeckAdvisor(
         )
         var firstFailure: AdvisorFailure? = null
         for (provider in usable) {
-            val access = ProviderAccess(requireNotNull(current.keyOf(provider)), current.modelOf(provider))
-            diagnostics.note("Asking $provider with model ${access.model}")
-            val started = TimeSource.Monotonic.markNow()
-            val outcome = providers.getValue(provider).advise(request, access)
-            diagnostics.note(
-                "$provider answered after ${started.elapsedNow().inWholeMilliseconds} ms: ${summary(outcome)}",
-            )
-            when (outcome) {
-                is Outcome.Success -> return outcome
-                is Outcome.Failure -> firstFailure = firstFailure ?: outcome.reason
+            val key = requireNotNull(current.keyOf(provider))
+            for (model in current.modelsToTry(provider)) {
+                val outcome = ask(provider, ProviderAccess(key, model), request)
+                if (outcome is Outcome.Success) return outcome
+                val failure = (outcome as Outcome.Failure).reason
+                firstFailure = firstFailure ?: failure
+                // The same key fails for every model of the provider.
+                if (failure == AdvisorFailure.InvalidKey) break
             }
         }
         return Outcome.Failure(requireNotNull(firstFailure))
+    }
+
+    private suspend fun ask(
+        provider: AdvisorProvider,
+        access: ProviderAccess,
+        request: AdviceRequest,
+    ): Outcome<DeckAdvice, AdvisorFailure> {
+        diagnostics.note("Asking $provider with model ${access.model}")
+        val started = TimeSource.Monotonic.markNow()
+        val outcome = providers.getValue(provider).advise(request, access)
+        diagnostics.note("$provider answered after ${started.elapsedNow().inWholeMilliseconds} ms: ${summary(outcome)}")
+        return outcome
     }
 
     private fun summary(outcome: Outcome<DeckAdvice, AdvisorFailure>) =
