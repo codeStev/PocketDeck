@@ -139,13 +139,9 @@ class OpenRouterDeckAdvisor(
 
     private fun read(answer: JsonObject): Outcome<DeckAdvice, AdvisorFailure> {
         answer["error"]?.let { return Outcome.Failure(classify(code(it), errorMessage(answer.toString()))) }
+        val choice = answer["choices"]?.jsonArray?.firstOrNull()?.jsonObject
         val message =
-            answer["choices"]
-                ?.jsonArray
-                ?.firstOrNull()
-                ?.jsonObject
-                ?.get("message")
-                ?.jsonObject
+            choice?.get("message")?.jsonObject
                 ?: return Outcome.Failure(AdvisorFailure.Unusable("The model sent no answer"))
         val arguments =
             message["tool_calls"]
@@ -157,8 +153,33 @@ class OpenRouterDeckAdvisor(
                 ?.get("arguments")
                 ?.jsonPrimitive
                 ?.contentOrNull
-        val text = arguments ?: message["content"]?.jsonPrimitive?.contentOrNull.orEmpty()
-        return DeckTool.parseText(text)
+        val content = message["content"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val finishReason = choice["finish_reason"]?.jsonPrimitive?.contentOrNull
+        describe(answer, message, arguments, content, finishReason)
+        if (arguments == null && content.isBlank()) {
+            return Outcome.Failure(
+                AdvisorFailure.Unusable("The model sent no deck (finish reason: ${finishReason ?: "unknown"})"),
+            )
+        }
+        return DeckTool.parseText(arguments ?: content)
+    }
+
+    /** What kind of answer came back and from which model, so a model that does not deliver can be recognised. */
+    private fun describe(
+        answer: JsonObject,
+        message: JsonObject,
+        arguments: String?,
+        content: String,
+        finishReason: String?,
+    ) {
+        val reasoning = message["reasoning"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val shown = (arguments ?: content).replace(Regex("\\s+"), " ").take(PREVIEW_LENGTH)
+        val model = answer["model"]?.jsonPrimitive?.contentOrNull ?: "an unknown model"
+        val call = if (arguments != null) "function call" else "no function call"
+        diagnostics.note(
+            "Answer from $model: finish reason ${finishReason ?: "unknown"}, $call, ${content.length} characters of " +
+                "text, ${reasoning.length} characters of reasoning; starts with: $shown",
+        )
     }
 
     /** OpenRouter sometimes reports an upstream failure inside a successful answer, with the status as `code`. */
@@ -187,6 +208,7 @@ class OpenRouterDeckAdvisor(
 
     private companion object {
         const val APP_NAME = "PocketDeck"
+        const val PREVIEW_LENGTH = 400
         const val MAX_TOKENS = 4096
         const val UNAUTHORIZED = 401
         const val REQUEST_TIMEOUT = 408
