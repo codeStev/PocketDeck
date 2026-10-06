@@ -109,6 +109,24 @@ class ScanSession private constructor(
                 reason = ReviewReason.COUNT_NEVER_READ,
             )
         }
+        // The list is sorted by count, so one card under two different counts is two tiles: reprints with the same art.
+        // Views that already combined several prints cannot be told apart this way.
+        if (mostParts == 1 &&
+            counted.size > 1 &&
+            counted.values.all { group -> group.maxOf { it.confidence.value } >= PRINT_CONFIDENCE }
+        ) {
+            val total = counted.keys.sumOf { requireNotNull(it) }
+            return ScannedCard(
+                cardId,
+                total,
+                Confidence(
+                    counted.values.minOf { g ->
+                        g.maxOf { it.confidence.value }
+                    },
+                ),
+                false,
+            )
+        }
         // Most confident support wins; on a tie the larger count wins so owned cards are not under-reported.
         val winningCopies =
             counted
@@ -144,6 +162,9 @@ class ScanSession private constructor(
     companion object {
         const val REVIEW_CONFIDENCE_THRESHOLD = 0.8
         private const val MINIMUM_OWNED = 1
+
+        /** A digit read this surely is no misread, so a differing count belongs to another print. */
+        private const val PRINT_CONFIDENCE = 0.9
 
         fun start() = ScanSession(emptyMap(), framesProcessed = 0)
     }

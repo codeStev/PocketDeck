@@ -54,9 +54,9 @@ class ScanSessionTest {
         val session =
             ScanSession
                 .start()
-                .observe(listOf(seen(pikachu, 2, 0.9)))
-                .observe(listOf(seen(pikachu, 2, 0.9)))
-                .observe(listOf(seen(pikachu, 1, 0.9)))
+                .observe(listOf(seen(pikachu, 2, 0.85)))
+                .observe(listOf(seen(pikachu, 2, 0.85)))
+                .observe(listOf(seen(pikachu, 1, 0.85)))
 
         val result = session.summarize().single()
 
@@ -82,8 +82,8 @@ class ScanSessionTest {
         val session =
             ScanSession
                 .start()
-                .observe(listOf(seen(pikachu, 1, 0.9)))
-                .observe(listOf(seen(pikachu, 2, 0.9)))
+                .observe(listOf(seen(pikachu, 1, 0.85)))
+                .observe(listOf(seen(pikachu, 2, 0.85)))
 
         session.summarize().single().copies shouldBe 2
     }
@@ -174,10 +174,40 @@ class ScanSessionTest {
         val session =
             ScanSession
                 .start()
-                .observe(listOf(seen(pikachu, 1, 0.9)))
-                .observe(listOf(seen(pikachu, 2, 0.9)))
+                .observe(listOf(seen(pikachu, 1, 0.85)))
+                .observe(listOf(seen(pikachu, 2, 0.85)))
 
         session.summarize().single().reason shouldBe ReviewReason.COUNT_DISAGREES
+    }
+
+    @Test
+    fun `certain readings of different counts are different prints and add up`() {
+        // The list is sorted by count, so the same artwork under two counts must be two tiles (reprints).
+        val session =
+            ScanSession
+                .start()
+                .observe(listOf(seen(pikachu, 3, 0.94)))
+                .observe(listOf(seen(pikachu, 3, 0.94)))
+                .observe(listOf(seen(pikachu, 1, 1.0)))
+
+        val result = session.summarize().single()
+
+        result.copies shouldBe 4
+        result.needsReview shouldBe false
+    }
+
+    @Test
+    fun `a doubtful reading is not added as another print`() {
+        val session =
+            ScanSession
+                .start()
+                .observe(listOf(seen(pikachu, 3, 0.95)))
+                .observe(listOf(seen(pikachu, 8, 0.6)))
+
+        val result = session.summarize().single()
+
+        result.copies shouldBe 3
+        result.reason shouldBe ReviewReason.COUNT_DISAGREES
     }
 
     @Test
