@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="collection_title">Meine Sammlung</string>
+    <string name="collection_stats">Verschiedene: %1$d / %2$d · Karten insgesamt: %3$d</string>
+    <string name="collection_search_hint">Karten suchen</string>
+    <string name="collection_owned_only">Nur vorhandene</string>
+    <string name="collection_sync">Kartendatenbank neu laden</string>
+    <string name="collection_syncing">Kartendatenbank wird geladen…</string>
+    <string name="collection_sync_unreachable">Die Kartendatenbank konnte nicht geladen werden: %1$s</string>
+    <string name="collection_sync_empty">Die Kartendatenbank war leer.</string>
+    <string name="collection_retry">Erneut versuchen</string>
+    <string name="collection_no_results">Keine passenden Karten.</string>
+    <string name="collection_add_copy">Eine Kopie von %1$s hinzufügen</string>
+    <string name="collection_remove_copy">Eine Kopie von %1$s entfernen</string>
+    <string name="collection_copies">×%1$d</string>
+    <string name="tab_collection">Sammlung</string>
+    <string name="tab_scan">Scannen</string>
+    <string name="tab_decks">Decks</string>
+    <string name="scan_title">Sammlung scannen</string>
+    <string name="scan_intro">Die App liest deine Karten vom Bildschirm ab, während du im Spiel durch „Meine Karten“ scrollst.</string>
+    <string name="scan_step_view">Wähle in „Meine Karten“ die Ansicht mit 3 Karten pro Reihe. Nur diese Ansicht zeigt, wie viele Kopien du besitzt.</string>
+    <string name="scan_step_start">Tippe auf Start und öffne dann das Spiel. Ein kleiner Knopf bleibt auf dem Bildschirm.</string>
+    <string name="scan_step_scroll">Scrolle langsam und halte auf jedem Bildschirm kurz an, damit die Zahlen erscheinen können.</string>
+    <string name="scan_step_stop">Tippe auf den kleinen Knopf, um zu stoppen. Du kannst das Ergebnis prüfen, bevor es gespeichert wird.</string>
+    <string name="scan_start">Scan starten</string>
+    <plurals name="scan_running">
+        <item quantity="one">Ein Scan läuft: bisher %1$d Karte gefunden.</item>
+        <item quantity="other">Ein Scan läuft: bisher %1$d Karten gefunden.</item>
+    </plurals>
+    <string name="scan_nothing_to_review">Es gab keinen Scan zu prüfen.</string>
+    <string name="scan_save_failed">Das Ergebnis konnte nicht gespeichert werden.</string>
+    <string name="review_title">Ergebnis prüfen</string>
+    <string name="review_summary">Gefunden: %1$d · zu prüfen: %2$d</string>
+    <string name="review_check_hint">Als „prüfen“ markierte Karten wurden nicht sicher gelesen: Anzahl oder Karte können falsch sein.</string>
+    <string name="review_looks_right">Passt so</string>
+    <string name="review_check">prüfen</string>
+    <string name="review_save">In Sammlung speichern</string>
+    <string name="review_discard">Verwerfen</string>
+    <string name="review_remove">%1$s aus dem Ergebnis entfernen</string>
+    <string name="saved_title">Sammlung aktualisiert</string>
+    <plurals name="saved_summary">
+        <item quantity="one">%1$d Karte wurde in deine Sammlung geschrieben.</item>
+        <item quantity="other">%1$d Karten wurden in deine Sammlung geschrieben.</item>
+    </plurals>
+    <string name="saved_done">Fertig</string>
+    <string name="scan_automatic_label">Automatisch scrollen</string>
+    <string name="scan_automatic_on">PocketDeck scrollt die Liste für dich, vom Anfang bis zum Ende. Berühre den Bildschirm währenddessen nicht; tippe auf den kleinen Knopf, um vorzeitig zu beenden.</string>
+    <string name="scan_automatic_needs_service">Zum automatischen Scrollen schalte „PocketDeck Auto-Scroll“ in den Bedienungshilfen ein. Es führt nur Wischgesten aus und liest nichts vom Bildschirm.</string>
+    <string name="scan_open_accessibility">Bedienungshilfen öffnen</string>
+    <string name="review_reason_never_read">Die Anzahl war nie sichtbar, daher wird 1 angenommen.</string>
+    <string name="review_reason_disagrees">Verschiedene Bilder zeigten unterschiedliche Anzahlen.</string>
+    <string name="review_reason_low_confidence">Unsicher, ob Karte oder Anzahl stimmt.</string>
+    <string name="review_replace">Meine ganze Sammlung durch diesen Scan ersetzen. Nicht gefundene Karten werden zu 0.</string>
+    <string name="review_incomplete_warning">Vom Scan gefundene Karten: %1$d. Karten in deiner Sammlung: %2$d. Der Scan wurde wahrscheinlich zu früh beendet, daher ist das Ersetzen deiner Sammlung ausgeschaltet.</string>
+    <string name="scan_restore_previous">Sammlung von vor dem letzten Scan wiederherstellen</string>
+    <string name="scan_restored">Die vorherige Sammlung ist zurück. Erneutes Tippen macht das rückgängig.</string>
+    <string name="scan_nothing_to_restore">Es gibt keine frühere Sammlung zum Wiederherstellen.</string>
+    <string name="decks_title">Deck-Vorschläge</string>
+    <string name="decks_intro">Decks, die in aktuellen Turnieren erfolgreich waren, sortiert danach, wie gut du sie bauen kannst.</string>
+    <string name="decks_refresh">Turnier-Decks aktualisieren</string>
+    <string name="decks_refreshing">Turnier-Decks werden geladen…</string>
+    <string name="decks_empty">Noch keine Vorschläge. Scanne deine Sammlung und aktualisiere die Turnier-Decks.</string>
+    <string name="decks_not_reachable">Turnier-Decks konnten nicht geladen werden. Prüfe deine Verbindung.</string>
+    <string name="decks_no_decklists">Aktuell wurden keine Turnier-Decks gefunden.</string>
+    <string name="decks_origin_meta">Turnier-Deck</string>
+    <string name="decks_origin_heuristic">Für dich gebaut</string>
+    <string name="decks_owned">%1$d%% vorhanden</string>
+    <string name="decks_buildable">Du kannst dieses Deck bauen</string>
+    <plurals name="decks_missing">
+        <item quantity="one">%1$d Karte fehlt</item>
+        <item quantity="other">%1$d Karten fehlen</item>
+    </plurals>
+    <string name="decks_card_line">%1$d× %2$s</string>
+    <string name="decks_card_missing">es fehlen %1$d</string>
+</resources>

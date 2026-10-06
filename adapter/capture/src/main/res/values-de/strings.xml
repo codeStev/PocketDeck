@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scan_channel_name">Sammlungs-Scan</string>
+    <string name="scan_notification_title">Deine Sammlung wird gescannt</string>
+    <string name="scan_notification_text">Scrolle im Spiel durch „Meine Karten“ und tippe dann auf Stopp.</string>
+    <string name="scan_stop">Stopp</string>
+    <string name="accessibility_label">PocketDeck Auto-Scroll</string>
+    <string name="accessibility_description">Lässt PocketDeck die Kartenliste in Pokémon TCG Pocket selbst scrollen, während es deine Sammlung scannt. Es führt nur Wischgesten aus und liest nichts vom Bildschirm.</string>
+    <string name="scan_auto_unavailable">Auto-Scroll ist aus. Schalte es in den Bedienungshilfen ein.</string>
+    <string name="scan_auto_too_long">Gestoppt: Die Liste ist länger als erwartet.</string>
+</resources>
