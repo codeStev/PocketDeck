@@ -24,6 +24,7 @@ import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.AiAssistant
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
+import dev.pocketdeck.adapter.ui.settings.SettingsViewModel
 import dev.pocketdeck.application.advice.AdvisorProvider
 import dev.pocketdeck.application.advice.AdvisorSettingsStore
 import dev.pocketdeck.application.advice.AskAiForDeck
@@ -241,7 +242,11 @@ object AppModule {
     fun aiAssistant(
         askAiForDeck: AskAiForDeck,
         settings: AdvisorSettingsStore,
-    ) = AiAssistant(askAiForDeck, ObserveAdvisorSettingsService(settings), SaveAdvisorSettingsService(settings))
+    ) = AiAssistant(askAiForDeck, ObserveAdvisorSettingsService(settings))
+
+    @Provides
+    fun settingsViewModelFactory(settings: AdvisorSettingsStore) =
+        SettingsViewModel.Factory(ObserveAdvisorSettingsService(settings), SaveAdvisorSettingsService(settings))
 
     @Provides
     fun metaDecklistSource(client: HttpClient): MetaDecklistSource = LimitlessMetaDecklistSource(client)

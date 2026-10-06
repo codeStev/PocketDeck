@@ -37,13 +37,6 @@ enum class DecksNotice {
     AI_NO_VALID_DECK,
 }
 
-/** What the player edits in the AI settings: the keys and models by provider, and which provider is tried first. */
-data class AiSettingsForm(
-    val order: List<AdvisorProvider>,
-    val keys: Map<AdvisorProvider, String>,
-    val models: Map<AdvisorProvider, String>,
-)
-
 /** A Pokémon the player can build a deck around. */
 data class CentrepieceItem(
     val cardId: String,
@@ -82,8 +75,6 @@ data class DecksUiState(
     /** Whether a key is set up for at least one AI service. */
     val aiConfigured: Boolean = false,
     val asking: Boolean = false,
-    /** The AI settings while the player edits them; null when closed. */
-    val aiSettings: AiSettingsForm? = null,
 )
 
 /** Shows the suggested decks and refreshes the picture of the competitive field. */
@@ -158,38 +149,10 @@ class DecksViewModel(
         }
     }
 
-    fun onOpenAiSettings() {
-        val form =
-            AiSettingsForm(
-                order = advisorSettings.order,
-                keys = AdvisorProvider.entries.mapNotNull { p -> advisorSettings.keyOf(p)?.let { p to it } }.toMap(),
-                models =
-                    AdvisorProvider.entries
-                        .mapNotNull { p ->
-                            advisorSettings.chosenModelOf(p)?.let { p to it }
-                        }.toMap(),
-            )
-        mutableState.update { it.copy(aiSettings = form, centrepieces = null) }
-    }
-
-    fun onCloseAiSettings() = mutableState.update { it.copy(aiSettings = null) }
-
-    fun onSaveAiSettings(form: AiSettingsForm) {
-        viewModelScope.launch {
-            val settings =
-                AdvisorProvider.entries.fold(AdvisorSettings().withOrder(form.order)) { acc, provider ->
-                    acc.withKey(provider, form.keys[provider]).withModel(provider, form.models[provider])
-                }
-            ai.saveSettings(settings)
-            mutableState.update { it.copy(aiSettings = null) }
-        }
-    }
-
-    /** Asks the AI for a deck. Without a key there is nothing to ask, so the settings open instead. */
+    /** Asks the AI for a deck. Without a key there is nothing to ask; the screen then points to the settings. */
     fun onAskAi(wish: String?) {
         if (!state.value.aiConfigured) {
-            mutableState.update { it.copy(notice = DecksNotice.AI_NEEDS_KEY, noticeDetail = null) }
-            onOpenAiSettings()
+            mutableState.update { it.copy(centrepieces = null, notice = DecksNotice.AI_NEEDS_KEY, noticeDetail = null) }
             return
         }
         viewModelScope.launch {

@@ -15,15 +15,18 @@ import dev.pocketdeck.adapter.ui.decks.DecksScreen
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanScreen
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
+import dev.pocketdeck.adapter.ui.settings.SettingsScreen
+import dev.pocketdeck.adapter.ui.settings.SettingsViewModel
 
-enum class AppTab { COLLECTION, DECKS, SCAN }
+enum class AppTab { COLLECTION, DECKS, SCAN, SETTINGS }
 
-/** The app's top-level layout: three tabs. Everything platform specific (permissions, services) comes in as callbacks. */
+/** The app's top-level layout: four tabs. Everything platform specific (permissions, services) comes in as callbacks. */
 @Composable
 fun PocketDeckApp(
     collectionViewModel: CollectionViewModel,
     decksViewModel: DecksViewModel,
     scanViewModel: ScanViewModel,
+    settingsViewModel: SettingsViewModel,
     selectedTab: AppTab,
     onTabSelected: (AppTab) -> Unit,
     autoScrollEnabled: Boolean,
@@ -51,14 +54,21 @@ fun PocketDeckApp(
                     icon = {},
                     label = { Text(stringResource(R.string.tab_scan)) },
                 )
+                NavigationBarItem(
+                    selected = selectedTab == AppTab.SETTINGS,
+                    onClick = { onTabSelected(AppTab.SETTINGS) },
+                    icon = {},
+                    label = { Text(stringResource(R.string.tab_settings)) },
+                )
             }
         },
     ) { padding ->
         Box(Modifier.padding(padding)) {
             when (selectedTab) {
                 AppTab.COLLECTION -> CollectionScreen(collectionViewModel)
-                AppTab.DECKS -> DecksScreen(decksViewModel)
+                AppTab.DECKS -> DecksScreen(decksViewModel) { onTabSelected(AppTab.SETTINGS) }
                 AppTab.SCAN -> ScanScreen(scanViewModel, autoScrollEnabled, onOpenAccessibilitySettings, onStartScan)
+                AppTab.SETTINGS -> SettingsScreen(settingsViewModel)
             }
         }
     }

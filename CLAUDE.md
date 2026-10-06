@@ -125,3 +125,6 @@ New way of driving the app => new driving adapter calling inbound ports.
   free `openrouter/free` router is the default model, models are editable). Keys live in
   `SharedPreferencesAdvisorSettingsStore` (private storage, no backup). Nothing here was run against the real services
   yet (no key); only mock-engine tests.
+- Settings live in their own tab (`adapter/ui/settings`: `SettingsViewModel` + `SettingsScreen`); "AI" is the first section
+  (keys, models, provider order; explicit Save). A new section is another composable in `SettingsContent`. The Decks tab only
+  asks the AI and points to Settings when no key is set up.

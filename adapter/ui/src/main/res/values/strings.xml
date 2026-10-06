@@ -130,24 +130,25 @@
     <string name="decks_ai_wish">What kind of deck? (optional)</string>
     <string name="decks_ai_ask">Ask the AI</string>
     <string name="decks_ai_set_up">Set up the AI first</string>
-    <string name="decks_ai_settings">AI settings</string>
-    <string name="decks_ai_settings_title">AI settings</string>
-    <string name="decks_ai_settings_hint">The AI is sent your card list and the tournament decks, so it needs a key for the service you choose. Keys stay on this phone. The services are tried in the order shown; the next one is used if the first is busy.</string>
-    <string name="decks_ai_provider_anthropic">Anthropic (Claude)</string>
-    <string name="decks_ai_provider_anthropic_hint">The strongest choice; costs money per request. Key from console.anthropic.com.</string>
-    <string name="decks_ai_provider_openrouter">OpenRouter</string>
-    <string name="decks_ai_provider_openrouter_hint">One key for many models, some free (their limits are low and they may be busy). Key from openrouter.ai.</string>
-    <string name="decks_ai_key">API key</string>
-    <string name="decks_ai_model">Model (empty = default)</string>
-    <string name="decks_ai_earlier">Ask earlier</string>
-    <string name="decks_ai_later">Ask later</string>
-    <string name="decks_ai_save">Save</string>
-    <string name="decks_ai_cancel">Cancel</string>
-    <string name="decks_ai_needs_key">Add a key for an AI service first.</string>
+    <string name="settings_ai_title">AI settings</string>
+    <string name="settings_ai_hint">The AI is sent your card list and the tournament decks, so it needs a key for the service you choose. Keys stay on this phone. The services are tried in the order shown; the next one is used if the first is busy.</string>
+    <string name="settings_ai_provider_anthropic">Anthropic (Claude)</string>
+    <string name="settings_ai_provider_anthropic_hint">The strongest choice; costs money per request. Key from console.anthropic.com.</string>
+    <string name="settings_ai_provider_openrouter">OpenRouter</string>
+    <string name="settings_ai_provider_openrouter_hint">One key for many models, some free (their limits are low and they may be busy). Key from openrouter.ai.</string>
+    <string name="settings_ai_key">API key</string>
+    <string name="settings_ai_model">Model (empty = default)</string>
+    <string name="settings_ai_earlier">Ask earlier</string>
+    <string name="settings_ai_later">Ask later</string>
+    <string name="settings_save">Save</string>
+    <string name="decks_ai_needs_key">Add a key for an AI service in Settings first.</string>
     <string name="decks_ai_invalid_key">The AI service did not accept your key. Check it in the AI settings.</string>
     <string name="decks_ai_busy">The AI service is busy or its limit is reached: %1$s. Try again in a moment.</string>
     <string name="decks_ai_unreachable">Could not reach the AI service: %1$s</string>
     <string name="decks_ai_rejected">The AI service refused the request: %1$s</string>
     <string name="decks_ai_unusable">The AI did not come back with a deck: %1$s</string>
     <string name="decks_ai_no_valid_deck">The AI did not manage to build a valid deck from your cards. Last problem: %1$s</string>
+    <string name="tab_settings">Settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_saved">Saved.</string>
 </resources>

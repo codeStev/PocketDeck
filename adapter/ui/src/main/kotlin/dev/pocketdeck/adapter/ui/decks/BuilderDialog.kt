@@ -79,10 +79,11 @@ private fun AskAiSection(
             modifier = Modifier.fillMaxWidth(),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { actions.onAskAi(wish) }) {
-                Text(stringResource(if (aiConfigured) R.string.decks_ai_ask else R.string.decks_ai_set_up))
+            if (aiConfigured) {
+                Button(onClick = { actions.onAskAi(wish) }) { Text(stringResource(R.string.decks_ai_ask)) }
+            } else {
+                Button(onClick = actions.onOpenSettings) { Text(stringResource(R.string.decks_ai_set_up)) }
             }
-            TextButton(onClick = actions.onOpenAiSettings) { Text(stringResource(R.string.decks_ai_settings)) }
         }
     }
 }

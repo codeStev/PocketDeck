@@ -8,7 +8,6 @@ import dev.pocketdeck.application.advice.AdvisorSettingsStore
 import dev.pocketdeck.application.advice.AskAiFailure
 import dev.pocketdeck.application.advice.AskAiForDeck
 import dev.pocketdeck.application.advice.ObserveAdvisorSettingsService
-import dev.pocketdeck.application.advice.SaveAdvisorSettingsService
 import dev.pocketdeck.application.deckcode.DeckCode
 import dev.pocketdeck.application.deckcode.DeckCodeFailure
 import dev.pocketdeck.application.deckcode.ExportDeckCode
@@ -119,7 +118,7 @@ class DecksViewModelTest {
     private fun aiAssistant(
         ask: AskAiForDeck,
         store: AdvisorSettingsStore,
-    ) = AiAssistant(ask, ObserveAdvisorSettingsService(store), SaveAdvisorSettingsService(store))
+    ) = AiAssistant(ask, ObserveAdvisorSettingsService(store))
 
     private val succeeding = RefreshMetaSnapshot { Outcome.Success(MetaSnapshot.EMPTY) }
 
@@ -476,7 +475,7 @@ class DecksViewModelTest {
         }
 
     @Test
-    fun `asks for a key instead of asking when none is set up`() =
+    fun `points to the settings instead of asking when no key is set up`() =
         runTest(dispatcher) {
             val viewModel = viewModel(succeeding)
             advanceUntilIdle()
@@ -485,7 +484,7 @@ class DecksViewModelTest {
             advanceUntilIdle()
 
             viewModel.state.value.notice shouldBe DecksNotice.AI_NEEDS_KEY
-            (viewModel.state.value.aiSettings != null) shouldBe true
+            viewModel.state.value.asking shouldBe false
         }
 
     private suspend fun TestScope.noticeFor(failure: AskAiFailure): DecksNotice? {
@@ -528,29 +527,5 @@ class DecksViewModelTest {
             advanceUntilIdle()
 
             viewModel.state.value.noticeDetail shouldBe "no such model"
-        }
-
-    @Test
-    fun `saves the settings the player entered`() =
-        runTest(dispatcher) {
-            val store = InMemoryAdvisorSettingsStore()
-            val viewModel = viewModel(succeeding, advisor = store)
-            advanceUntilIdle()
-            viewModel.onOpenAiSettings()
-            advanceUntilIdle()
-
-            viewModel.onSaveAiSettings(
-                AiSettingsForm(
-                    order = listOf(AdvisorProvider.OPENROUTER, AdvisorProvider.ANTHROPIC),
-                    keys = mapOf(AdvisorProvider.OPENROUTER to " sk-or "),
-                    models = mapOf(AdvisorProvider.OPENROUTER to "google/gemma-4-31b-it:free"),
-                ),
-            )
-            advanceUntilIdle()
-
-            store.current().keyOf(AdvisorProvider.OPENROUTER) shouldBe "sk-or"
-            store.current().modelOf(AdvisorProvider.OPENROUTER) shouldBe "google/gemma-4-31b-it:free"
-            viewModel.state.value.aiSettings shouldBe null
-            viewModel.state.value.aiConfigured shouldBe true
         }
 }

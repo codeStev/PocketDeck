@@ -37,13 +37,14 @@ internal class DecksActions(
     val onCloseBuilder: () -> Unit,
     val onBuild: (String?) -> Unit,
     val onAskAi: (String?) -> Unit,
-    val onOpenAiSettings: () -> Unit,
-    val onCloseAiSettings: () -> Unit,
-    val onSaveAiSettings: (AiSettingsForm) -> Unit,
+    val onOpenSettings: () -> Unit,
 )
 
 @Composable
-fun DecksScreen(viewModel: DecksViewModel) {
+fun DecksScreen(
+    viewModel: DecksViewModel,
+    onOpenSettings: () -> Unit,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     DecksContent(
         state,
@@ -55,9 +56,10 @@ fun DecksScreen(viewModel: DecksViewModel) {
             onCloseBuilder = viewModel::onCloseBuilder,
             onBuild = viewModel::onBuild,
             onAskAi = viewModel::onAskAi,
-            onOpenAiSettings = viewModel::onOpenAiSettings,
-            onCloseAiSettings = viewModel::onCloseAiSettings,
-            onSaveAiSettings = viewModel::onSaveAiSettings,
+            onOpenSettings = {
+                viewModel.onCloseBuilder()
+                onOpenSettings()
+            },
         ),
     )
 }
@@ -69,7 +71,6 @@ internal fun DecksContent(
 ) {
     state.code?.let { DeckCodeDialog(it, actions.onCloseCode) }
     state.centrepieces?.let { BuilderDialog(it, state.aiConfigured, actions) }
-    state.aiSettings?.let { AiSettingsDialog(it, actions.onSaveAiSettings, actions.onCloseAiSettings) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding =
