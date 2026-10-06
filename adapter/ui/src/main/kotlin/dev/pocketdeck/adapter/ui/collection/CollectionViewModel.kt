@@ -65,9 +65,8 @@ class CollectionViewModel(
 
     init {
         viewModelScope.launch {
-            // A catalog stored by an older version lacks the game's card numbers, which deck codes need.
             val catalog = observeCatalog().first()
-            if (catalog.size == 0 || catalog.cards.any { it.gameEntityId == null }) sync()
+            if (catalog.size == 0 || catalog.lacksCardDetails) sync()
         }
     }
 

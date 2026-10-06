@@ -1,6 +1,8 @@
 package dev.pocketdeck.adapter.carddb
 
+import dev.pocketdeck.domain.card.Ability
 import dev.pocketdeck.domain.card.ArtworkUrl
+import dev.pocketdeck.domain.card.Attack
 import dev.pocketdeck.domain.card.Card
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.card.CardName
@@ -41,6 +43,8 @@ private fun MasterCardDto.toPokemon(): PokemonCard =
             artwork = bestArtwork(),
             germanName = CardName(names.de),
             gameEntityId = gameEntityId,
+            attacks = attacks.map { Attack(it.name, it.cost, it.damage, it.effect) },
+            ability = ability?.let { Ability(it.name, it.effect) },
         )
     } catch (invalid: InvalidCardData) {
         throw invalid
@@ -57,6 +61,7 @@ private fun MasterCardDto.toTrainer() =
         artwork = bestArtwork(),
         germanName = CardName(names.de),
         gameEntityId = gameEntityId,
+        effect = text,
     )
 
 /** The player's game is usually German, so the German picture matches what they see in the game. */

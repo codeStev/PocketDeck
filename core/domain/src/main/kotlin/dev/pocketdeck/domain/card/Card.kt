@@ -4,6 +4,19 @@ enum class Stage { BASIC, STAGE_1, STAGE_2 }
 
 enum class TrainerKind { ITEM, SUPPORTER, TOOL, STADIUM }
 
+/** One attack of a Pokémon. [cost] lists the energy letters as the game does, e.g. `WLC`; [effect] is its text. */
+data class Attack(
+    val name: String,
+    val cost: String,
+    val damage: Int?,
+    val effect: String?,
+)
+
+data class Ability(
+    val name: String,
+    val effect: String,
+)
+
 sealed interface Card {
     val id: CardId
     val name: CardName
@@ -15,6 +28,9 @@ sealed interface Card {
 
     /** The name as printed in German; equals [name] when no translation is known. */
     val germanName: CardName
+
+    /** The texts of everything this card does, in English as the dataset has them. */
+    val effectTexts: List<String>
 
     fun nameIn(language: Language): CardName =
         when (language) {
@@ -35,7 +51,11 @@ data class PokemonCard(
     override val artwork: ArtworkUrl? = null,
     override val germanName: CardName = name,
     override val gameEntityId: Int? = null,
+    val attacks: List<Attack> = emptyList(),
+    val ability: Ability? = null,
 ) : Card {
+    override val effectTexts: List<String> get() = attacks.mapNotNull { it.effect } + listOfNotNull(ability?.effect)
+
     init {
         require(hp > 0) { "hp must be positive but was $hp" }
         require(retreatCost >= 0) { "retreatCost must not be negative but was $retreatCost" }
@@ -59,4 +79,8 @@ data class TrainerCard(
     override val artwork: ArtworkUrl? = null,
     override val germanName: CardName = name,
     override val gameEntityId: Int? = null,
-) : Card
+    /** What the card says; null when not known. */
+    val effect: String? = null,
+) : Card {
+    override val effectTexts: List<String> get() = listOfNotNull(effect)
+}

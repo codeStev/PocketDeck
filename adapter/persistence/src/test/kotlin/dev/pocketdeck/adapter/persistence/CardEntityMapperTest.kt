@@ -1,6 +1,8 @@
 package dev.pocketdeck.adapter.persistence
 
+import dev.pocketdeck.domain.card.Ability
 import dev.pocketdeck.domain.card.ArtworkUrl
+import dev.pocketdeck.domain.card.Attack
 import dev.pocketdeck.domain.card.Card
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.card.CardName
@@ -28,6 +30,12 @@ class CardEntityMapperTest {
             artwork = ArtworkUrl("https://example.test/a1-036.webp"),
             germanName = CardName("Glurak ex"),
             gameEntityId = 360,
+            attacks =
+                listOf(
+                    Attack("Fire Spin", "RRC", 150, "Discard 2 [R] Energy from this Pokémon."),
+                    Attack("Claw", "C", null, null),
+                ),
+            ability = Ability("Blaze", "Once during your turn, you may attach a [R] Energy."),
         )
     private val bulbasaur: Card =
         PokemonCard(CardId("a1-001"), CardName("Bulbasaur"), EnergyType.GRASS, Stage.BASIC, hp = 70)

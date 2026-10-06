@@ -1,6 +1,7 @@
 package dev.pocketdeck.adapter.ui.decks
 
 import dev.pocketdeck.domain.card.CardCatalog
+import dev.pocketdeck.domain.card.EffectTag
 import dev.pocketdeck.domain.card.Language
 import dev.pocketdeck.domain.charizardEx
 import dev.pocketdeck.domain.charmander
@@ -91,12 +92,30 @@ class DeckListingTest {
     @Test
     fun `lists the substitutes with the card they replace`() {
         val base = suggestion(cards.associateWith { 2 })
-        val adapted = base.copy(substitutions = listOf(Substitution(charizardEx, charmander, copies = 2)))
+        val adapted =
+            base.copy(
+                substitutions =
+                    listOf(
+                        Substitution(
+                            charizardEx,
+                            charmander,
+                            copies = 2,
+                            sharedEffects = setOf(EffectTag.HEAL, EffectTag.DISCARD_OWN_ENERGY),
+                        ),
+                    ),
+            )
 
         val item = DeckListing.build(listOf(adapted), Language.ENGLISH).single()
 
         item.substitutes shouldBe
-            listOf(SubstituteLine(replacement = "Charmander", original = "Charizard ex", copies = 2))
+            listOf(
+                SubstituteLine(
+                    replacement = "Charmander",
+                    original = "Charizard ex",
+                    copies = 2,
+                    effects = listOf(EffectTag.DISCARD_OWN_ENERGY, EffectTag.HEAL),
+                ),
+            )
         item.substituteCopies shouldBe 2
     }
 

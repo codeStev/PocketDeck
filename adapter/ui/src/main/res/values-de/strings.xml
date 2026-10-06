@@ -86,4 +86,33 @@
         <item quantity="other">Nutzt %1$d Ersatzkarten, die du besitzt</item>
     </plurals>
     <string name="decks_substitute_line">%1$d× %2$s statt %3$s</string>
+    <string name="effect_discard_own_energy">wirft eigene Energie ab</string>
+    <string name="effect_discard_opponent_energy">entfernt gegnerische Energie</string>
+    <string name="effect_attach_energy">legt Energie an</string>
+    <string name="effect_attach_energy_from_zone">legt Energie aus der Energiezone an</string>
+    <string name="effect_attach_energy_from_discard">legt Energie vom Ablagestapel an</string>
+    <string name="effect_draw">zieht Karten</string>
+    <string name="effect_search_deck">durchsucht das Deck</string>
+    <string name="effect_heal">heilt</string>
+    <string name="effect_switch">wechselt Pokémon aus</string>
+    <string name="effect_bench_damage">schadet der Bank</string>
+    <string name="effect_random_targets">trifft zufällige Ziele</string>
+    <string name="effect_damage_scaling">skalierender Schaden</string>
+    <string name="effect_damage_reduction">erleidet weniger Schaden</string>
+    <string name="effect_self_damage">verletzt sich selbst</string>
+    <string name="effect_coin_flip">Münzwurf</string>
+    <string name="effect_poison">vergiftet</string>
+    <string name="effect_burn">verbrennt</string>
+    <string name="effect_sleep">schläfert ein</string>
+    <string name="effect_paralyze">lähmt</string>
+    <string name="effect_confuse">verwirrt</string>
+    <string name="effect_prevent_action">blockiert Angriff oder Rückzug</string>
+    <string name="effect_move_energy">verschiebt Energie</string>
+    <string name="effect_retreat_cost">ändert Rückzugskosten</string>
+    <string name="effect_snipe">zielt auf beliebige Pokémon</string>
+    <string name="effect_hand_disruption">stört die Hand</string>
+    <string name="effect_tool_removal">entfernt Tools</string>
+    <string name="effect_recover_from_discard">holt aus dem Ablagestapel</string>
+    <string name="effect_counter_damage">schlägt zurück</string>
+    <string name="decks_substitute_alike">Beide: %1$s</string>
 </resources>

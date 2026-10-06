@@ -1,5 +1,6 @@
 package dev.pocketdeck.adapter.ui.decks
 
+import dev.pocketdeck.domain.card.EffectTag
 import dev.pocketdeck.domain.card.GameplayKey
 import dev.pocketdeck.domain.card.Language
 import dev.pocketdeck.domain.deck.DeckSuggestion
@@ -18,6 +19,8 @@ data class SubstituteLine(
     val replacement: String,
     val original: String,
     val copies: Int,
+    /** What the two cards do alike, e.g. both throw energy away. */
+    val effects: List<EffectTag> = emptyList(),
 )
 
 /** A suggested deck as shown in the list. */
@@ -70,7 +73,12 @@ object DeckListing {
             cards = lines,
             substitutes =
                 suggestion.substitutions.map {
-                    SubstituteLine(it.replacement.nameIn(language).value, it.original.nameIn(language).value, it.copies)
+                    SubstituteLine(
+                        it.replacement.nameIn(language).value,
+                        it.original.nameIn(language).value,
+                        it.copies,
+                        it.sharedEffects.sortedBy(EffectTag::ordinal),
+                    )
                 },
         )
     }

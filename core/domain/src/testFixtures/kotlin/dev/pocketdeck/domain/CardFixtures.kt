@@ -1,5 +1,6 @@
 package dev.pocketdeck.domain
 
+import dev.pocketdeck.domain.card.Attack
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.card.CardName
 import dev.pocketdeck.domain.card.EnergyType
@@ -8,6 +9,8 @@ import dev.pocketdeck.domain.card.PokemonCard
 import dev.pocketdeck.domain.card.Stage
 import dev.pocketdeck.domain.card.TrainerCard
 import dev.pocketdeck.domain.card.TrainerKind
+
+private val TACKLE = Attack("Tackle", "C", 20, null)
 
 fun basicPokemon(
     name: String,
@@ -22,6 +25,7 @@ fun basicPokemon(
     hp = 60,
     gameplayKey = gameplayKey,
     gameEntityId = entityIdOf(id),
+    attacks = listOf(TACKLE),
 )
 
 fun evolvedPokemon(
@@ -38,6 +42,7 @@ fun evolvedPokemon(
     hp = 90,
     evolvesFrom = CardName(evolvesFrom),
     gameEntityId = entityIdOf(id),
+    attacks = listOf(TACKLE),
 )
 
 fun trainer(

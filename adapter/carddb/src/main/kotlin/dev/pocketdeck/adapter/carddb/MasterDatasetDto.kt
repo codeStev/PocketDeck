@@ -23,6 +23,24 @@ internal data class MasterCardDto(
     val retreatCost: Int? = null,
     val trainerKind: String? = null,
     val gameEntityId: Int? = null,
+    val attacks: List<AttackDto> = emptyList(),
+    val ability: AbilityDto? = null,
+    /** The effect text of a trainer card. */
+    val text: String? = null,
+)
+
+@Serializable
+internal data class AttackDto(
+    val name: String,
+    val cost: String = "",
+    val damage: Int? = null,
+    val effect: String? = null,
+)
+
+@Serializable
+internal data class AbilityDto(
+    val name: String,
+    val effect: String,
 )
 
 @Serializable

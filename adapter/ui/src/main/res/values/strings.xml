@@ -86,4 +86,33 @@
         <item quantity="other">Uses %1$d stand-in cards you own</item>
     </plurals>
     <string name="decks_substitute_line">%1$d× %2$s instead of %3$s</string>
+    <string name="effect_discard_own_energy">discards its own energy</string>
+    <string name="effect_discard_opponent_energy">removes opposing energy</string>
+    <string name="effect_attach_energy">attaches energy</string>
+    <string name="effect_attach_energy_from_zone">attaches energy from the Energy Zone</string>
+    <string name="effect_attach_energy_from_discard">attaches energy from the discard pile</string>
+    <string name="effect_draw">draws cards</string>
+    <string name="effect_search_deck">searches the deck</string>
+    <string name="effect_heal">heals</string>
+    <string name="effect_switch">switches Pokémon</string>
+    <string name="effect_bench_damage">damages the Bench</string>
+    <string name="effect_random_targets">hits random targets</string>
+    <string name="effect_damage_scaling">scaling damage</string>
+    <string name="effect_damage_reduction">takes less damage</string>
+    <string name="effect_self_damage">hurts itself</string>
+    <string name="effect_coin_flip">coin flip</string>
+    <string name="effect_poison">poisons</string>
+    <string name="effect_burn">burns</string>
+    <string name="effect_sleep">puts to sleep</string>
+    <string name="effect_paralyze">paralyzes</string>
+    <string name="effect_confuse">confuses</string>
+    <string name="effect_prevent_action">blocks attacks or retreat</string>
+    <string name="effect_move_energy">moves energy</string>
+    <string name="effect_retreat_cost">changes retreat cost</string>
+    <string name="effect_snipe">targets any Pokémon</string>
+    <string name="effect_hand_disruption">disrupts the hand</string>
+    <string name="effect_tool_removal">removes Tools</string>
+    <string name="effect_recover_from_discard">recovers from the discard pile</string>
+    <string name="effect_counter_damage">hits back</string>
+    <string name="decks_substitute_alike">Both: %1$s</string>
 </resources>

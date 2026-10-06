@@ -22,6 +22,11 @@ internal data class CardEntity(
     val trainerKind: String?,
     // Added in schema version 4; rows migrated from version 3 have none until the next sync.
     val gameEntityId: Int? = null,
+    // Added in schema version 5: what the card does, see CardEffectsCodec for the format.
+    val attacks: String? = null,
+    val abilityName: String? = null,
+    val abilityEffect: String? = null,
+    val effectText: String? = null,
 )
 
 @Entity(tableName = "owned_card")

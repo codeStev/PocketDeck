@@ -9,7 +9,7 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 
 @Database(
     entities = [CardEntity::class, OwnedCardEntity::class, BackupOwnedCardEntity::class],
-    version = 4,
+    version = 5,
     autoMigrations = [
         AutoMigration(
             from = 1,

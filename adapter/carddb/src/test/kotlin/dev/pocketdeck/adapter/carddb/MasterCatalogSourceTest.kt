@@ -3,6 +3,7 @@ package dev.pocketdeck.adapter.carddb
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.catalog.SourceUnavailable
 import dev.pocketdeck.domain.card.ArtworkUrl
+import dev.pocketdeck.domain.card.Attack
 import dev.pocketdeck.domain.card.Card
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.card.CardName
@@ -63,6 +64,20 @@ class MasterCatalogSourceTest {
     fun `carries the number the game itself uses for the card`() =
         runTest {
             cards().getValue("a1-001").gameEntityId shouldBe 10
+        }
+
+    @Test
+    fun `carries the attacks of a pokemon with their cost damage and effect`() =
+        runTest {
+            val vineWhip = (cards().getValue("a1-001") as PokemonCard).attacks.single()
+
+            vineWhip shouldBe Attack("Vine Whip", "GC", 40, null)
+        }
+
+    @Test
+    fun `carries the effect text of a trainer`() =
+        runTest {
+            (cards().getValue("a1-219") as TrainerCard).effect shouldBe "Heal 50 damage from 1 of your [ G ] Pokémon."
         }
 
     @Test

@@ -125,11 +125,20 @@ private fun originText(origin: SuggestionOrigin) =
 
 @Composable
 private fun SubstituteText(line: SubstituteLine) {
-    Text(
-        stringResource(R.string.decks_substitute_line, line.copies, line.replacement, line.original),
-        color = MaterialTheme.colorScheme.tertiary,
-        style = MaterialTheme.typography.bodyMedium,
-    )
+    val effects = line.effects.map { stringResource(it.label()) }.joinToString(", ")
+    Column {
+        Text(
+            stringResource(R.string.decks_substitute_line, line.copies, line.replacement, line.original),
+            color = MaterialTheme.colorScheme.tertiary,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        if (effects.isNotEmpty()) {
+            Text(
+                stringResource(R.string.decks_substitute_alike, effects),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
 }
 
 @Composable

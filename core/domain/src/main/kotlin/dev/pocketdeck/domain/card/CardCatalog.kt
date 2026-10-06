@@ -16,6 +16,13 @@ class CardCatalog(
 
     operator fun contains(id: CardId): Boolean = id in byId
 
+    /**
+     * A catalog stored by an older version lacks details the app needs now (the game's card numbers, the attacks).
+     * Every Pokémon has at least one attack, so one without any shows the catalog has to be loaded again.
+     */
+    val lacksCardDetails: Boolean
+        get() = cards.any { it.gameEntityId == null || (it is PokemonCard && it.attacks.isEmpty()) }
+
     companion object {
         val EMPTY = CardCatalog(emptyList())
     }

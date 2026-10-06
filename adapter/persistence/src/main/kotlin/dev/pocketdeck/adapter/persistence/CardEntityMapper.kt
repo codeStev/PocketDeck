@@ -1,5 +1,6 @@
 package dev.pocketdeck.adapter.persistence
 
+import dev.pocketdeck.domain.card.Ability
 import dev.pocketdeck.domain.card.ArtworkUrl
 import dev.pocketdeck.domain.card.Card
 import dev.pocketdeck.domain.card.CardId
@@ -23,11 +24,14 @@ internal fun Card.toEntity(): CardEntity =
                 hp = hp,
                 evolvesFrom = evolvesFrom?.value,
                 retreatCost = retreatCost,
+                attacks = AttackCodec.encode(attacks),
+                abilityName = ability?.name,
+                abilityEffect = ability?.effect,
             )
         }
 
         is TrainerCard -> {
-            baseEntity(KIND_TRAINER).copy(trainerKind = kind.name)
+            baseEntity(KIND_TRAINER).copy(trainerKind = kind.name, effectText = effect)
         }
     }
 
@@ -69,6 +73,8 @@ private fun CardEntity.toPokemon() =
         artwork = artworkUrl?.let(::ArtworkUrl),
         germanName = germanNameOrEnglish(),
         gameEntityId = gameEntityId,
+        attacks = AttackCodec.decode(attacks),
+        ability = abilityName?.let { Ability(it, abilityEffect.orEmpty()) },
     )
 
 private fun CardEntity.toTrainer() =
@@ -80,6 +86,7 @@ private fun CardEntity.toTrainer() =
         artwork = artworkUrl?.let(::ArtworkUrl),
         germanName = germanNameOrEnglish(),
         gameEntityId = gameEntityId,
+        effect = effectText,
     )
 
 private fun CardEntity.germanNameOrEnglish() = CardName(germanName.ifBlank { name })
