@@ -33,7 +33,10 @@ class GridScrollService : AccessibilityService() {
         return super.onUnbind(intent)
     }
 
-    /** Drags across the screen as described; true once the gesture has been carried out completely. */
+    /**
+     * Drags across the screen as described and keeps the finger still on the end point for a moment, which stops the
+     * list from gliding on (a flick overshoots unpredictably). True once the gesture has been carried out completely.
+     */
     internal suspend fun drag(gesture: ScrollGesture): Boolean =
         suspendCancellableCoroutine { continuation ->
             val path =
@@ -41,18 +44,36 @@ class GridScrollService : AccessibilityService() {
                     moveTo(gesture.startX.toFloat(), gesture.startY.toFloat())
                     lineTo(gesture.endX.toFloat(), gesture.endY.toFloat())
                 }
-            val stroke = GestureDescription.StrokeDescription(path, 0, gesture.durationMillis)
-            val callback =
+            val move = GestureDescription.StrokeDescription(path, 0, gesture.durationMillis, true)
+            val hold =
+                move.continueStroke(
+                    Path().apply { moveTo(gesture.endX.toFloat(), gesture.endY.toFloat()) },
+                    0,
+                    HOLD_MILLIS,
+                    false,
+                )
+            val finish =
                 object : GestureResultCallback() {
                     override fun onCompleted(description: GestureDescription?) = continuation.resume(true)
 
                     override fun onCancelled(description: GestureDescription?) = continuation.resume(false)
                 }
-            val dispatched = dispatchGesture(GestureDescription.Builder().addStroke(stroke).build(), callback, null)
+            val afterMove =
+                object : GestureResultCallback() {
+                    override fun onCompleted(description: GestureDescription?) {
+                        val held = dispatchGesture(GestureDescription.Builder().addStroke(hold).build(), finish, null)
+                        if (!held) continuation.resume(false)
+                    }
+
+                    override fun onCancelled(description: GestureDescription?) = continuation.resume(false)
+                }
+            val dispatched = dispatchGesture(GestureDescription.Builder().addStroke(move).build(), afterMove, null)
             if (!dispatched) continuation.resume(false)
         }
 
     internal companion object {
+        const val HOLD_MILLIS = 250L
+
         @Volatile
         var instance: GridScrollService? = null
     }
