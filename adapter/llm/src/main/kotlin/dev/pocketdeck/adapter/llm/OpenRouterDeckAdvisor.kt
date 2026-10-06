@@ -63,6 +63,8 @@ class OpenRouterDeckAdvisor(
         return buildJsonObject {
             put("model", access.model)
             put("max_tokens", MAX_TOKENS)
+            // A thinking model spends most of its room on thinking; this keeps that short so the deck still fits.
+            putJsonObject("reasoning") { put("effort", "low") }
             putJsonArray("tools") { add(tool()) }
             putJsonObject("tool_choice") {
                 put("type", "function")
@@ -156,6 +158,12 @@ class OpenRouterDeckAdvisor(
         val content = message["content"]?.jsonPrimitive?.contentOrNull.orEmpty()
         val finishReason = choice["finish_reason"]?.jsonPrimitive?.contentOrNull
         describe(answer, message, arguments, content, finishReason)
+        if (arguments == null && finishReason == "length") {
+            val model = answer["model"]?.jsonPrimitive?.contentOrNull ?: "The model"
+            return Outcome.Failure(
+                AdvisorFailure.Unusable("$model ran out of room while thinking; choose another model"),
+            )
+        }
         if (arguments == null && content.isBlank()) {
             return Outcome.Failure(
                 AdvisorFailure.Unusable("The model sent no deck (finish reason: ${finishReason ?: "unknown"})"),
@@ -209,7 +217,7 @@ class OpenRouterDeckAdvisor(
     private companion object {
         const val APP_NAME = "PocketDeck"
         const val PREVIEW_LENGTH = 400
-        const val MAX_TOKENS = 4096
+        const val MAX_TOKENS = 12_000
         const val UNAUTHORIZED = 401
         const val REQUEST_TIMEOUT = 408
         const val TOO_MANY_REQUESTS = 429

@@ -260,6 +260,44 @@ class ProviderAdvisorsTest {
         }
 
     @Test
+    fun `openrouter leaves a thinking model room to think and asks it to think briefly`() =
+        runTest {
+            val captured = Captured()
+
+            OpenRouterDeckAdvisor(
+                client(captured) { json(openRouterAnswer()) },
+                "https://or.test/api/v1",
+            ).advise(request, access)
+
+            (
+                captured.body["max_tokens"]!!
+                    .jsonPrimitive.content
+                    .toInt() >= 8000
+            ) shouldBe true
+            captured.body["reasoning"]!!
+                .jsonObject["effort"]!!
+                .jsonPrimitive.content shouldBe "low"
+        }
+
+    @Test
+    fun `openrouter says so when the model ran out of room while thinking`() =
+        runTest {
+            val body =
+                """{"model":"x/y:free","choices":[{"finish_reason":"length",""" +
+                    """"message":{"role":"assistant","content":null,"reasoning":"Let me think..."}}]}"""
+
+            val outcome =
+                OpenRouterDeckAdvisor(
+                    client(Captured()) { json(body) },
+                    "https://or.test",
+                ).advise(request, access)
+
+            val reason = ((outcome as Outcome.Failure).reason as AdvisorFailure.Unusable).reason
+            reason shouldContain "ran out of room"
+            reason shouldContain "x/y:free"
+        }
+
+    @Test
     fun `openrouter puts the rules in the system message and the cards in the user message`() =
         runTest {
             val captured = Captured()
