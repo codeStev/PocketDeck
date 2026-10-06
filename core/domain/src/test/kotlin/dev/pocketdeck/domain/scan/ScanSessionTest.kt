@@ -54,9 +54,9 @@ class ScanSessionTest {
         val session =
             ScanSession
                 .start()
-                .observe(listOf(seen(pikachu, 2, 0.85)))
-                .observe(listOf(seen(pikachu, 2, 0.85)))
-                .observe(listOf(seen(pikachu, 1, 0.85)))
+                .observe(listOf(seen(pikachu, 2, 0.75)))
+                .observe(listOf(seen(pikachu, 2, 0.75)))
+                .observe(listOf(seen(pikachu, 1, 0.75)))
 
         val result = session.summarize().single()
 
@@ -82,8 +82,8 @@ class ScanSessionTest {
         val session =
             ScanSession
                 .start()
-                .observe(listOf(seen(pikachu, 1, 0.85)))
-                .observe(listOf(seen(pikachu, 2, 0.85)))
+                .observe(listOf(seen(pikachu, 1, 0.75)))
+                .observe(listOf(seen(pikachu, 2, 0.75)))
 
         session.summarize().single().copies shouldBe 2
     }
@@ -174,8 +174,8 @@ class ScanSessionTest {
         val session =
             ScanSession
                 .start()
-                .observe(listOf(seen(pikachu, 1, 0.85)))
-                .observe(listOf(seen(pikachu, 2, 0.85)))
+                .observe(listOf(seen(pikachu, 1, 0.75)))
+                .observe(listOf(seen(pikachu, 2, 0.75)))
 
         session.summarize().single().reason shouldBe ReviewReason.COUNT_DISAGREES
     }
