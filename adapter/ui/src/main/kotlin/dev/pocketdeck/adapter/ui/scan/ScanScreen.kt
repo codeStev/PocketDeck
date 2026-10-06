@@ -53,6 +53,7 @@ fun ScanScreen(
         onAccept = viewModel::onAccept,
         onRemove = viewModel::onRemove,
         onReplaceChanged = viewModel::onReplaceChanged,
+        onRestorePrevious = viewModel::onRestorePrevious,
         onConfirm = viewModel::onConfirm,
         onDiscard = viewModel::onDiscard,
         onDone = viewModel::onDone,
@@ -70,13 +71,21 @@ internal fun ScanContent(
     onAccept: (CardId) -> Unit,
     onRemove: (CardId) -> Unit,
     onReplaceChanged: (Boolean) -> Unit,
+    onRestorePrevious: () -> Unit,
     onConfirm: () -> Unit,
     onDiscard: () -> Unit,
     onDone: () -> Unit,
 ) {
     when (state.phase) {
         ScanPhase.IDLE, ScanPhase.SCANNING -> {
-            Instructions(state, autoScrollEnabled, onAutomaticChanged, onOpenAccessibilitySettings, onStartScan)
+            Instructions(
+                state,
+                autoScrollEnabled,
+                onAutomaticChanged,
+                onOpenAccessibilitySettings,
+                onStartScan,
+                onRestorePrevious,
+            )
         }
 
         ScanPhase.REVIEW -> {
@@ -96,6 +105,7 @@ private fun Instructions(
     onAutomaticChanged: (Boolean) -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
     onStartScan: (Boolean) -> Unit,
+    onRestorePrevious: () -> Unit,
 ) {
     val needsService = state.automatic && !autoScrollEnabled
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -135,6 +145,11 @@ private fun Instructions(
         ) {
             Text(stringResource(if (needsService) R.string.scan_open_accessibility else R.string.scan_start))
         }
+        if (state.backupAvailable) {
+            OutlinedButton(onClick = onRestorePrevious, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.scan_restore_previous))
+            }
+        }
     }
 }
 
@@ -143,6 +158,8 @@ private fun noticeText(notice: ScanNotice) =
     when (notice) {
         ScanNotice.NOTHING_TO_REVIEW -> stringResource(R.string.scan_nothing_to_review)
         ScanNotice.SAVE_FAILED -> stringResource(R.string.scan_save_failed)
+        ScanNotice.RESTORED -> stringResource(R.string.scan_restored)
+        ScanNotice.NOTHING_TO_RESTORE -> stringResource(R.string.scan_nothing_to_restore)
     }
 
 @Composable
@@ -163,6 +180,13 @@ private fun Review(
                 Text(stringResource(R.string.review_check_hint), style = MaterialTheme.typography.bodySmall)
             }
             state.notice?.let { Text(noticeText(it), color = MaterialTheme.colorScheme.error) }
+            if (state.looksIncomplete) {
+                Text(
+                    stringResource(R.string.review_incomplete_warning, state.review.size, state.ownedBefore),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Switch(checked = state.replaceCollection, onCheckedChange = onReplaceChanged)
                 Text(stringResource(R.string.review_replace), style = MaterialTheme.typography.bodyMedium)

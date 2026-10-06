@@ -50,4 +50,8 @@
     <string name="review_reason_disagrees">Different screenshots showed different counts.</string>
     <string name="review_reason_low_confidence">Not sure this is the right card or count.</string>
     <string name="review_replace">Replace my whole collection with this scan. Cards that were not found become 0.</string>
+    <string name="review_incomplete_warning">Cards found by this scan: %1$d. Cards you own: %2$d. The scan probably stopped early, so replacing your collection is switched off.</string>
+    <string name="scan_restore_previous">Restore the collection from before the last scan</string>
+    <string name="scan_restored">The previous collection is back. Tapping the button again undoes this.</string>
+    <string name="scan_nothing_to_restore">There is no earlier collection to restore.</string>
 </resources>

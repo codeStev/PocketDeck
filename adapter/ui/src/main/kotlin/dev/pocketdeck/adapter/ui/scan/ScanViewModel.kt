@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.catalog.ObserveCardCatalog
+import dev.pocketdeck.application.collection.ObserveBackupAvailable
+import dev.pocketdeck.application.collection.ObserveCollection
+import dev.pocketdeck.application.collection.RestorePreviousCollection
 import dev.pocketdeck.application.scan.ConfirmScanResults
 import dev.pocketdeck.application.scan.FinishCollectionScan
 import dev.pocketdeck.application.scan.ObserveScanProgress
@@ -21,7 +24,7 @@ import kotlinx.coroutines.launch
 
 enum class ScanPhase { IDLE, SCANNING, REVIEW, SAVED }
 
-enum class ScanNotice { NOTHING_TO_REVIEW, SAVE_FAILED }
+enum class ScanNotice { NOTHING_TO_REVIEW, SAVE_FAILED, RESTORED, NOTHING_TO_RESTORE }
 
 data class ScanUiState(
     val phase: ScanPhase = ScanPhase.IDLE,
@@ -33,6 +36,12 @@ data class ScanUiState(
     val automatic: Boolean = true,
     /** Whether saving makes the scan the whole collection (cards it did not find become 0). */
     val replaceCollection: Boolean = false,
+    /** The scan found far fewer cards than the collection holds, so it probably stopped early. */
+    val looksIncomplete: Boolean = false,
+    /** Unique cards in the collection before this scan was saved. */
+    val ownedBefore: Int = 0,
+    /** Whether the collection from before the last saved scan can be restored. */
+    val backupAvailable: Boolean = false,
 )
 
 /** Drives the scan and review screens through the application's inbound ports only. */
@@ -41,12 +50,20 @@ class ScanViewModel(
     private val finishScan: FinishCollectionScan,
     private val confirmScan: ConfirmScanResults,
     private val observeCatalog: ObserveCardCatalog,
+    private val observeCollection: ObserveCollection,
+    observeBackup: ObserveBackupAvailable,
+    private val restorePrevious: RestorePreviousCollection,
     private val language: Language,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(ScanUiState())
     val state: StateFlow<ScanUiState> = mutableState
 
     init {
+        viewModelScope.launch {
+            observeBackup().collect { available ->
+                mutableState.update { it.copy(backupAvailable = available) }
+            }
+        }
         viewModelScope.launch {
             observeProgress().collect { progress ->
                 mutableState.update { current ->
@@ -84,13 +101,18 @@ class ScanViewModel(
 
                 is Outcome.Success -> {
                     val items = ReviewListing.build(outcome.value, observeCatalog().first(), language)
+                    val owned = observeCollection().first().copiesByCard.size
+                    // A scan that stopped halfway must never be able to wipe the rest of the collection.
+                    val incomplete = owned > 0 && items.size < owned * MIN_SHARE_OF_OWNED
                     mutableState.update {
                         it.copy(
                             phase = ScanPhase.REVIEW,
                             progress = null,
                             review = items,
                             notice = null,
-                            replaceCollection = complete,
+                            replaceCollection = complete && !incomplete,
+                            looksIncomplete = incomplete,
+                            ownedBefore = owned,
                         )
                     }
                 }
@@ -156,6 +178,17 @@ class ScanViewModel(
 
     fun onAutomaticChanged(automatic: Boolean) = mutableState.update { it.copy(automatic = automatic) }
 
+    fun onRestorePrevious() {
+        viewModelScope.launch {
+            val notice =
+                when (restorePrevious()) {
+                    is Outcome.Success -> ScanNotice.RESTORED
+                    is Outcome.Failure -> ScanNotice.NOTHING_TO_RESTORE
+                }
+            mutableState.update { it.copy(notice = notice) }
+        }
+    }
+
     fun onDone() = mutableState.update { ScanUiState(automatic = it.automatic) }
 
     private fun updateItem(
@@ -170,17 +203,30 @@ class ScanViewModel(
         private val finishScan: FinishCollectionScan,
         private val confirmScan: ConfirmScanResults,
         private val observeCatalog: ObserveCardCatalog,
+        private val observeCollection: ObserveCollection,
+        private val observeBackup: ObserveBackupAvailable,
+        private val restorePrevious: RestorePreviousCollection,
         private val language: Language,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(ScanViewModel::class.java)) { "Unknown ViewModel $modelClass" }
-            return ScanViewModel(observeProgress, finishScan, confirmScan, observeCatalog, language) as T
+            return ScanViewModel(
+                observeProgress,
+                finishScan,
+                confirmScan,
+                observeCatalog,
+                observeCollection,
+                observeBackup,
+                restorePrevious,
+                language,
+            ) as T
         }
     }
 
     private companion object {
         const val MIN_COPIES = 1
+        const val MIN_SHARE_OF_OWNED = 0.8
         val FOLLOWS_PROGRESS = setOf(ScanPhase.IDLE, ScanPhase.SCANNING)
     }
 }

@@ -47,3 +47,24 @@ internal abstract class OwnedCardDao {
         insertAll(owned)
     }
 }
+
+@Dao
+internal abstract class BackupOwnedCardDao {
+    @Query("SELECT * FROM owned_card_backup")
+    abstract suspend fun getAll(): List<BackupOwnedCardEntity>
+
+    @Query("SELECT COUNT(*) FROM owned_card_backup")
+    abstract fun observeCount(): Flow<Int>
+
+    @Query("DELETE FROM owned_card_backup")
+    protected abstract suspend fun deleteAll()
+
+    @Insert
+    protected abstract suspend fun insertAll(rows: List<BackupOwnedCardEntity>)
+
+    @Transaction
+    open suspend fun replaceAll(rows: List<BackupOwnedCardEntity>) {
+        deleteAll()
+        insertAll(rows)
+    }
+}

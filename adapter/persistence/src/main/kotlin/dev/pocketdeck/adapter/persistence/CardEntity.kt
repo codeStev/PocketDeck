@@ -27,3 +27,10 @@ internal data class OwnedCardEntity(
     @PrimaryKey val cardId: String,
     val copies: Int,
 )
+
+/** The collection as it was before the last scan was saved. */
+@Entity(tableName = "owned_card_backup")
+internal data class BackupOwnedCardEntity(
+    @PrimaryKey val cardId: String,
+    val copies: Int,
+)

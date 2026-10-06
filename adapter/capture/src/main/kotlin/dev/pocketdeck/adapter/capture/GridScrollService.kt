@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Path
 import android.provider.Settings
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import dev.pocketdeck.application.scan.GridScroller
 import dev.pocketdeck.application.scan.ScrollGesture
@@ -59,7 +60,28 @@ class GridScrollService : AccessibilityService() {
 
 /** The [GridScroller] backed by the accessibility service; unavailable until the player has switched it on. */
 class AccessibilityGridScroller : GridScroller {
-    override suspend fun perform(gesture: ScrollGesture): Boolean = GridScrollService.instance?.drag(gesture) ?: false
+    override suspend fun perform(gesture: ScrollGesture): Boolean {
+        val service = GridScrollService.instance
+        val completed = service?.drag(gesture) ?: false
+        Log.i(
+            TAG,
+            "Swipe x=${gesture.startX} y ${gesture.startY} -> ${gesture.endY} (${gesture.durationMillis} ms): " +
+                if (service ==
+                    null
+                ) {
+                    "accessibility service not connected"
+                } else if (completed) {
+                    "completed"
+                } else {
+                    "cancelled"
+                },
+        )
+        return completed
+    }
+
+    private companion object {
+        const val TAG = "PocketDeckScan"
+    }
 }
 
 object AutoScroll {

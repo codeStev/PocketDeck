@@ -8,14 +8,16 @@ import androidx.room3.RoomDatabase
 import androidx.sqlite.driver.AndroidSQLiteDriver
 
 @Database(
-    entities = [CardEntity::class, OwnedCardEntity::class],
-    version = 2,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    entities = [CardEntity::class, OwnedCardEntity::class, BackupOwnedCardEntity::class],
+    version = 3,
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 internal abstract class PocketDeckDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
 
     abstract fun ownedCardDao(): OwnedCardDao
+
+    abstract fun backupDao(): BackupOwnedCardDao
 }
 
 /** Entry point for the composition root: builds the database without leaking Room types. */
@@ -39,5 +41,6 @@ object PocketDeckDatabases {
         PocketDeckStorage(
             catalogs = RoomCardCatalogRepository(database.cardDao()),
             collections = RoomCollectionRepository(database.ownedCardDao()),
+            backup = RoomCollectionBackup(database.backupDao()),
         )
 }

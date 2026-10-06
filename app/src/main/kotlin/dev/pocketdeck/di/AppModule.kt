@@ -25,9 +25,14 @@ import dev.pocketdeck.application.catalog.SyncCardCatalog
 import dev.pocketdeck.application.catalog.SyncCardCatalogService
 import dev.pocketdeck.application.collection.AdjustOwnedCount
 import dev.pocketdeck.application.collection.AdjustOwnedCountService
+import dev.pocketdeck.application.collection.CollectionBackup
 import dev.pocketdeck.application.collection.CollectionRepository
+import dev.pocketdeck.application.collection.ObserveBackupAvailable
+import dev.pocketdeck.application.collection.ObserveBackupAvailableService
 import dev.pocketdeck.application.collection.ObserveCollection
 import dev.pocketdeck.application.collection.ObserveCollectionService
+import dev.pocketdeck.application.collection.RestorePreviousCollection
+import dev.pocketdeck.application.collection.RestorePreviousCollectionService
 import dev.pocketdeck.application.scan.CardRecognizer
 import dev.pocketdeck.application.scan.ConfirmScanResults
 import dev.pocketdeck.application.scan.ConfirmScanResultsService
@@ -65,6 +70,18 @@ object AppModule {
 
     @Provides
     fun collectionRepository(storage: PocketDeckStorage): CollectionRepository = storage.collections
+
+    @Provides
+    fun collectionBackup(storage: PocketDeckStorage): CollectionBackup = storage.backup
+
+    @Provides
+    fun observeBackupAvailable(backup: CollectionBackup): ObserveBackupAvailable = ObserveBackupAvailableService(backup)
+
+    @Provides
+    fun restorePreviousCollection(
+        collections: CollectionRepository,
+        backup: CollectionBackup,
+    ): RestorePreviousCollection = RestorePreviousCollectionService(collections, backup)
 
     @Provides
     fun cardCatalogSource(
@@ -131,7 +148,8 @@ object AppModule {
     fun confirmScanResults(
         catalogs: CardCatalogRepository,
         collections: CollectionRepository,
-    ): ConfirmScanResults = ConfirmScanResultsService(catalogs, collections)
+        backup: CollectionBackup,
+    ): ConfirmScanResults = ConfirmScanResultsService(catalogs, collections, backup)
 
     // --- driving adapter wiring
     @Provides
@@ -140,8 +158,20 @@ object AppModule {
         finishScan: FinishCollectionScan,
         confirmScan: ConfirmScanResults,
         observeCatalog: ObserveCardCatalog,
+        observeCollection: ObserveCollection,
+        observeBackup: ObserveBackupAvailable,
+        restorePrevious: RestorePreviousCollection,
         language: Language,
-    ) = ScanViewModel.Factory(observeProgress, finishScan, confirmScan, observeCatalog, language)
+    ) = ScanViewModel.Factory(
+        observeProgress,
+        finishScan,
+        confirmScan,
+        observeCatalog,
+        observeCollection,
+        observeBackup,
+        restorePrevious,
+        language,
+    )
 
     @Provides
     fun collectionViewModelFactory(

@@ -1,6 +1,7 @@
 package dev.pocketdeck.application.scan
 
 import dev.pocketdeck.application.Outcome
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,6 +21,7 @@ private class FakeGridWorld(
     startOffset: Int = 0,
     private val pollsUntilCountsAppear: Int = 3,
     private val gesturesWork: Boolean = true,
+    private val ignoredSwipeMillis: Long? = null,
 ) {
     var offset = startOffset
         private set
@@ -54,6 +56,8 @@ private class FakeGridWorld(
             gestures += gesture
             offsetsWhenScrolling += countsVisible
             if (!gesturesWork) return@GridScroller false
+            val swallowed = gesture.durationMillis == ignoredSwipeMillis && gesture.startY > gesture.endY
+            if (swallowed) return@GridScroller true // reported as done, but the list does not move
             val moved = (gesture.startY - gesture.endY)
             offset = (offset + moved).coerceIn(0, maxOffset)
             pollsSinceMove = 0
@@ -142,12 +146,36 @@ class AutoScanServiceTest {
     fun `tries the end of the list only as often as the stall limit allows`() =
         runTest {
             val world = FakeGridWorld(contentHeight = 100)
+            val settings = AutoScanSettings()
 
             service(world)()
 
-            // Two scrolls that move (0 -> 30 -> 60), then the list does not move any more: it is tried exactly
-            // twice more (the default stall limit) before the scan is declared finished.
-            world.gestures.count { it.startY > it.endY } shouldBe 4
+            // Two scrolls that move (0 -> 30 -> 60), then the list does not move any more: it is tried
+            // stallLimit more times before the scan is declared finished.
+            world.gestures.count { it.startY > it.endY } shouldBe 2 + settings.stallLimit
+        }
+
+    @Test
+    fun `does not mistake blocked swipes for the end of the list`() =
+        runTest {
+            // The usual swipe is swallowed (something blocks it) but a differently shaped one gets through.
+            val world = FakeGridWorld(contentHeight = 200, ignoredSwipeMillis = AutoScanSettings().swipeMillis)
+
+            val outcome = service(world)()
+
+            (outcome is Outcome.Success) shouldBe true
+            world.rowsSeen() shouldBe (0 until 20).toSet()
+        }
+
+    @Test
+    fun `tries differently shaped swipes before giving up`() =
+        runTest {
+            val world = FakeGridWorld(contentHeight = 100)
+
+            service(world)()
+
+            val atTheEnd = world.gestures.filter { it.startY > it.endY }.drop(2)
+            atTheEnd.map { it.durationMillis }.distinct().size shouldBeGreaterThan 1
         }
 
     @Test

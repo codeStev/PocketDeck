@@ -2,6 +2,7 @@ package dev.pocketdeck.application.scan
 
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.catalog.CardCatalogRepository
+import dev.pocketdeck.application.collection.CollectionBackup
 import dev.pocketdeck.application.collection.CollectionRepository
 import dev.pocketdeck.domain.collection.CardCollection
 import dev.pocketdeck.domain.scan.ReviewReason
@@ -62,6 +63,7 @@ private fun countToStore(
 class ConfirmScanResultsService(
     private val catalogs: CardCatalogRepository,
     private val collections: CollectionRepository,
+    private val backup: CollectionBackup,
 ) : ConfirmScanResults {
     override suspend fun invoke(
         review: List<ScannedCard>,
@@ -74,6 +76,8 @@ class ConfirmScanResultsService(
         val current = collections.current()
         val base = if (replaceCollection) CardCollection.EMPTY else current
         val updated = review.fold(base) { acc, card -> acc.withCopies(card.cardId, countToStore(card, current)) }
+        // Keep what the player had, so that a scan that went wrong can be undone.
+        if (current.copiesByCard.isNotEmpty()) backup.save(current)
         collections.save(updated)
         return Outcome.Success(ConfirmedScan(updatedCards = review.size))
     }

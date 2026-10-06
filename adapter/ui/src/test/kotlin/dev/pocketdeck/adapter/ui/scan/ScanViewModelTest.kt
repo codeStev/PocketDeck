@@ -2,8 +2,12 @@ package dev.pocketdeck.adapter.ui.scan
 
 import app.cash.turbine.test
 import dev.pocketdeck.application.catalog.ObserveCardCatalogService
+import dev.pocketdeck.application.collection.ObserveBackupAvailableService
+import dev.pocketdeck.application.collection.ObserveCollectionService
+import dev.pocketdeck.application.collection.RestorePreviousCollectionService
 import dev.pocketdeck.application.fakes.FakeCardRecognizer
 import dev.pocketdeck.application.fakes.InMemoryCardCatalogRepository
+import dev.pocketdeck.application.fakes.InMemoryCollectionBackup
 import dev.pocketdeck.application.fakes.InMemoryCollectionRepository
 import dev.pocketdeck.application.scan.ConfirmScanResultsService
 import dev.pocketdeck.application.scan.FinishCollectionScanService
@@ -15,6 +19,7 @@ import dev.pocketdeck.application.scan.SubmitScanFrameService
 import dev.pocketdeck.domain.card.CardCatalog
 import dev.pocketdeck.domain.card.Language
 import dev.pocketdeck.domain.charmander
+import dev.pocketdeck.domain.collection.CardCollection
 import dev.pocketdeck.domain.magmar
 import dev.pocketdeck.domain.scan.Confidence
 import dev.pocketdeck.domain.scan.TileRecognition
@@ -36,6 +41,7 @@ class ScanViewModelTest {
     private val sessions = InMemoryScanSessionStore()
     private val catalogs = InMemoryCardCatalogRepository(CardCatalog(listOf(charmander, magmar)))
     private val collections = InMemoryCollectionRepository()
+    private val backup = InMemoryCollectionBackup()
     private val frame = ScreenFrame(1, 1, intArrayOf(0))
 
     @BeforeEach
@@ -48,8 +54,11 @@ class ScanViewModelTest {
         ScanViewModel(
             observeProgress = ObserveScanProgressService(sessions),
             finishScan = FinishCollectionScanService(sessions),
-            confirmScan = ConfirmScanResultsService(catalogs, collections),
+            confirmScan = ConfirmScanResultsService(catalogs, collections, backup),
             observeCatalog = ObserveCardCatalogService(catalogs),
+            observeCollection = ObserveCollectionService(collections),
+            observeBackup = ObserveBackupAvailableService(backup),
+            restorePrevious = RestorePreviousCollectionService(collections, backup),
             language = Language.ENGLISH,
         )
 
@@ -330,5 +339,114 @@ class ScanViewModelTest {
             advanceUntilIdle()
 
             collections.current().copiesOf(magmar.id) shouldBe 2
+        }
+
+    @Test
+    fun `a scan that found far fewer cards than are owned does not replace the collection by default`() =
+        runTest(dispatcher) {
+            val owned = CardCollection.EMPTY.withCopies(charmander.id, 3).withCopies(magmar.id, 2)
+            collections.save(owned)
+            scanSeeing(tile(charmander, 3))
+            val viewModel = viewModel()
+
+            viewModel.onReviewRequested(complete = true)
+            advanceUntilIdle()
+
+            viewModel.state.value.run {
+                replaceCollection shouldBe false
+                looksIncomplete shouldBe true
+                ownedBefore shouldBe 2
+            }
+        }
+
+    @Test
+    fun `a scan that found about as many cards as are owned may replace the collection`() =
+        runTest(dispatcher) {
+            collections.save(CardCollection.EMPTY.withCopies(charmander.id, 3).withCopies(magmar.id, 2))
+            scanSeeing(tile(charmander, 3), tile(magmar, 2))
+            val viewModel = viewModel()
+
+            viewModel.onReviewRequested(complete = true)
+            advanceUntilIdle()
+
+            viewModel.state.value.replaceCollection shouldBe true
+            viewModel.state.value.looksIncomplete shouldBe false
+        }
+
+    @Test
+    fun `the first scan of an empty collection is never called incomplete`() =
+        runTest(dispatcher) {
+            scanSeeing(tile(charmander, 1))
+            val viewModel = viewModel()
+
+            viewModel.onReviewRequested(complete = true)
+            advanceUntilIdle()
+
+            viewModel.state.value.looksIncomplete shouldBe false
+        }
+
+    @Test
+    fun `the player can still force a replacement after the warning`() =
+        runTest(dispatcher) {
+            collections.save(CardCollection.EMPTY.withCopies(charmander.id, 3).withCopies(magmar.id, 2))
+            scanSeeing(tile(charmander, 3))
+            val viewModel = viewModel()
+            viewModel.onReviewRequested(complete = true)
+            advanceUntilIdle()
+
+            viewModel.onReplaceChanged(true)
+            viewModel.onConfirm()
+            advanceUntilIdle()
+
+            collections.current().copiesOf(magmar.id) shouldBe 0
+        }
+
+    @Test
+    fun `saving a scan makes the previous collection restorable`() =
+        runTest(dispatcher) {
+            collections.save(CardCollection.EMPTY.withCopies(magmar.id, 5))
+            scanSeeing(tile(charmander, 2))
+            val viewModel = viewModel()
+            viewModel.state.test {
+                awaitItem().backupAvailable shouldBe false
+                viewModel.onReviewRequested(complete = true)
+                advanceUntilIdle()
+                viewModel.onReplaceChanged(true)
+                viewModel.onConfirm()
+                advanceUntilIdle()
+
+                expectMostRecentItem().backupAvailable shouldBe true
+            }
+        }
+
+    @Test
+    fun `restoring brings the earlier collection back`() =
+        runTest(dispatcher) {
+            collections.save(CardCollection.EMPTY.withCopies(magmar.id, 5))
+            scanSeeing(tile(charmander, 2))
+            val viewModel = viewModel()
+            viewModel.onReviewRequested(complete = true)
+            advanceUntilIdle()
+            viewModel.onReplaceChanged(true)
+            viewModel.onConfirm()
+            advanceUntilIdle()
+            collections.current().copiesOf(magmar.id) shouldBe 0
+
+            viewModel.onRestorePrevious()
+            advanceUntilIdle()
+
+            collections.current().copiesOf(magmar.id) shouldBe 5
+            viewModel.state.value.notice shouldBe ScanNotice.RESTORED
+        }
+
+    @Test
+    fun `restoring without a backup says so`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+
+            viewModel.onRestorePrevious()
+            advanceUntilIdle()
+
+            viewModel.state.value.notice shouldBe ScanNotice.NOTHING_TO_RESTORE
         }
 }

@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.fakes.FakeCardRecognizer
 import dev.pocketdeck.application.fakes.InMemoryCardCatalogRepository
+import dev.pocketdeck.application.fakes.InMemoryCollectionBackup
 import dev.pocketdeck.application.fakes.InMemoryCollectionRepository
 import dev.pocketdeck.domain.card.CardCatalog
 import dev.pocketdeck.domain.card.CardId
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.Test
 class CollectionScanTest {
     private val sessions = InMemoryScanSessionStore()
     private val collections = InMemoryCollectionRepository()
+    private val backup = InMemoryCollectionBackup()
     private val catalogs = InMemoryCardCatalogRepository(CardCatalog(listOf(charmander, magmar)))
     private val frame = ScreenFrame(width = 2, height = 1, pixels = intArrayOf(0, 0))
 
@@ -97,7 +99,7 @@ class CollectionScanTest {
     @Test
     fun `confirming writes the scanned copies into the collection`() =
         runTest {
-            val confirm = ConfirmScanResultsService(catalogs, collections)
+            val confirm = ConfirmScanResultsService(catalogs, collections, backup)
             val review =
                 listOf(ScannedCard(charmander.id, copies = 2, confidence = Confidence(0.9), needsReview = false))
 
@@ -110,7 +112,7 @@ class CollectionScanTest {
     fun `confirming keeps cards that were not part of the scan`() =
         runTest {
             collections.save(CardCollection.EMPTY.withCopies(magmar.id, 1))
-            val confirm = ConfirmScanResultsService(catalogs, collections)
+            val confirm = ConfirmScanResultsService(catalogs, collections, backup)
 
             confirm(
                 listOf(ScannedCard(charmander.id, 2, Confidence(0.9), needsReview = false)),
@@ -123,7 +125,7 @@ class CollectionScanTest {
     @Test
     fun `confirming rejects the whole review when it contains unknown cards`() =
         runTest {
-            val confirm = ConfirmScanResultsService(catalogs, collections)
+            val confirm = ConfirmScanResultsService(catalogs, collections, backup)
             val unknown = CardId("ghost")
             val review =
                 listOf(
@@ -176,7 +178,7 @@ class CollectionScanTest {
     fun `replacing the collection drops cards that the scan did not find`() =
         runTest {
             collections.save(CardCollection.EMPTY.withCopies(magmar.id, 4))
-            val confirm = ConfirmScanResultsService(catalogs, collections)
+            val confirm = ConfirmScanResultsService(catalogs, collections, backup)
 
             confirm(
                 listOf(ScannedCard(charmander.id, 2, Confidence(0.9), needsReview = false)),
@@ -191,7 +193,7 @@ class CollectionScanTest {
     fun `a rejected review does not touch the collection even when replacing`() =
         runTest {
             collections.save(CardCollection.EMPTY.withCopies(magmar.id, 4))
-            val confirm = ConfirmScanResultsService(catalogs, collections)
+            val confirm = ConfirmScanResultsService(catalogs, collections, backup)
             val review = listOf(ScannedCard(CardId("ghost"), 1, Confidence(0.9), needsReview = false))
 
             confirm(review, replaceCollection = true) shouldBe
@@ -204,7 +206,7 @@ class CollectionScanTest {
     fun `a card whose count was never visible keeps the count it already had`() =
         runTest {
             collections.save(CardCollection.EMPTY.withCopies(charmander.id, 7))
-            val confirm = ConfirmScanResultsService(catalogs, collections)
+            val confirm = ConfirmScanResultsService(catalogs, collections, backup)
             val unread =
                 ScannedCard(
                     charmander.id,
@@ -222,7 +224,7 @@ class CollectionScanTest {
     @Test
     fun `an unread count of a new card is stored as one`() =
         runTest {
-            val confirm = ConfirmScanResultsService(catalogs, collections)
+            val confirm = ConfirmScanResultsService(catalogs, collections, backup)
             val unread =
                 ScannedCard(magmar.id, 1, Confidence(0.95), needsReview = true, reason = ReviewReason.COUNT_NEVER_READ)
 
@@ -235,7 +237,7 @@ class CollectionScanTest {
     fun `a count the player corrected replaces the old one`() =
         runTest {
             collections.save(CardCollection.EMPTY.withCopies(charmander.id, 7))
-            val confirm = ConfirmScanResultsService(catalogs, collections)
+            val confirm = ConfirmScanResultsService(catalogs, collections, backup)
             val corrected = ScannedCard(charmander.id, 3, Confidence(0.95), needsReview = false)
 
             confirm(listOf(corrected), replaceCollection = true)
@@ -256,5 +258,49 @@ class CollectionScanTest {
             analysis.countsExpected shouldBe 1
             analysis.countsRead shouldBe 1
             analysis.countsVisible shouldBe true
+        }
+
+    @Test
+    fun `the previous collection is kept before a scan is saved`() =
+        runTest {
+            val before = CardCollection.EMPTY.withCopies(magmar.id, 4)
+            collections.save(before)
+            val confirm = ConfirmScanResultsService(catalogs, collections, backup)
+
+            confirm(
+                listOf(ScannedCard(charmander.id, 2, Confidence(0.9), needsReview = false)),
+                replaceCollection = true,
+            )
+
+            backup.load() shouldBe before
+        }
+
+    @Test
+    fun `an empty collection is not worth a backup`() =
+        runTest {
+            val confirm = ConfirmScanResultsService(catalogs, collections, backup)
+
+            confirm(
+                listOf(ScannedCard(charmander.id, 2, Confidence(0.9), needsReview = false)),
+                replaceCollection = false,
+            )
+
+            backup.load() shouldBe null
+        }
+
+    @Test
+    fun `a rejected review leaves the existing backup alone`() =
+        runTest {
+            val older = CardCollection.EMPTY.withCopies(magmar.id, 9)
+            backup.save(older)
+            collections.save(CardCollection.EMPTY.withCopies(magmar.id, 4))
+            val confirm = ConfirmScanResultsService(catalogs, collections, backup)
+
+            confirm(
+                listOf(ScannedCard(CardId("ghost"), 1, Confidence(0.9), needsReview = false)),
+                replaceCollection = true,
+            )
+
+            backup.load() shouldBe older
         }
 }

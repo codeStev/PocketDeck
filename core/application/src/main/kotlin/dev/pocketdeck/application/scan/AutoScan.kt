@@ -105,7 +105,8 @@ data class AutoScanSettings(
     val swipeMillis: Long = 900,
     val rewindSwipeMillis: Long = 300,
     val overlapRows: Int = 1,
-    val stallLimit: Int = 2,
+    /** How many scrolls in a row may leave the picture unchanged before the list is considered ended. */
+    val stallLimit: Int = 4,
     val maxScreens: Int = 400,
     val maxRewindSwipes: Int = 60,
 )

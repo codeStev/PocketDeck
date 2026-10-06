@@ -45,7 +45,12 @@ class AutoScanService(
             if (previous == null || !frame.looksLike(previous)) screens++
             if (screens > settings.maxScreens) return Outcome.Failure(AutoScanFailure.TooManyScreens)
             previous = frame
-            if (!scroller.perform(pageDown(frame))) return Outcome.Failure(AutoScanFailure.GestureUnavailable)
+            if (!scroller.perform(
+                    pageDown(frame, attempt = stalls),
+                )
+            ) {
+                return Outcome.Failure(AutoScanFailure.GestureUnavailable)
+            }
             delay(settings.afterScrollMillis)
         }
     }
@@ -107,16 +112,45 @@ class AutoScanService(
         }
     }
 
-    /** Content moves up by about one page minus the overlap: the finger drags up from the bottom of the grid. */
-    private fun pageDown(frame: ScreenFrame): ScrollGesture {
+    /**
+     * Content moves up by about one page minus the overlap: the finger drags up from the bottom of the grid. When the
+     * picture did not change after the previous scroll ([attempt] > 0) the swipe is varied (slower, shorter, from a
+     * different column), so a swipe that something swallowed is not mistaken for the end of the list.
+     */
+    private fun pageDown(
+        frame: ScreenFrame,
+        attempt: Int,
+    ): ScrollGesture {
         val geometry = locator.locate(frame)
-        val distance =
+        val page =
             geometry?.let { max(it.rowPitch, (it.visibleRows - settings.overlapRows) * it.rowPitch) }
                 ?: (frame.height / 2)
         val bottom = geometry?.lastRowBottom ?: (frame.height * FALLBACK_BOTTOM_PERCENT / PERCENT)
         val startY = min(bottom - margin(geometry), frame.height - 1)
-        val x = geometry?.centerX ?: (frame.width / 2)
-        return ScrollGesture(x, startY, x, max(startY - distance, 0), settings.swipeMillis)
+        val centre = geometry?.centerX ?: (frame.width / 2)
+        return when (attempt % VARIANTS) {
+            0 -> {
+                ScrollGesture(centre, startY, centre, max(startY - page, 0), settings.swipeMillis)
+            }
+
+            1 -> {
+                ScrollGesture(centre, startY, centre, max(startY - page, 0), settings.swipeMillis * SLOW_FACTOR)
+            }
+
+            2 -> {
+                ScrollGesture(centre, startY, centre, max(startY - page / 2, 0), settings.rewindSwipeMillis)
+            }
+
+            else -> {
+                ScrollGesture(
+                    frame.width / SIDE_DIVISOR,
+                    startY,
+                    frame.width / SIDE_DIVISOR,
+                    max(startY - page, 0),
+                    settings.swipeMillis,
+                )
+            }
+        }
     }
 
     /** Content moves down by a page: the finger drags down, ending at the bottom of the grid. */
@@ -136,6 +170,9 @@ class AutoScanService(
 
     private companion object {
         const val GIVE_UP_FACTOR = 3
+        const val VARIANTS = 4
+        const val SLOW_FACTOR = 2L
+        const val SIDE_DIVISOR = 4
         const val FALLBACK_BOTTOM_PERCENT = 80
         const val PERCENT = 100
         const val MARGIN_DIVISOR = 10

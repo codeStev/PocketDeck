@@ -18,6 +18,7 @@ class RoomRepositoriesTest {
     private lateinit var database: PocketDeckDatabase
     private lateinit var catalogs: RoomCardCatalogRepository
     private lateinit var collections: RoomCollectionRepository
+    private lateinit var backup: RoomCollectionBackup
 
     @Before
     fun openInMemoryDatabase() {
@@ -25,6 +26,7 @@ class RoomRepositoriesTest {
         database = PocketDeckDatabases.inMemory(context)
         catalogs = RoomCardCatalogRepository(database.cardDao())
         collections = RoomCollectionRepository(database.ownedCardDao())
+        backup = RoomCollectionBackup(database.backupDao())
     }
 
     @After
@@ -91,5 +93,25 @@ class RoomRepositoriesTest {
             collections.save(CardCollection.EMPTY.withCopies(charmander.id, 1))
 
             collections.current() shouldBe CardCollection.EMPTY.withCopies(charmander.id, 1)
+        }
+
+    @Test
+    fun backupIsEmptyAtStart() =
+        runTest {
+            backup.load() shouldBe null
+            backup.observeAvailable().first() shouldBe false
+        }
+
+    @Test
+    fun backupRoundTripsAndIsReplacedByTheNextOne() =
+        runTest {
+            val first = CardCollection.EMPTY.withCopies(charmander.id, 2)
+            val second = CardCollection.EMPTY.withCopies(magmar.id, 5)
+
+            backup.save(first)
+            backup.save(second)
+
+            backup.load() shouldBe second
+            backup.observeAvailable().first() shouldBe true
         }
 }
