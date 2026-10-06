@@ -80,3 +80,13 @@ New way of driving the app => new driving adapter calling inbound ports.
   AccessibilityService the player switches on in the system settings (gestures only, no screen reading).
 - `SubmitScanFrame` returns a `FrameAnalysis` (tiles recognised, counts readable) which the auto-scroll policy uses.
 - Logs: tag `PocketDeckScan` (per-frame analysis time, skipped frames).
+
+## Decks (live)
+- `:adapter:limitless` implements `MetaDecklistSource` with the public Limitless API (no key; `/tournaments?game=POCKET`,
+  `/tournaments/{id}/standings`). Card ids are `set.lowercase().remove('-') + "-" + number.padStart(3,'0')`, which matches
+  the master dataset for every listed card (checked on 1,171 live decklists). The adapter takes its `HttpClient` from `:app`.
+- `ArchetypeAggregator` (domain) groups decklists into archetypes; `MetaBasedSuggestionStrategy` (application) picks per
+  archetype the list closest to what the player owns; `SuggestDecks` combines all `DeckSuggestionStrategy` ports.
+- Scan paging: `AutoScanService` measures the real scroll distance (`measureScrollShift`) and corrects the swipe length;
+  swipes hold still at the end (`GridScrollService.drag`) because a flick makes the game's list glide on.
+- One card read under different counts (each reading >= 0.8) is several prints with the same art: counts are added.

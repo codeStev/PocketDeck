@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":adapter:ui"))
     implementation(project(":adapter:persistence"))
     implementation(project(":adapter:carddb"))
+    implementation(project(":adapter:limitless"))
     implementation(project(":adapter:recognition"))
     implementation(project(":adapter:capture"))
 
@@ -23,6 +24,10 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     coreLibraryDesugaring(libs.desugar.jdk.libs)

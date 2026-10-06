@@ -25,6 +25,7 @@ import dev.pocketdeck.adapter.capture.ScanCapture
 import dev.pocketdeck.adapter.ui.AppTab
 import dev.pocketdeck.adapter.ui.PocketDeckApp
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
+import dev.pocketdeck.adapter.ui.decks.DecksViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
 import dev.pocketdeck.adapter.ui.theme.PocketDeckTheme
 import javax.inject.Inject
@@ -33,6 +34,9 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
     @Inject
     lateinit var collectionViewModelFactory: CollectionViewModel.Factory
+
+    @Inject
+    lateinit var decksViewModelFactory: DecksViewModel.Factory
 
     @Inject
     lateinit var scanViewModelFactory: ScanViewModel.Factory
@@ -50,6 +54,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             PocketDeckTheme {
                 val collectionViewModel = viewModel<CollectionViewModel>(factory = collectionViewModelFactory)
+                val decksViewModel = viewModel<DecksViewModel>(factory = decksViewModelFactory)
                 val scanViewModel = viewModel<ScanViewModel>(factory = scanViewModelFactory)
                 LaunchedEffect(reviewRequests) {
                     if (reviewRequests >
@@ -76,6 +81,7 @@ class MainActivity : ComponentActivity() {
 
                 PocketDeckApp(
                     collectionViewModel = collectionViewModel,
+                    decksViewModel = decksViewModel,
                     scanViewModel = scanViewModel,
                     selectedTab = selectedTab,
                     onTabSelected = { selectedTab = it },

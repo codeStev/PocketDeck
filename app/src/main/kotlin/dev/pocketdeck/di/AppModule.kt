@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.pocketdeck.LogScanDiagnostics
 import dev.pocketdeck.adapter.carddb.MasterCatalogSource
+import dev.pocketdeck.adapter.limitless.LimitlessMetaDecklistSource
 import dev.pocketdeck.adapter.persistence.PocketDeckDatabases
 import dev.pocketdeck.adapter.persistence.PocketDeckStorage
 import dev.pocketdeck.adapter.recognition.BadgeDigitReader
@@ -17,6 +18,7 @@ import dev.pocketdeck.adapter.recognition.DetectorGridLocator
 import dev.pocketdeck.adapter.recognition.DigitTemplates
 import dev.pocketdeck.adapter.recognition.GridCardRecognizer
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
+import dev.pocketdeck.adapter.ui.decks.DecksViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
 import dev.pocketdeck.application.catalog.CardCatalogRepository
 import dev.pocketdeck.application.catalog.CardCatalogSource
@@ -34,6 +36,11 @@ import dev.pocketdeck.application.collection.ObserveCollection
 import dev.pocketdeck.application.collection.ObserveCollectionService
 import dev.pocketdeck.application.collection.RestorePreviousCollection
 import dev.pocketdeck.application.collection.RestorePreviousCollectionService
+import dev.pocketdeck.application.meta.InMemoryMetaSnapshotRepository
+import dev.pocketdeck.application.meta.MetaDecklistSource
+import dev.pocketdeck.application.meta.MetaSnapshotRepository
+import dev.pocketdeck.application.meta.RefreshMetaSnapshot
+import dev.pocketdeck.application.meta.RefreshMetaSnapshotService
 import dev.pocketdeck.application.scan.CardRecognizer
 import dev.pocketdeck.application.scan.ConfirmScanResults
 import dev.pocketdeck.application.scan.ConfirmScanResultsService
@@ -49,7 +56,15 @@ import dev.pocketdeck.application.scan.StartCollectionScan
 import dev.pocketdeck.application.scan.StartCollectionScanService
 import dev.pocketdeck.application.scan.SubmitScanFrame
 import dev.pocketdeck.application.scan.SubmitScanFrameService
+import dev.pocketdeck.application.suggest.MetaBasedSuggestionStrategy
+import dev.pocketdeck.application.suggest.SuggestDecks
+import dev.pocketdeck.application.suggest.SuggestDecksService
 import dev.pocketdeck.domain.card.Language
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 import java.util.Locale
 import javax.inject.Singleton
 
@@ -160,7 +175,42 @@ object AppModule {
         backup: CollectionBackup,
     ): ConfirmScanResults = ConfirmScanResultsService(catalogs, collections, backup)
 
+    // --- tournament decks and deck suggestions
+    @Provides
+    @Singleton
+    fun httpClient(): HttpClient =
+        HttpClient(OkHttp) {
+            install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+        }
+
+    @Provides
+    fun metaDecklistSource(client: HttpClient): MetaDecklistSource = LimitlessMetaDecklistSource(client)
+
+    @Provides
+    @Singleton
+    fun metaSnapshotRepository(): MetaSnapshotRepository = InMemoryMetaSnapshotRepository()
+
+    @Provides
+    fun refreshMetaSnapshot(
+        source: MetaDecklistSource,
+        snapshots: MetaSnapshotRepository,
+    ): RefreshMetaSnapshot = RefreshMetaSnapshotService(source, snapshots)
+
+    @Provides
+    fun suggestDecks(
+        catalogs: CardCatalogRepository,
+        collections: CollectionRepository,
+        snapshots: MetaSnapshotRepository,
+    ): SuggestDecks = SuggestDecksService(catalogs, collections, snapshots, listOf(MetaBasedSuggestionStrategy()))
+
     // --- driving adapter wiring
+    @Provides
+    fun decksViewModelFactory(
+        suggestDecks: SuggestDecks,
+        refreshMetaSnapshot: RefreshMetaSnapshot,
+        language: Language,
+    ) = DecksViewModel.Factory(suggestDecks, refreshMetaSnapshot, language)
+
     @Provides
     fun scanViewModelFactory(
         observeProgress: ObserveScanProgress,
