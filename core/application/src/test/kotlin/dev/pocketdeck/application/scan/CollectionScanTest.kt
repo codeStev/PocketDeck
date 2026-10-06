@@ -148,6 +148,7 @@ class CollectionScanTest {
 
             analysis.progress shouldBe ScanProgress(1, 2, cardsNeedingReview = 1, breakdown = ReviewBreakdown(1, 0, 0))
             analysis.tilesRecognized shouldBe 2
+            analysis.countsExpected shouldBe 2
             analysis.countsRead shouldBe 1
         }
 
@@ -240,5 +241,20 @@ class CollectionScanTest {
             confirm(listOf(corrected), replaceCollection = true)
 
             collections.current().copiesOf(charmander.id) shouldBe 3
+        }
+
+    @Test
+    fun `tiles under the navigation fade are not waited for`() =
+        runTest {
+            val faded = TileRecognition(magmar.id, copies = null, confidence = Confidence(0.95), expectsCount = false)
+            val submitFrame = submit(FakeCardRecognizer(listOf(seen(charmander.id, 2), faded)))
+            start()
+
+            val analysis = (submitFrame(frame) as Outcome.Success).value
+
+            analysis.tilesRecognized shouldBe 2
+            analysis.countsExpected shouldBe 1
+            analysis.countsRead shouldBe 1
+            analysis.countsVisible shouldBe true
         }
 }

@@ -24,8 +24,14 @@ class SubmitScanFrameService(
         val recognitions = recognizer.recognize(frame)
         val updated = session.observe(recognitions)
         sessions.save(updated)
+        val expected = recognitions.filter { it.expectsCount }
         val analysis =
-            FrameAnalysis(ScanProgress.of(updated), recognitions.size, recognitions.count { it.copies != null })
+            FrameAnalysis(
+                ScanProgress.of(updated),
+                recognitions.size,
+                expected.size,
+                expected.count { it.copies != null },
+            )
         return Outcome.Success(analysis)
     }
 }

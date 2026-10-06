@@ -35,21 +35,19 @@ fun interface GridScroller {
     suspend fun perform(gesture: ScrollGesture): Boolean
 }
 
-/** What one analysed picture contained. Counts are only readable once the game has faded its badges in. */
+/**
+ * What one analysed picture contained. The game shows count badges only once the list rests and fades them in tile by
+ * tile, so a page is only complete when every tile that can show a badge does.
+ */
 data class FrameAnalysis(
     val progress: ScanProgress,
     val tilesRecognized: Int,
+    /** Tiles whose badge should be readable (tiles under the navigation bar's fade are left out). */
+    val countsExpected: Int,
+    /** Of the expected ones, how many have a readable count already. */
     val countsRead: Int,
 ) {
-    val countsVisible: Boolean get() =
-        tilesRecognized > 0 &&
-            countsRead * COUNT_SHARE_DEN >= tilesRecognized * COUNT_SHARE_NUM
-
-    private companion object {
-        // "Visible" means at least four out of five recognised tiles had a readable count.
-        const val COUNT_SHARE_NUM = 4
-        const val COUNT_SHARE_DEN = 5
-    }
+    val countsVisible: Boolean get() = countsRead >= countsExpected
 }
 
 data class AutoScanSummary(

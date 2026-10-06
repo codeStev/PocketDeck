@@ -25,6 +25,11 @@ data class TileRecognition(
      * combined more tiles is a more complete picture of the card than one that saw only a part.
      */
     val parts: Int = 1,
+    /**
+     * Whether the game shows a count badge on this tile once the list rests. Tiles under the navigation bar's fade
+     * often have no readable badge; they are seen again higher up on the next page and need not be waited for.
+     */
+    val expectsCount: Boolean = true,
 ) {
     init {
         require(copies == null || copies >= 1) { "A recognised tile shows at least one copy but was $copies" }

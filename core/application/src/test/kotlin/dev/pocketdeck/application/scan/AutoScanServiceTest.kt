@@ -63,7 +63,7 @@ private class FakeGridWorld(
             submittedOffsets += offset
             val tiles = viewportHeight / rowPitch
             Outcome.Success(
-                FrameAnalysis(ScanProgress(submittedOffsets.size, 0, 0), tiles, if (countsVisible) tiles else 0),
+                FrameAnalysis(ScanProgress(submittedOffsets.size, 0, 0), tiles, tiles, if (countsVisible) tiles else 0),
             )
         }
 

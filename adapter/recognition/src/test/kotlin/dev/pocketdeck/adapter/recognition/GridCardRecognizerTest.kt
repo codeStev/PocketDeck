@@ -174,4 +174,13 @@ class GridCardRecognizerTest {
             combined.copies shouldBe null
             combined.parts shouldBe 2
         }
+
+    @Test
+    fun `only the tiles above the navigation fade expect a count badge`() =
+        runTest {
+            val recognitions = recognizer().recognize(screenshot)
+
+            // The nine-tile screenshot has three rows; the third ends at 91% of the screen height, in the fade.
+            recognitions.map { it.expectsCount } shouldBe List(6) { true } + List(3) { false }
+        }
 }

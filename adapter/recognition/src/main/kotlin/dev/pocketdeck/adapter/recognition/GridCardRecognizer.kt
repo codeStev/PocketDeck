@@ -47,7 +47,14 @@ class GridCardRecognizer(
                 tiles.single()
             } else {
                 val copies = if (tiles.any { it.copies == null }) null else tiles.sumOf { requireNotNull(it.copies) }
-                TileRecognition(cardId, copies, Confidence(tiles.minOf { it.confidence.value }), parts = tiles.size)
+                val confidence = Confidence(tiles.minOf { it.confidence.value })
+                TileRecognition(
+                    cardId,
+                    copies,
+                    confidence,
+                    parts = tiles.size,
+                    expectsCount = tiles.any { it.expectsCount },
+                )
             }
         }
 
@@ -65,7 +72,8 @@ class GridCardRecognizer(
         val runnerUp = matches.firstOrNull { best.score - it.score > SAME_ARTWORK_TOLERANCE }
         val identification = IdentificationConfidence.of(best.score, best.score - (runnerUp?.score ?: -1f))
         val confidence = min(identification, reading?.confidence ?: 1.0)
-        return TileRecognition(chosen.cardId, reading?.copies, Confidence(confidence))
+        val expectsCount = tile.y + tile.height <= frame.height * BADGE_ZONE_BOTTOM
+        return TileRecognition(chosen.cardId, reading?.copies, Confidence(confidence), expectsCount = expectsCount)
     }
 
     /**
@@ -79,6 +87,9 @@ class GridCardRecognizer(
 
     private companion object {
         const val CANDIDATES = 4
+
+        /** Below this share of the screen height the list fades into the navigation bar and badges are unreliable. */
+        const val BADGE_ZONE_BOTTOM = 0.90
         const val MINIMUM_MATCH_SCORE = 0.90f
         const val FLOOR_SCORE = 0.80f
         const val MINIMUM_MARGIN = 0.12f
