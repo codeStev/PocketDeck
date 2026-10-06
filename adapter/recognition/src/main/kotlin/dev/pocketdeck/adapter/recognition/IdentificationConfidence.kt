@@ -10,6 +10,7 @@ internal object IdentificationConfidence {
     private const val CERTAIN_SCORE = 0.98f
     private const val SEPARATED_MARGIN = 0.05f
     private const val CERTAIN_MARGIN = 0.25f
+    private const val WEAKEST_TRUSTED_SCORE = 0.55f
 
     fun of(
         score: Float,
@@ -17,6 +18,8 @@ internal object IdentificationConfidence {
     ): Double {
         val byScore = (score - FLOOR_SCORE) / (CERTAIN_SCORE - FLOOR_SCORE)
         val byMargin = (margin - SEPARATED_MARGIN) / (CERTAIN_MARGIN - SEPARATED_MARGIN)
-        return maxOf(byScore, byMargin).toDouble().coerceIn(0.0, 1.0)
+        // A margin only vouches for the match if the tile also resembles the card to some degree.
+        val scoreTrust = (score - WEAKEST_TRUSTED_SCORE) / (FLOOR_SCORE - WEAKEST_TRUSTED_SCORE)
+        return maxOf(byScore, minOf(byMargin, scoreTrust)).toDouble().coerceIn(0.0, 1.0)
     }
 }

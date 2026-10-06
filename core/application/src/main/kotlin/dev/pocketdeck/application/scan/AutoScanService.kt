@@ -16,10 +16,13 @@ class AutoScanService(
     private val scroller: GridScroller,
     private val submit: SubmitScanFrame,
     private val settings: AutoScanSettings = AutoScanSettings(),
+    private val diagnostics: ScanDiagnostics = ScanDiagnostics.NONE,
 ) : RunAutomaticScan {
     private sealed interface Settled {
         class Ready(
             val frame: ScreenFrame,
+            val analysis: FrameAnalysis?,
+            val waitedPolls: Int,
         ) : Settled
 
         data object ScanEnded : Settled
@@ -28,13 +31,14 @@ class AutoScanService(
     override suspend fun invoke(): Outcome<AutoScanSummary, AutoScanFailure> {
         rewindToTop()?.let { return Outcome.Failure(it) }
         var screens = 0
+        var pages = 0
         var stalls = 0
         var previous: ScreenFrame? = null
         while (true) {
             val frame =
                 when (val settled = settle()) {
                     is Settled.ScanEnded -> return Outcome.Failure(AutoScanFailure.ScanNotRunning)
-                    is Settled.Ready -> settled.frame
+                    is Settled.Ready -> settled.also { report(++pages, it) }.frame
                 }
             if (previous != null && frame.looksLike(previous)) stalls++ else stalls = 0
             if (stalls >= settings.stallLimit) return Outcome.Success(AutoScanSummary(screens))
@@ -45,6 +49,13 @@ class AutoScanService(
             delay(settings.afterScrollMillis)
         }
     }
+
+    private fun report(
+        page: Int,
+        settled: Settled.Ready,
+    ) = diagnostics.pageSettled(
+        PageReport(page, settled.analysis, settled.waitedPolls, timedOut = settled.analysis?.countsVisible != true),
+    )
 
     /** Swipes down until the picture stops changing. Returns a failure only if swiping is impossible. */
     private suspend fun rewindToTop(): AutoScanFailure? {
@@ -78,8 +89,12 @@ class AutoScanService(
             last = frame
             val countsReady = analysis?.countsVisible == true
             val waitedLongEnough = polls >= settings.countWaitPolls
-            if (stable >= settings.stablePolls && (countsReady || waitedLongEnough)) return Settled.Ready(frame)
-            if (polls >= settings.countWaitPolls * GIVE_UP_FACTOR) return Settled.Ready(frame)
+            if (stable >= settings.stablePolls &&
+                (countsReady || waitedLongEnough)
+            ) {
+                return Settled.Ready(frame, analysis, polls)
+            }
+            if (polls >= settings.countWaitPolls * GIVE_UP_FACTOR) return Settled.Ready(frame, analysis, polls)
             polls++
             delay(settings.pollMillis)
         }

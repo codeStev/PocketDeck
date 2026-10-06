@@ -73,6 +73,24 @@ fun interface RunManualScan {
     suspend operator fun invoke()
 }
 
+/** What the auto-scroller saw on one page when it moved on; for diagnosing scans that miss counts. */
+data class PageReport(
+    val page: Int,
+    val analysis: FrameAnalysis?,
+    val waitedPolls: Int,
+    /** True when it moved on although some expected counts were still missing. */
+    val timedOut: Boolean,
+)
+
+/** Outbound port: receives a report for every page the auto-scroller settles on. */
+fun interface ScanDiagnostics {
+    fun pageSettled(report: PageReport)
+
+    companion object {
+        val NONE = ScanDiagnostics { }
+    }
+}
+
 /** Timing and limits of the automatic scan; the defaults suit the game's own animations. */
 data class AutoScanSettings(
     val pollMillis: Long = 250,

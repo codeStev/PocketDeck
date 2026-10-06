@@ -64,7 +64,7 @@ class GridCardRecognizer(
     ): TileRecognition? {
         val matches = index.nearest(fingerprinter.fingerprint(frame, tile), CANDIDATES)
         val best = matches.first()
-        if (!isAccepted(best.score, matches.getOrNull(1)?.score)) return null
+        if (!MatchAcceptance.accepts(best.score, matches.getOrNull(1)?.score)) return null
         // Reprints share their artwork and cannot be told apart on screen; choose the same one every time so
         // repeated sightings of a card agree with each other.
         val chosen = matches.filter { best.score - it.score <= SAME_ARTWORK_TOLERANCE }.minBy { it.cardId.value }
@@ -76,23 +76,11 @@ class GridCardRecognizer(
         return TileRecognition(chosen.cardId, reading?.copies, Confidence(confidence), expectsCount = expectsCount)
     }
 
-    /**
-     * Clean matches score about 0.99. Overlays such as the game's floating buttons cover parts of a tile and lower
-     * the score, so a weaker match is still accepted when it stands clearly apart from every other card.
-     */
-    private fun isAccepted(
-        best: Float,
-        runnerUp: Float?,
-    ) = best >= MINIMUM_MATCH_SCORE || (best >= FLOOR_SCORE && best - (runnerUp ?: -1f) >= MINIMUM_MARGIN)
-
     private companion object {
         const val CANDIDATES = 4
 
         /** Below this share of the screen height the list fades into the navigation bar and badges are unreliable. */
         const val BADGE_ZONE_BOTTOM = 0.90
-        const val MINIMUM_MATCH_SCORE = 0.90f
-        const val FLOOR_SCORE = 0.80f
-        const val MINIMUM_MARGIN = 0.12f
         const val SAME_ARTWORK_TOLERANCE = 0.004f
     }
 }

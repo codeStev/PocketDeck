@@ -11,6 +11,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
 /** A scrollable list of card rows seen through a small viewport, driven by the same gestures the real scroller sends. */
+private const val BADGE_TINT = 5_000_000
+
 private class FakeGridWorld(
     private val contentHeight: Int,
     val viewportHeight: Int = 40,
@@ -67,16 +69,19 @@ private class FakeGridWorld(
             )
         }
 
-    /** Row y of the frame shows content row (offset + y), so a different offset gives a different picture. */
-    private fun frame() =
-        ScreenFrame(
-            20,
-            viewportHeight,
+    /**
+     * Row y of the frame shows content row (offset + y), so a different offset gives a different picture. Count badges
+     * appearing also changes the picture, as in the real game.
+     */
+    private fun frame(): ScreenFrame {
+        val badges = if (countsVisible) BADGE_TINT else 0
+        val pixels =
             IntArray(20 * viewportHeight) {
                 0xFF000000.toInt() or
-                    ((offset + it / 20) * 7919 % 0xFFFFFF)
-            },
-        )
+                    (((offset + it / 20) * 7919 + badges) % 0xFFFFFF)
+            }
+        return ScreenFrame(20, viewportHeight, pixels)
+    }
 
     /** Content rows (of [rowPitch]) that have been in view in at least one submitted frame. */
     fun rowsSeen(): Set<Int> =
@@ -242,5 +247,45 @@ class AutoScanServiceTest {
                 )
 
             ended() shouldBe Outcome.Failure(AutoScanFailure.ScanNotRunning)
+        }
+
+    private class RecordingDiagnostics : ScanDiagnostics {
+        val pages = mutableListOf<PageReport>()
+
+        override fun pageSettled(report: PageReport) {
+            pages += report
+        }
+    }
+
+    @Test
+    fun `reports every settled page with how long it waited`() =
+        runTest {
+            val world = FakeGridWorld(contentHeight = 200, pollsUntilCountsAppear = 4)
+            val diagnostics = RecordingDiagnostics()
+
+            AutoScanService(world.capturer, world.locator, world.scroller, world.submit, diagnostics = diagnostics)()
+
+            diagnostics.pages.isNotEmpty() shouldBe true
+            diagnostics.pages.map { it.page } shouldBe (1..diagnostics.pages.size).toList()
+            diagnostics.pages.all { it.analysis?.countsVisible == true && !it.timedOut } shouldBe true
+        }
+
+    @Test
+    fun `flags the pages that were left although their counts never showed up`() =
+        runTest {
+            val world = FakeGridWorld(contentHeight = 120, pollsUntilCountsAppear = Int.MAX_VALUE)
+            val diagnostics = RecordingDiagnostics()
+
+            AutoScanService(world.capturer, world.locator, world.scroller, world.submit, diagnostics = diagnostics)()
+
+            diagnostics.pages.all { it.timedOut } shouldBe true
+            diagnostics.pages
+                .first()
+                .analysis
+                ?.countsExpected shouldBe 4
+            diagnostics.pages
+                .first()
+                .analysis
+                ?.countsRead shouldBe 0
         }
 }

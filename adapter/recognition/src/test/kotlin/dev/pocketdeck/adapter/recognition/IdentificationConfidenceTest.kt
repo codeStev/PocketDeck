@@ -44,4 +44,11 @@ class IdentificationConfidenceTest {
         IdentificationConfidence.of(score = 0.5f, margin = -1f) shouldBe 0.0
         IdentificationConfidence.of(score = 1.0f, margin = 2f) shouldBe 1.0
     }
+
+    @Test
+    fun `a low score is never trusted fully, however large the margin`() {
+        // A tile that matches at 0.64 may be partly covered; the player should look at it.
+        IdentificationConfidence.of(score = 0.64f, margin = 0.30f) shouldBeLessThan 0.5
+        IdentificationConfidence.of(score = 0.78f, margin = 0.33f) shouldBeGreaterThan 0.8
+    }
 }
