@@ -130,7 +130,8 @@ class ScanViewModel(
                         it.cardId,
                         it.copies,
                         Confidence(it.confidence),
-                        needsReview = false,
+                        needsReview = it.needsReview,
+                        reason = it.reason,
                     )
                 }
             when (val outcome = confirmScan(scanned, replace)) {

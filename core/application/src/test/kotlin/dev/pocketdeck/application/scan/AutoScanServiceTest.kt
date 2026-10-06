@@ -158,6 +158,19 @@ class AutoScanServiceTest {
         }
 
     @Test
+    fun `is patient enough for badges that fade in over several seconds`() =
+        runTest {
+            // The game fades the count badges in tile by tile, which takes 3-4 seconds after the list stops.
+            val world = FakeGridWorld(contentHeight = 120, pollsUntilCountsAppear = 20)
+
+            service(world)()
+
+            world.gestures.indices
+                .filter { world.gestures[it].startY > world.gestures[it].endY }
+                .all { world.offsetsWhenScrolling[it] } shouldBe true
+        }
+
+    @Test
     fun `scrolls on after a limit when the counts never show up`() =
         runTest {
             val world = FakeGridWorld(contentHeight = 120, pollsUntilCountsAppear = Int.MAX_VALUE)

@@ -300,4 +300,35 @@ class ScanViewModelTest {
 
             collections.current().copiesOf(magmar.id) shouldBe 5
         }
+
+    @Test
+    fun `confirming keeps the known count of a card whose count was never visible`() =
+        runTest(dispatcher) {
+            collections.save(collections.current().withCopies(magmar.id, 7))
+            scanSeeing(tile(magmar, null))
+            val viewModel = viewModel()
+            viewModel.onReviewRequested(complete = true)
+            advanceUntilIdle()
+
+            viewModel.onConfirm()
+            advanceUntilIdle()
+
+            collections.current().copiesOf(magmar.id) shouldBe 7
+        }
+
+    @Test
+    fun `a count the player entered wins over the known one`() =
+        runTest(dispatcher) {
+            collections.save(collections.current().withCopies(magmar.id, 7))
+            scanSeeing(tile(magmar, null))
+            val viewModel = viewModel()
+            viewModel.onReviewRequested(complete = true)
+            advanceUntilIdle()
+            viewModel.onAdjust(magmar.id, delta = 1)
+
+            viewModel.onConfirm()
+            advanceUntilIdle()
+
+            collections.current().copiesOf(magmar.id) shouldBe 2
+        }
 }

@@ -12,6 +12,7 @@ import dev.pocketdeck.domain.collection.CardCollection
 import dev.pocketdeck.domain.magmar
 import dev.pocketdeck.domain.scan.Confidence
 import dev.pocketdeck.domain.scan.ReviewBreakdown
+import dev.pocketdeck.domain.scan.ReviewReason
 import dev.pocketdeck.domain.scan.ScannedCard
 import dev.pocketdeck.domain.scan.TileRecognition
 import io.kotest.matchers.shouldBe
@@ -196,5 +197,48 @@ class CollectionScanTest {
                 Outcome.Failure(ConfirmScanFailure.UnknownCards(listOf(CardId("ghost"))))
 
             collections.current().copiesOf(magmar.id) shouldBe 4
+        }
+
+    @Test
+    fun `a card whose count was never visible keeps the count it already had`() =
+        runTest {
+            collections.save(CardCollection.EMPTY.withCopies(charmander.id, 7))
+            val confirm = ConfirmScanResultsService(catalogs, collections)
+            val unread =
+                ScannedCard(
+                    charmander.id,
+                    1,
+                    Confidence(0.95),
+                    needsReview = true,
+                    reason = ReviewReason.COUNT_NEVER_READ,
+                )
+
+            confirm(listOf(unread), replaceCollection = true)
+
+            collections.current().copiesOf(charmander.id) shouldBe 7
+        }
+
+    @Test
+    fun `an unread count of a new card is stored as one`() =
+        runTest {
+            val confirm = ConfirmScanResultsService(catalogs, collections)
+            val unread =
+                ScannedCard(magmar.id, 1, Confidence(0.95), needsReview = true, reason = ReviewReason.COUNT_NEVER_READ)
+
+            confirm(listOf(unread), replaceCollection = false)
+
+            collections.current().copiesOf(magmar.id) shouldBe 1
+        }
+
+    @Test
+    fun `a count the player corrected replaces the old one`() =
+        runTest {
+            collections.save(CardCollection.EMPTY.withCopies(charmander.id, 7))
+            val confirm = ConfirmScanResultsService(catalogs, collections)
+            val corrected = ScannedCard(charmander.id, 3, Confidence(0.95), needsReview = false)
+
+            confirm(listOf(corrected), replaceCollection = true)
+
+            collections.current().copiesOf(charmander.id) shouldBe 3
         }
 }

@@ -80,8 +80,11 @@ data class AutoScanSettings(
     val pollMillis: Long = 250,
     /** How many identical pictures in a row count as "the screen is at rest". */
     val stablePolls: Int = 2,
-    /** How long to wait for the count badges to fade in before scrolling on anyway. */
-    val countWaitPolls: Int = 12,
+    /**
+     * How long to wait for the count badges before scrolling on anyway. The game fades them in tile by tile once the
+     * list has stopped, which took 3-4 seconds in practice, on top of the time the list is still coasting.
+     */
+    val countWaitPolls: Int = 32,
     val afterScrollMillis: Long = 450,
     val swipeMillis: Long = 900,
     val rewindSwipeMillis: Long = 300,
