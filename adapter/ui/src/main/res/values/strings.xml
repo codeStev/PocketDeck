@@ -118,4 +118,10 @@
     <string name="decks_with_substitutes">with stand-ins</string>
     <string name="decks_code_show_substituted">Import code (with stand-ins)</string>
     <string name="decks_code_contains">This code contains stand-ins:</string>
+    <string name="decks_build">Build a deck from my cards</string>
+    <string name="decks_building">Building a deck…</string>
+    <string name="decks_build_title">Build a deck</string>
+    <string name="decks_build_hint">The deck is made only of cards you own. Choose the Pokémon it should be built around, strongest first.</string>
+    <string name="decks_build_best">Best deck from my cards</string>
+    <string name="decks_build_failed">Your collection is too small to build a deck like that.</string>
 </resources>

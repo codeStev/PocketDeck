@@ -65,7 +65,7 @@ object DeckListing {
                 }.sortedByDescending { it.missingCopies > 0 }
         return DeckItem(
             key = "${suggestion.title}#$index",
-            title = suggestion.title,
+            title = suggestion.centrepiece?.nameIn(language)?.value ?: suggestion.title,
             origin = suggestion.origin,
             ownedPercent = Math.round(suggestion.completeness.ratio * PERCENT).toInt(),
             missingCopies = suggestion.completeness.missingCopies,

@@ -28,20 +28,39 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pocketdeck.adapter.ui.R
 import dev.pocketdeck.domain.deck.SuggestionOrigin
 
+/** What the player can do on the decks screen. */
+internal class DecksActions(
+    val onRefresh: () -> Unit,
+    val onShowCode: (String) -> Unit,
+    val onCloseCode: () -> Unit,
+    val onOpenBuilder: () -> Unit,
+    val onCloseBuilder: () -> Unit,
+    val onBuild: (String?) -> Unit,
+)
+
 @Composable
 fun DecksScreen(viewModel: DecksViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    DecksContent(state, viewModel::onRefresh, viewModel::onShowCode, viewModel::onCloseCode)
+    DecksContent(
+        state,
+        DecksActions(
+            onRefresh = viewModel::onRefresh,
+            onShowCode = viewModel::onShowCode,
+            onCloseCode = viewModel::onCloseCode,
+            onOpenBuilder = viewModel::onOpenBuilder,
+            onCloseBuilder = viewModel::onCloseBuilder,
+            onBuild = viewModel::onBuild,
+        ),
+    )
 }
 
 @Composable
 internal fun DecksContent(
     state: DecksUiState,
-    onRefresh: () -> Unit,
-    onShowCode: (String) -> Unit,
-    onCloseCode: () -> Unit,
+    actions: DecksActions,
 ) {
-    state.code?.let { DeckCodeDialog(it, onCloseCode) }
+    state.code?.let { DeckCodeDialog(it, actions.onCloseCode) }
+    state.centrepieces?.let { BuilderDialog(it, actions.onBuild, actions.onCloseBuilder) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding =
@@ -49,22 +68,25 @@ internal fun DecksContent(
                 .PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Header(state, onRefresh) }
-        items(state.items, key = { it.key }) { item -> DeckCard(item, onShowCode) }
+        item { Header(state, actions) }
+        items(state.items, key = { it.key }) { item -> DeckCard(item, actions.onShowCode) }
     }
 }
 
 @Composable
 private fun Header(
     state: DecksUiState,
-    onRefresh: () -> Unit,
+    actions: DecksActions,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.decks_title), style = MaterialTheme.typography.headlineSmall)
         Text(stringResource(R.string.decks_intro), style = MaterialTheme.typography.bodyMedium)
         state.notice?.let { Text(noticeText(it), color = MaterialTheme.colorScheme.error) }
         if (state.items.isEmpty() && !state.refreshing) Text(stringResource(R.string.decks_empty))
-        Button(onClick = onRefresh, enabled = !state.refreshing, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = actions.onOpenBuilder, enabled = !state.building, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(if (state.building) R.string.decks_building else R.string.decks_build))
+        }
+        OutlinedButton(onClick = actions.onRefresh, enabled = !state.refreshing, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(if (state.refreshing) R.string.decks_refreshing else R.string.decks_refresh))
         }
     }
@@ -76,6 +98,7 @@ private fun noticeText(notice: DecksNotice) =
         when (notice) {
             DecksNotice.NOT_REACHABLE -> R.string.decks_not_reachable
             DecksNotice.NO_DECKLISTS -> R.string.decks_no_decklists
+            DecksNotice.BUILD_FAILED -> R.string.decks_build_failed
         },
     )
 

@@ -58,6 +58,11 @@ import dev.pocketdeck.application.scan.StartCollectionScan
 import dev.pocketdeck.application.scan.StartCollectionScanService
 import dev.pocketdeck.application.scan.SubmitScanFrame
 import dev.pocketdeck.application.scan.SubmitScanFrameService
+import dev.pocketdeck.application.suggest.BuildDeck
+import dev.pocketdeck.application.suggest.BuildDeckService
+import dev.pocketdeck.application.suggest.HeuristicSuggestionStrategy
+import dev.pocketdeck.application.suggest.ListDeckCentrepieces
+import dev.pocketdeck.application.suggest.ListDeckCentrepiecesService
 import dev.pocketdeck.application.suggest.MetaBasedSuggestionStrategy
 import dev.pocketdeck.application.suggest.SuggestDecks
 import dev.pocketdeck.application.suggest.SuggestDecksService
@@ -203,7 +208,13 @@ object AppModule {
         catalogs: CardCatalogRepository,
         collections: CollectionRepository,
         snapshots: MetaSnapshotRepository,
-    ): SuggestDecks = SuggestDecksService(catalogs, collections, snapshots, listOf(MetaBasedSuggestionStrategy()))
+    ): SuggestDecks =
+        SuggestDecksService(
+            catalogs,
+            collections,
+            snapshots,
+            listOf(MetaBasedSuggestionStrategy(), HeuristicSuggestionStrategy()),
+        )
 
     // --- driving adapter wiring
     @Provides
@@ -211,8 +222,29 @@ object AppModule {
         suggestDecks: SuggestDecks,
         refreshMetaSnapshot: RefreshMetaSnapshot,
         exportDeckCode: ExportDeckCode,
+        buildDeck: BuildDeck,
+        listDeckCentrepieces: ListDeckCentrepieces,
         language: Language,
-    ) = DecksViewModel.Factory(suggestDecks, refreshMetaSnapshot, exportDeckCode, language)
+    ) = DecksViewModel.Factory(
+        suggestDecks,
+        refreshMetaSnapshot,
+        exportDeckCode,
+        buildDeck,
+        listDeckCentrepieces,
+        language,
+    )
+
+    @Provides
+    fun buildDeck(
+        catalogs: CardCatalogRepository,
+        collections: CollectionRepository,
+    ): BuildDeck = BuildDeckService(catalogs, collections)
+
+    @Provides
+    fun listDeckCentrepieces(
+        catalogs: CardCatalogRepository,
+        collections: CollectionRepository,
+    ): ListDeckCentrepieces = ListDeckCentrepiecesService(catalogs, collections)
 
     @Provides
     fun exportDeckCode(): ExportDeckCode = ExportDeckCodeService()

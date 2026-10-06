@@ -1,5 +1,7 @@
 package dev.pocketdeck.domain.deck
 
+import dev.pocketdeck.domain.card.Card
+
 /** Where a suggestion comes from; the player may trust a tournament list more than a generated one. */
 enum class SuggestionOrigin { META, HEURISTIC }
 
@@ -13,4 +15,6 @@ data class DeckSuggestion(
     val score: Double,
     /** What the player would play instead of cards they lack; empty when the deck is the original list. */
     val substitutions: List<Substitution> = emptyList(),
+    /** The Pokémon a built deck is about; the title falls back to its English name. */
+    val centrepiece: Card? = null,
 )

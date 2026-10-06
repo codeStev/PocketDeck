@@ -11,8 +11,12 @@ import dev.pocketdeck.application.meta.InMemoryMetaSnapshotRepository
 import dev.pocketdeck.application.meta.MetaSourceFailure
 import dev.pocketdeck.application.meta.RefreshMetaSnapshot
 import dev.pocketdeck.application.meta.RefreshMetaSnapshotService
+import dev.pocketdeck.application.suggest.BuildDeck
+import dev.pocketdeck.application.suggest.BuildDeckFailure
 import dev.pocketdeck.application.suggest.DeckSuggestionStrategy
+import dev.pocketdeck.application.suggest.ListDeckCentrepieces
 import dev.pocketdeck.application.suggest.SuggestDecksService
+import dev.pocketdeck.domain.builder.DeckFocus
 import dev.pocketdeck.domain.card.CardCatalog
 import dev.pocketdeck.domain.card.CardName
 import dev.pocketdeck.domain.card.EffectTag
@@ -38,6 +42,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.coroutines.EmptyCoroutineContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DecksViewModelTest {
@@ -64,6 +69,8 @@ class DecksViewModelTest {
     private fun viewModel(
         refresh: RefreshMetaSnapshot,
         export: ExportDeckCode = ExportDeckCodeService(),
+        build: BuildDeck = BuildDeck { Outcome.Failure(BuildDeckFailure.NotEnoughCards) },
+        centrepieces: ListDeckCentrepieces = ListDeckCentrepieces { emptyList() },
     ): DecksViewModel {
         val suggest =
             SuggestDecksService(
@@ -71,8 +78,9 @@ class DecksViewModelTest {
                 InMemoryCollectionRepository(),
                 snapshots,
                 listOf(strategy),
+                EmptyCoroutineContext,
             )
-        return DecksViewModel(suggest, refresh, export, Language.ENGLISH)
+        return DecksViewModel(suggest, refresh, export, build, centrepieces, Language.ENGLISH)
     }
 
     private val succeeding = RefreshMetaSnapshot { Outcome.Success(MetaSnapshot.EMPTY) }
@@ -219,8 +227,17 @@ class DecksViewModelTest {
                     InMemoryCollectionRepository(),
                     InMemoryMetaSnapshotRepository(),
                     listOf(DeckSuggestionStrategy { listOf(adapted) }),
+                    EmptyCoroutineContext,
                 )
-            val viewModel = DecksViewModel(suggest, succeeding, { Outcome.Success(DeckCode("AAAA")) }, Language.ENGLISH)
+            val viewModel =
+                DecksViewModel(
+                    suggest,
+                    succeeding,
+                    { Outcome.Success(DeckCode("AAAA")) },
+                    { Outcome.Failure(BuildDeckFailure.NotEnoughCards) },
+                    { emptyList() },
+                    Language.ENGLISH,
+                )
             advanceUntilIdle()
 
             viewModel.onShowCode(
@@ -231,5 +248,116 @@ class DecksViewModelTest {
 
             (viewModel.state.value.code as DeckCodeUi.Ready).substitutes shouldBe
                 listOf(SubstituteLine("Charmander", "Charizard ex", 2, listOf(EffectTag.HEAL)))
+        }
+
+    private val builtSuggestion: DeckSuggestion
+        get() {
+            val deck = validFireDeck()
+            val completeness =
+                CompletenessCalculator().calculate(
+                    deck,
+                    Inventory.of(CardCollection.EMPTY, CardCatalog.EMPTY),
+                )
+            return DeckSuggestion(
+                "Charmander",
+                SuggestionOrigin.HEURISTIC,
+                deck,
+                completeness,
+                0.4,
+                centrepiece = charmander,
+            )
+        }
+
+    @Test
+    fun `lists the pokemon a deck can be built around when the player opens the builder`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(succeeding, centrepieces = { listOf(charmander, charizardEx) })
+            advanceUntilIdle()
+
+            viewModel.onOpenBuilder()
+            advanceUntilIdle()
+
+            viewModel.state.value.centrepieces
+                ?.map { it.name } shouldBe listOf("Charmander", "Charizard ex")
+        }
+
+    @Test
+    fun `builds a deck around the chosen pokemon and shows it first`() =
+        runTest(dispatcher) {
+            var asked: DeckFocus? = null
+            val viewModel =
+                viewModel(
+                    succeeding,
+                    build = { focus ->
+                        asked = focus
+                        Outcome.Success(builtSuggestion)
+                    },
+                    centrepieces = { listOf(charmander) },
+                )
+            advanceUntilIdle()
+            viewModel.onOpenBuilder()
+            advanceUntilIdle()
+
+            viewModel.onBuild(charmander.id.value)
+            advanceUntilIdle()
+
+            asked?.core shouldBe charmander
+            viewModel.state.value.items
+                .first()
+                .origin shouldBe SuggestionOrigin.HEURISTIC
+            viewModel.state.value.centrepieces shouldBe null
+            viewModel.state.value.building shouldBe false
+        }
+
+    @Test
+    fun `builds the best deck when no pokemon is chosen`() =
+        runTest(dispatcher) {
+            var asked: DeckFocus? = null
+            val viewModel =
+                viewModel(succeeding, build = { focus ->
+                    asked = focus
+                    Outcome.Success(builtSuggestion)
+                })
+            advanceUntilIdle()
+
+            viewModel.onBuild(null)
+            advanceUntilIdle()
+
+            asked shouldBe DeckFocus()
+        }
+
+    @Test
+    fun `tells the player when the collection is too small to build a deck`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(succeeding)
+            advanceUntilIdle()
+
+            viewModel.onBuild(null)
+            advanceUntilIdle()
+
+            viewModel.state.value.notice shouldBe DecksNotice.BUILD_FAILED
+            viewModel.state.value.building shouldBe false
+        }
+
+    @Test
+    fun `the code of a built deck can be shown`() =
+        runTest(dispatcher) {
+            val viewModel =
+                viewModel(
+                    succeeding,
+                    { Outcome.Success(DeckCode("AAAA")) },
+                    build = { Outcome.Success(builtSuggestion) },
+                )
+            advanceUntilIdle()
+            viewModel.onBuild(null)
+            advanceUntilIdle()
+
+            viewModel.onShowCode(
+                viewModel.state.value.items
+                    .first()
+                    .key,
+            )
+
+            (viewModel.state.value.code as DeckCodeUi.Ready).text shouldBe "AAAA"
         }
 }

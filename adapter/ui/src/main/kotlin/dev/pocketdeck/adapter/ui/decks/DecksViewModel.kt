@@ -8,15 +8,26 @@ import dev.pocketdeck.application.deckcode.DeckCodeFailure
 import dev.pocketdeck.application.deckcode.ExportDeckCode
 import dev.pocketdeck.application.meta.MetaSourceFailure
 import dev.pocketdeck.application.meta.RefreshMetaSnapshot
+import dev.pocketdeck.application.suggest.BuildDeck
+import dev.pocketdeck.application.suggest.ListDeckCentrepieces
 import dev.pocketdeck.application.suggest.SuggestDecks
+import dev.pocketdeck.domain.builder.DeckFocus
 import dev.pocketdeck.domain.card.Language
+import dev.pocketdeck.domain.card.PokemonCard
 import dev.pocketdeck.domain.deck.DeckSuggestion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class DecksNotice { NOT_REACHABLE, NO_DECKLISTS }
+enum class DecksNotice { NOT_REACHABLE, NO_DECKLISTS, BUILD_FAILED }
+
+/** A Pokémon the player can build a deck around. */
+data class CentrepieceItem(
+    val cardId: String,
+    val name: String,
+    val artworkUrl: String?,
+)
 
 /** What the player sees when they ask for the import code of a deck. */
 sealed interface DeckCodeUi {
@@ -41,6 +52,9 @@ data class DecksUiState(
     val refreshing: Boolean = false,
     val notice: DecksNotice? = null,
     val code: DeckCodeUi? = null,
+    /** The Pokémon to choose from while the builder is open; null when it is closed. */
+    val centrepieces: List<CentrepieceItem>? = null,
+    val building: Boolean = false,
 )
 
 /** Shows the suggested decks and refreshes the picture of the competitive field. */
@@ -48,17 +62,22 @@ class DecksViewModel(
     suggestDecks: SuggestDecks,
     private val refreshMeta: RefreshMetaSnapshot,
     private val exportDeckCode: ExportDeckCode,
+    private val buildDeck: BuildDeck,
+    private val listCentrepieces: ListDeckCentrepieces,
     private val language: Language,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(DecksUiState())
     val state: StateFlow<DecksUiState> = mutableState
     private var suggestions: List<DeckSuggestion> = emptyList()
+    private var builtDecks: List<DeckSuggestion> = emptyList()
+    private var shown: List<DeckSuggestion> = emptyList()
+    private var centres: Map<String, PokemonCard> = emptyMap()
 
     init {
         viewModelScope.launch {
             suggestDecks().collect { latest ->
                 suggestions = latest
-                mutableState.update { it.copy(items = DeckListing.build(latest, language)) }
+                publish()
             }
         }
         onRefresh()
@@ -78,13 +97,49 @@ class DecksViewModel(
 
     fun onShowCode(key: String) {
         val item = state.value.items.firstOrNull { it.key == key } ?: return
-        val suggestion = suggestions.getOrNull(state.value.items.indexOf(item)) ?: return
+        val suggestion = shown.getOrNull(state.value.items.indexOf(item)) ?: return
         val code =
             when (val outcome = exportDeckCode(suggestion.deck)) {
                 is Outcome.Success -> DeckCodeUi.Ready(item.title, outcome.value.text, item.substitutes)
                 is Outcome.Failure -> DeckCodeUi.Unavailable(item.title, outcome.reason.unknownCards())
             }
         mutableState.update { it.copy(code = code) }
+    }
+
+    /** Decks the player asked for come first; they stay until the app closes. */
+    private fun publish() {
+        shown = builtDecks + suggestions
+        mutableState.update { it.copy(items = DeckListing.build(shown, language)) }
+    }
+
+    fun onOpenBuilder() {
+        viewModelScope.launch {
+            val list = listCentrepieces()
+            centres = list.associateBy { it.id.value }
+            val items = list.map { CentrepieceItem(it.id.value, it.nameIn(language).value, it.artwork?.value) }
+            mutableState.update { it.copy(centrepieces = items) }
+        }
+    }
+
+    fun onCloseBuilder() = mutableState.update { it.copy(centrepieces = null) }
+
+    /** Builds a deck around the chosen Pokémon, or the best one the collection allows if none is chosen. */
+    fun onBuild(centrepieceId: String?) {
+        viewModelScope.launch {
+            mutableState.update { it.copy(centrepieces = null, building = true, notice = null) }
+            val focus = DeckFocus(core = centrepieceId?.let(centres::get))
+            when (val outcome = buildDeck(focus)) {
+                is Outcome.Success -> {
+                    builtDecks = (listOf(outcome.value) + builtDecks).take(MAX_BUILT_DECKS)
+                    publish()
+                    mutableState.update { it.copy(building = false) }
+                }
+
+                is Outcome.Failure -> {
+                    mutableState.update { it.copy(building = false, notice = DecksNotice.BUILD_FAILED) }
+                }
+            }
+        }
     }
 
     fun onCloseCode() = mutableState.update { it.copy(code = null) }
@@ -101,16 +156,22 @@ class DecksViewModel(
             MetaSourceFailure.NoDecklists -> DecksNotice.NO_DECKLISTS
         }
 
+    private companion object {
+        const val MAX_BUILT_DECKS = 10
+    }
+
     class Factory(
         private val suggestDecks: SuggestDecks,
         private val refreshMeta: RefreshMetaSnapshot,
         private val exportDeckCode: ExportDeckCode,
+        private val buildDeck: BuildDeck,
+        private val listCentrepieces: ListDeckCentrepieces,
         private val language: Language,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(DecksViewModel::class.java)) { "Unknown ViewModel $modelClass" }
-            return DecksViewModel(suggestDecks, refreshMeta, exportDeckCode, language) as T
+            return DecksViewModel(suggestDecks, refreshMeta, exportDeckCode, buildDeck, listCentrepieces, language) as T
         }
     }
 }

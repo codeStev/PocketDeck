@@ -103,3 +103,10 @@ New way of driving the app => new driving adapter calling inbound ports.
   identical tags. Nothing matching => the card stays missing. `MetaBasedSuggestionStrategy` offers such a variant next
   to the printed list, scored 0.9 per swapped card lower; the UI shows the shared effects. A catalog stored without these
   details is reloaded (`CardCatalog.lacksCardDetails`).
+- Heuristic builder (always available, needs no meta data or network): `HeuristicDeckBuilder` (domain) makes a legal
+  20-card deck only from owned cards. It rates evolution lines (damage per energy, HP, ex, useful ability), keeps whole
+  evolution lines with no more copies of an evolution than of its predecessor, fills trainers by effect (search/draw
+  first), and picks the energy by trying every single type and pair. `HeuristicSuggestionStrategy` adds up to four decks
+  of different kinds to the list; `BuildDeck` / `ListDeckCentrepieces` serve the "Build a deck" dialog (best deck, or
+  around a chosen Pokémon). Built decks stay on top of the list until the app closes. Strategies run off the main
+  thread (`SuggestDecksService` takes the coroutine context).

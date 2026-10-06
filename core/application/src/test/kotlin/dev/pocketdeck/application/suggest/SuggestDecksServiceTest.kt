@@ -15,6 +15,7 @@ import dev.pocketdeck.domain.validFireDeck
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import kotlin.coroutines.EmptyCoroutineContext
 
 class SuggestDecksServiceTest {
     private fun suggestion(
@@ -41,6 +42,7 @@ class SuggestDecksServiceTest {
                     InMemoryCollectionRepository(),
                     InMemoryMetaSnapshotRepository(),
                     listOf(low, high),
+                    EmptyCoroutineContext,
                 )
 
             service().test {
@@ -57,7 +59,14 @@ class SuggestDecksServiceTest {
                     listOf(suggestion("c${context.inventory.copiesOf(charmander)}", 1.0))
                 }
             val catalogs = InMemoryCardCatalogRepository(CardCatalog(listOf(charmander)))
-            val service = SuggestDecksService(catalogs, collections, InMemoryMetaSnapshotRepository(), listOf(owned))
+            val service =
+                SuggestDecksService(
+                    catalogs,
+                    collections,
+                    InMemoryMetaSnapshotRepository(),
+                    listOf(owned),
+                    EmptyCoroutineContext,
+                )
 
             service().test {
                 awaitItem().single().title shouldBe "c0"

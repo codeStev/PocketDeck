@@ -118,4 +118,10 @@
     <string name="decks_with_substitutes">mit Ersatzkarten</string>
     <string name="decks_code_show_substituted">Import-Code (mit Ersatzkarten)</string>
     <string name="decks_code_contains">Dieser Code enthält Ersatzkarten:</string>
+    <string name="decks_build">Deck aus meinen Karten bauen</string>
+    <string name="decks_building">Deck wird gebaut…</string>
+    <string name="decks_build_title">Deck bauen</string>
+    <string name="decks_build_hint">Das Deck besteht nur aus Karten, die du besitzt. Wähle das Pokémon, um das es gebaut werden soll, die stärksten zuerst.</string>
+    <string name="decks_build_best">Bestes Deck aus meinen Karten</string>
+    <string name="decks_build_failed">Deine Sammlung ist zu klein, um so ein Deck zu bauen.</string>
 </resources>

@@ -124,4 +124,18 @@ class DeckListingTest {
         DeckListing.build(listOf(suggestion(cards.associateWith { 2 })), Language.ENGLISH).single().substitutes shouldBe
             emptyList()
     }
+
+    @Test
+    fun `a built deck is named after what it is built around, in the player's language`() {
+        val german =
+            charmander.copy(
+                germanName =
+                    dev.pocketdeck.domain.card
+                        .CardName("Glumanda"),
+            )
+        val built = suggestion(cards.associateWith { 2 }).copy(title = "Charmander", centrepiece = german)
+
+        DeckListing.build(listOf(built), Language.GERMAN).single().title shouldBe "Glumanda"
+        DeckListing.build(listOf(built), Language.ENGLISH).single().title shouldBe "Charmander"
+    }
 }
