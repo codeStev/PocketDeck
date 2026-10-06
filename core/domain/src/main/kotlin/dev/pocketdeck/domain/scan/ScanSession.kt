@@ -163,8 +163,8 @@ class ScanSession private constructor(
         const val REVIEW_CONFIDENCE_THRESHOLD = 0.8
         private const val MINIMUM_OWNED = 1
 
-        /** A digit read this surely is no misread, so a differing count belongs to another print. */
-        private const val PRINT_CONFIDENCE = 0.9
+        /** A reading that needs no review is no misread, so a differing count belongs to another print. */
+        private const val PRINT_CONFIDENCE = REVIEW_CONFIDENCE_THRESHOLD
 
         fun start() = ScanSession(emptyMap(), framesProcessed = 0)
     }

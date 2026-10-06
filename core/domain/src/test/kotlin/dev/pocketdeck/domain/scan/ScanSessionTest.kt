@@ -189,10 +189,13 @@ class ScanSessionTest {
                 .observe(listOf(seen(pikachu, 3, 0.94)))
                 .observe(listOf(seen(pikachu, 3, 0.94)))
                 .observe(listOf(seen(pikachu, 1, 1.0)))
+                .observe(listOf(seen(mew, 3, 0.82)))
+                .observe(listOf(seen(mew, 1, 1.0)))
 
-        val result = session.summarize().single()
+        val result = session.summarize().first { it.cardId == pikachu }
 
         result.copies shouldBe 4
+        session.summarize().first { it.cardId == mew }.copies shouldBe 4
         result.needsReview shouldBe false
     }
 
