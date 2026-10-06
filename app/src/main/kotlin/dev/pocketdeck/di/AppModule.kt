@@ -238,13 +238,15 @@ object AppModule {
     fun buildDeck(
         catalogs: CardCatalogRepository,
         collections: CollectionRepository,
-    ): BuildDeck = BuildDeckService(catalogs, collections)
+        snapshots: MetaSnapshotRepository,
+    ): BuildDeck = BuildDeckService(catalogs, collections, snapshots)
 
     @Provides
     fun listDeckCentrepieces(
         catalogs: CardCatalogRepository,
         collections: CollectionRepository,
-    ): ListDeckCentrepieces = ListDeckCentrepiecesService(catalogs, collections)
+        snapshots: MetaSnapshotRepository,
+    ): ListDeckCentrepieces = ListDeckCentrepiecesService(catalogs, collections, snapshots)
 
     @Provides
     fun exportDeckCode(): ExportDeckCode = ExportDeckCodeService()

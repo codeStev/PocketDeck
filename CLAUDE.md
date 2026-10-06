@@ -110,3 +110,10 @@ New way of driving the app => new driving adapter calling inbound ports.
   of different kinds to the list; `BuildDeck` / `ListDeckCentrepieces` serve the "Build a deck" dialog (best deck, or
   around a chosen Pokémon). Built decks stay on top of the list until the app closes. Strategies run off the main
   thread (`SuggestDecksService` takes the coroutine context).
+- The builder is calibrated with the tournament data (`CardPopularity`: share of decks that play a card, and `around(card)`:
+  the share among decks that play the centrepiece). Measured by giving the builder a collection of the user's cards plus a
+  real tournament deck and counting how much of that deck it recovers (118 live decks, leave-one-out so the tested deck is
+  not in the data): without popularity 12.5% of the deck automatically and 17.5% around the deck's main Pokémon; with it
+  45% and 53%. Weights (`CardRatings`: 6.0 for lines and trainers) were picked on that measure; going higher gave little.
+  Rerun such a measure before changing the rating rules (a throwaway JVM test in `:adapter:carddb` reading the real
+  master dataset worked well; it needs live decklists and a copy of the collection).

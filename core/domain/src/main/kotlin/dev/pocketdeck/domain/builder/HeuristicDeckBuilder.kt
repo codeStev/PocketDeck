@@ -7,6 +7,7 @@ import dev.pocketdeck.domain.card.TrainerCard
 import dev.pocketdeck.domain.collection.Inventory
 import dev.pocketdeck.domain.deck.Deck
 import dev.pocketdeck.domain.deck.DeckValidator
+import dev.pocketdeck.domain.meta.CardPopularity
 import kotlin.math.pow
 
 /**
@@ -22,11 +23,12 @@ class HeuristicDeckBuilder(
         catalog: CardCatalog,
         inventory: Inventory,
         focus: DeckFocus = DeckFocus(),
+        popularity: CardPopularity = CardPopularity.NONE,
     ): BuiltDeck? {
         val owned = OwnedCards(catalog, inventory)
         val lines = LineFinder.linesOf(owned)
         return energyOptions(focus, owned)
-            .mapNotNull { energy -> buildFor(owned, lines, energy, focus) }
+            .mapNotNull { energy -> buildFor(owned, lines, energy, Wish(focus, popularity)) }
             .maxByOrNull { it.rating }
     }
 
@@ -34,16 +36,20 @@ class HeuristicDeckBuilder(
     fun centrepieces(
         catalog: CardCatalog,
         inventory: Inventory,
+        popularity: CardPopularity = CardPopularity.NONE,
     ): List<PokemonCard> {
         val owned = OwnedCards(catalog, inventory)
         return LineFinder
             .linesOf(owned)
-            .sortedWith(compareByDescending<PokemonLine> { bestRating(it) }.thenBy { it.last.name.value })
+            .sortedWith(compareByDescending<PokemonLine> { bestRating(it, popularity) }.thenBy { it.last.name.value })
             .map { it.last }
             .distinctBy { it.name }
     }
 
-    private fun bestRating(line: PokemonLine) = SELECTABLE_ENERGY.maxOf { CardRatings.lineRating(line, setOf(it)) }
+    private fun bestRating(
+        line: PokemonLine,
+        popularity: CardPopularity,
+    ) = SELECTABLE_ENERGY.maxOf { CardRatings.lineRating(line, setOf(it), popularity) }
 
     private fun energyOptions(
         focus: DeckFocus,
@@ -68,26 +74,34 @@ class HeuristicDeckBuilder(
         owned: OwnedCards,
         lines: List<PokemonLine>,
         energy: Set<EnergyType>,
-        focus: DeckFocus,
+        wish: Wish,
     ): BuiltDeck? {
+        val focus = wish.focus
         val playable = lines.filter { CardRatings.bestAttack(it.last, energy) != null }
         val seed = focus.core?.let { core -> playable.firstOrNull { it.last == core } ?: return null }
+        val centre = seed ?: playable.maxByOrNull { CardRatings.lineRating(it, energy, wish.popularity) } ?: return null
+        // What strong players put next to the centrepiece matters more than what is popular overall.
+        val popularity = wish.popularity.around(centre.last)
         val ranked =
             playable.sortedWith(
                 compareByDescending<PokemonLine> {
-                    CardRatings.lineRating(it, energy)
+                    CardRatings.lineRating(
+                        it,
+                        energy,
+                        popularity,
+                    )
                 }.thenBy { it.last.name.value },
             )
         val draft = DeckDraft(owned)
         val picked = (listOfNotNull(seed) + ranked.filter { it != seed }).filter { tryAdd(draft, it) }
         if (picked.isEmpty()) return null
-        fillWithTrainers(draft, owned)
+        fillWithTrainers(draft, owned, popularity)
         fillWithPokemon(draft, picked + ranked.filter { it !in picked })
         return draft
             .takeIf { it.size == Deck.SIZE }
             ?.toDeck(energy)
             ?.takeIf { validator.validate(it).isEmpty() }
-            ?.let { BuiltDeck(it, rating(picked, energy), picked.first().last) }
+            ?.let { BuiltDeck(it, rating(picked, energy, popularity), picked.first().last) }
     }
 
     /** Adds a whole line, or nothing: half an evolution line cannot be played. */
@@ -115,12 +129,13 @@ class HeuristicDeckBuilder(
     private fun fillWithTrainers(
         draft: DeckDraft,
         owned: OwnedCards,
+        popularity: CardPopularity,
     ) {
         val ranked =
             owned.trainers.sortedWith(
-                compareByDescending<TrainerCard> { CardRatings.trainerRating(it) }.thenBy { it.name.value },
+                compareByDescending<TrainerCard> { CardRatings.trainerRating(it, popularity) }.thenBy { it.name.value },
             )
-        ranked.forEach { draft.add(it, if (CardRatings.trainerRating(it) >= GOOD_TRAINER) 2 else 1) }
+        ranked.forEach { draft.add(it, if (CardRatings.trainerRating(it, popularity) >= GOOD_TRAINER) 2 else 1) }
         ranked.forEach { draft.add(it, 1) }
     }
 
@@ -158,10 +173,26 @@ class HeuristicDeckBuilder(
     private fun rating(
         picked: List<PokemonLine>,
         energy: Set<EnergyType>,
+        popularity: CardPopularity,
     ): Double {
-        val strongest = picked.map { CardRatings.lineRating(it, energy) }.sortedDescending().take(LINES_THAT_COUNT)
+        val strongest =
+            picked
+                .map {
+                    CardRatings.lineRating(
+                        it,
+                        energy,
+                        popularity,
+                    )
+                }.sortedDescending()
+                .take(LINES_THAT_COUNT)
         return (strongest.average() / MAXIMUM_RATING).coerceIn(0.0, 1.0) * EXTRA_TYPE_FACTOR.pow(energy.size - 1)
     }
+
+    /** What the player asked for and what the tournaments show strong players choose. */
+    private class Wish(
+        val focus: DeckFocus,
+        val popularity: CardPopularity,
+    )
 
     private companion object {
         const val POKEMON_TARGET = 11

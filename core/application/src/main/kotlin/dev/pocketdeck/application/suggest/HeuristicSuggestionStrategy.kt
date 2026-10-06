@@ -3,11 +3,11 @@ package dev.pocketdeck.application.suggest
 import dev.pocketdeck.domain.builder.BuiltDeck
 import dev.pocketdeck.domain.builder.DeckFocus
 import dev.pocketdeck.domain.builder.HeuristicDeckBuilder
-import dev.pocketdeck.domain.card.CardCatalog
 import dev.pocketdeck.domain.collection.Inventory
 import dev.pocketdeck.domain.deck.CompletenessCalculator
 import dev.pocketdeck.domain.deck.DeckSuggestion
 import dev.pocketdeck.domain.deck.SuggestionOrigin
+import dev.pocketdeck.domain.meta.CardPopularity
 
 /** Turns what the builder made into a suggestion; the deck is made of owned cards, so it can always be played. */
 internal fun toSuggestion(
@@ -29,21 +29,24 @@ private const val HEURISTIC_WEIGHT = 0.5
 
 /**
  * Suggests decks made from the player's own cards, whatever the tournament field looks like: one around each of the
- * strongest Pokémon of a few different kinds. It needs no meta data and works offline.
+ * strongest Pokémon of a few different kinds. It needs no meta data and works offline; when tournament data is there,
+ * it chooses the cards strong players choose.
  */
 class HeuristicSuggestionStrategy(
     private val builder: HeuristicDeckBuilder = HeuristicDeckBuilder(),
 ) : DeckSuggestionStrategy {
     override fun suggest(context: SuggestionContext): List<DeckSuggestion> =
-        centresOfDifferentKinds(context.catalog, context.inventory)
-            .mapNotNull { builder.build(context.catalog, context.inventory, DeckFocus(core = it)) }
-            .map { toSuggestion(it, context.inventory) }
+        CardPopularity.of(context.meta, context.catalog).let { popularity ->
+            centresOfDifferentKinds(context, popularity)
+                .mapNotNull { builder.build(context.catalog, context.inventory, DeckFocus(core = it), popularity) }
+                .map { toSuggestion(it, context.inventory) }
+        }
 
     private fun centresOfDifferentKinds(
-        catalog: CardCatalog,
-        inventory: Inventory,
+        context: SuggestionContext,
+        popularity: CardPopularity,
     ) = builder
-        .centrepieces(catalog, inventory)
+        .centrepieces(context.catalog, context.inventory, popularity)
         .distinctBy { it.energyType }
         .take(MAX_DECKS)
 

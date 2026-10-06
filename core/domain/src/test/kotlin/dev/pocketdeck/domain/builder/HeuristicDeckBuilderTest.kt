@@ -15,6 +15,13 @@ import dev.pocketdeck.domain.collection.CardCollection
 import dev.pocketdeck.domain.collection.Inventory
 import dev.pocketdeck.domain.deck.Deck
 import dev.pocketdeck.domain.deck.DeckValidator
+import dev.pocketdeck.domain.meta.Archetype
+import dev.pocketdeck.domain.meta.ArchetypeName
+import dev.pocketdeck.domain.meta.CardPopularity
+import dev.pocketdeck.domain.meta.DecklistEntry
+import dev.pocketdeck.domain.meta.MetaDecklist
+import dev.pocketdeck.domain.meta.MetaSnapshot
+import dev.pocketdeck.domain.meta.TournamentResult
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
@@ -191,4 +198,82 @@ class HeuristicDeckBuilderTest {
         (copies(charmeleon) <= copies(charmander)) shouldBe true
         (copies(charizard) <= copies(charmeleon)) shouldBe true
     }
+
+    @Test
+    fun `prefers the trainer strong players choose over one that only looks useful`() {
+        val shiny = trainer("Shiny", TrainerKind.SUPPORTER, "Draw 2 cards. Heal 20 damage.")
+        val staple = trainer("Staple", TrainerKind.ITEM, null)
+        val everything = fire + shiny + staple + (1..6).map { trainer("Filler $it", TrainerKind.TOOL, null) }
+        val catalog = CardCatalog(everything)
+        val owned = everything.fold(CardCollection.EMPTY) { c, card -> c.withCopies(card.id, 2) }
+        val meta = MetaSnapshot(listOf(Archetype(ArchetypeName("A"), listOf(playing(staple), playing(staple)), 1.0)))
+
+        val popular = CardPopularity.of(meta, catalog)
+        val deck =
+            HeuristicDeckBuilder().build(catalog, Inventory.of(owned, catalog), DeckFocus(), popular)!!.deck
+
+        val trainerCopies = deck.entries.filter { it.card is TrainerCard }.associate { it.card to it.copies }
+        (trainerCopies.getValue(staple) >= trainerCopies[shiny] ?: 0) shouldBe true
+    }
+
+    @Test
+    fun `prefers the pokemon strong players choose when two are otherwise alike`() {
+        val twin = pokemon("Twin", hp = 70)
+        val cards = (1..4).map { pokemon("Rival $it", hp = 70) }
+        val everything = cards + twin + trainers + (1..4).map { trainer("Filler $it", TrainerKind.TOOL, null) }
+        val catalog = CardCatalog(everything)
+        val owned = everything.fold(CardCollection.EMPTY) { c, card -> c.withCopies(card.id, 2) }
+        val meta = MetaSnapshot(listOf(Archetype(ArchetypeName("A"), listOf(playing(twin)), 1.0)))
+
+        val built =
+            HeuristicDeckBuilder().build(
+                catalog,
+                Inventory.of(owned, catalog),
+                DeckFocus(),
+                CardPopularity.of(meta, catalog),
+            )!!
+
+        built.centrepiece shouldBe twin
+    }
+
+    private fun playing(card: Card) =
+        MetaDecklist(
+            ArchetypeName("A"),
+            listOf(DecklistEntry(card.id, 2)),
+            setOf(EnergyType.FIRE),
+            TournamentResult(1, 3, 1, 0),
+        )
+
+    @Test
+    fun `follows what is played together with the chosen pokemon`() {
+        val partner = trainer("Partner", TrainerKind.ITEM, null)
+        val crowd = trainer("Crowd", TrainerKind.ITEM, null)
+        val everything = fire + partner + crowd + (1..6).map { trainer("Filler $it", TrainerKind.TOOL, null) }
+        val catalog = CardCatalog(everything)
+        val owned = everything.fold(CardCollection.EMPTY) { c, card -> c.withCopies(card.id, 2) }
+        // The crowd favourite is in many more decks, but the decks of the chosen Pokémon play the partner.
+        val decks = List(6) { playing(magmar, partner) } + List(40) { playing(vulpix, crowd) }
+        val popularity = CardPopularity.of(MetaSnapshot(listOf(Archetype(ArchetypeName("A"), decks, 1.0))), catalog)
+
+        val deck =
+            HeuristicDeckBuilder()
+                .build(
+                    catalog,
+                    Inventory.of(owned, catalog),
+                    DeckFocus(core = magmar),
+                    popularity,
+                )!!
+                .deck
+
+        fun copies(card: Card) = deck.entries.filter { it.card == card }.sumOf { it.copies }
+        (copies(partner) > copies(crowd)) shouldBe true
+    }
+
+    private fun playing(vararg cards: Card) =
+        MetaDecklist(
+            ArchetypeName("A"),
+            cards.map { DecklistEntry(it.id, 2) },
+            setOf(EnergyType.FIRE),
+            TournamentResult(1, 3, 1, 0),
+        )
 }

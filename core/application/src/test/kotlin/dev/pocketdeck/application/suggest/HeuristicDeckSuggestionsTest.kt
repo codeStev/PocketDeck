@@ -3,6 +3,7 @@ package dev.pocketdeck.application.suggest
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.fakes.InMemoryCardCatalogRepository
 import dev.pocketdeck.application.fakes.InMemoryCollectionRepository
+import dev.pocketdeck.application.meta.InMemoryMetaSnapshotRepository
 import dev.pocketdeck.domain.builder.DeckFocus
 import dev.pocketdeck.domain.card.Attack
 import dev.pocketdeck.domain.card.Card
@@ -18,7 +19,12 @@ import dev.pocketdeck.domain.card.TrainerKind
 import dev.pocketdeck.domain.collection.CardCollection
 import dev.pocketdeck.domain.collection.Inventory
 import dev.pocketdeck.domain.deck.SuggestionOrigin
+import dev.pocketdeck.domain.meta.ArchetypeAggregator
+import dev.pocketdeck.domain.meta.ArchetypeName
+import dev.pocketdeck.domain.meta.DecklistEntry
+import dev.pocketdeck.domain.meta.MetaDecklist
 import dev.pocketdeck.domain.meta.MetaSnapshot
+import dev.pocketdeck.domain.meta.TournamentResult
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
@@ -90,7 +96,11 @@ class HeuristicDeckSuggestionsTest {
     fun `builds a deck around the pokemon the player picked`() =
         runTest {
             val service =
-                BuildDeckService(InMemoryCardCatalogRepository(catalog), InMemoryCollectionRepository(collection()))
+                BuildDeckService(
+                    InMemoryCardCatalogRepository(catalog),
+                    InMemoryCollectionRepository(collection()),
+                    InMemoryMetaSnapshotRepository(),
+                )
 
             val outcome = service(DeckFocus(core = water[2]))
 
@@ -103,7 +113,12 @@ class HeuristicDeckSuggestionsTest {
     @Test
     fun `says so when the collection is too small to build a deck`() =
         runTest {
-            val service = BuildDeckService(InMemoryCardCatalogRepository(catalog), InMemoryCollectionRepository())
+            val service =
+                BuildDeckService(
+                    InMemoryCardCatalogRepository(catalog),
+                    InMemoryCollectionRepository(),
+                    InMemoryMetaSnapshotRepository(),
+                )
 
             service(DeckFocus()) shouldBe Outcome.Failure(BuildDeckFailure.NotEnoughCards)
         }
@@ -115,6 +130,7 @@ class HeuristicDeckSuggestionsTest {
                 ListDeckCentrepiecesService(
                     InMemoryCardCatalogRepository(catalog),
                     InMemoryCollectionRepository(collection()),
+                    InMemoryMetaSnapshotRepository(),
                 )
 
             service()
@@ -124,4 +140,29 @@ class HeuristicDeckSuggestionsTest {
         }
 
     private fun collection() = everything.fold(CardCollection.EMPTY) { c, card -> c.withCopies(card.id, 2) }
+
+    @Test
+    fun `follows the tournament decks when there are some`() {
+        val partner = trainer("Partner", "Move along.")
+        val withPartner = CardCatalog(everything + partner)
+        val owned =
+            (everything + partner).fold(CardCollection.EMPTY) { c, card -> c.withCopies(card.id, 2) }
+        val decks =
+            List(10) {
+                MetaDecklist(
+                    ArchetypeName("A"),
+                    listOf(DecklistEntry(partner.id, 2), DecklistEntry(fire[0].id, 2)),
+                    setOf(EnergyType.FIRE),
+                    TournamentResult(1, 3, 1, 0),
+                )
+            }
+        val meta = ArchetypeAggregator().aggregate(decks)
+
+        val suggestion =
+            HeuristicSuggestionStrategy()
+                .suggest(SuggestionContext(withPartner, Inventory.of(owned, withPartner), meta))
+                .first { it.deck.energyTypes == setOf(EnergyType.FIRE) }
+
+        suggestion.deck.entries.any { it.card == partner && it.copies == 2 } shouldBe true
+    }
 }

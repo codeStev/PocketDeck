@@ -7,6 +7,7 @@ import dev.pocketdeck.domain.card.EnergyType
 import dev.pocketdeck.domain.card.PokemonCard
 import dev.pocketdeck.domain.card.TrainerCard
 import dev.pocketdeck.domain.card.TrainerKind
+import dev.pocketdeck.domain.meta.CardPopularity
 
 /** Rules of thumb for how much a card is worth in a deck. They rank cards; they do not claim to be exact. */
 internal object CardRatings {
@@ -17,7 +18,11 @@ internal object CardRatings {
     private const val EX_BONUS = 0.2
     private const val ABILITY_BONUS = 0.3
     private const val EXTRA_CARD_PENALTY = 0.1
-    private const val MAXIMUM_LINE_RATING = 2.0
+    private const val MAXIMUM_LINE_RATING = 8.0
+
+    /** What strong players choose outweighs what the card text suggests: a staple is in most winning decks. */
+    private const val POPULARITY_TRAINER_WEIGHT = 6.0
+    private const val POPULARITY_LINE_WEIGHT = 6.0
 
     private val usefulAbilities = setOf(EffectTag.ATTACH_ENERGY, EffectTag.DRAW, EffectTag.SEARCH_DECK, EffectTag.HEAL)
 
@@ -45,21 +50,28 @@ internal object CardRatings {
     fun lineRating(
         line: PokemonLine,
         energy: Set<EnergyType>,
+        popularity: CardPopularity = CardPopularity.NONE,
     ): Double {
         val card = line.last
         val attack = bestAttack(card, energy)?.let { strength(it) } ?: 0.0
         val sturdiness = card.hp / HP_SCALE * HP_WEIGHT
         val bonus = (if (card.isEx) EX_BONUS else 0.0) + (if (hasUsefulAbility(card)) ABILITY_BONUS else 0.0)
         val cost = (line.chain.size - 1) * EXTRA_CARD_PENALTY
-        return (attack / STRENGTH_SCALE + sturdiness + bonus - cost).coerceIn(0.0, MAXIMUM_LINE_RATING)
+        val chosen = popularity.of(card) * POPULARITY_LINE_WEIGHT
+        return (attack / STRENGTH_SCALE + sturdiness + bonus + chosen - cost).coerceIn(0.0, MAXIMUM_LINE_RATING)
     }
 
     private fun hasUsefulAbility(card: PokemonCard) =
         card.ability?.let { EffectClassifier.tagsOf(it.effect).any { tag -> tag in usefulAbilities } } == true
 
     /** Cards that find other cards, draw, or keep the deck running are worth more than ones that need a situation. */
-    fun trainerRating(card: TrainerCard): Double =
-        kindWeight(card.kind) + EffectClassifier.tagsOf(card).sumOf { tagWeight(it) }
+    fun trainerRating(
+        card: TrainerCard,
+        popularity: CardPopularity = CardPopularity.NONE,
+    ): Double =
+        kindWeight(card.kind) +
+            EffectClassifier.tagsOf(card).sumOf { tagWeight(it) } +
+            popularity.of(card) * POPULARITY_TRAINER_WEIGHT
 
     private fun kindWeight(kind: TrainerKind) =
         when (kind) {
