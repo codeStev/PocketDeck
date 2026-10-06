@@ -11,6 +11,7 @@ import dev.pocketdeck.domain.charmander
 import dev.pocketdeck.domain.collection.CardCollection
 import dev.pocketdeck.domain.magmar
 import dev.pocketdeck.domain.scan.Confidence
+import dev.pocketdeck.domain.scan.ReviewBreakdown
 import dev.pocketdeck.domain.scan.ScannedCard
 import dev.pocketdeck.domain.scan.TileRecognition
 import io.kotest.matchers.shouldBe
@@ -140,7 +141,7 @@ class CollectionScanTest {
 
             val analysis = (submitFrame(frame) as Outcome.Success).value
 
-            analysis.progress shouldBe ScanProgress(1, 2, cardsNeedingReview = 1)
+            analysis.progress shouldBe ScanProgress(1, 2, cardsNeedingReview = 1, breakdown = ReviewBreakdown(1, 0, 0))
             analysis.tilesRecognized shouldBe 2
             analysis.countsRead shouldBe 1
         }

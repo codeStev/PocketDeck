@@ -25,12 +25,38 @@ data class TileRecognition(
     }
 }
 
+/** Why a scanned card is not trusted yet; shown to the player so they know what to look at. */
+enum class ReviewReason {
+    /** The count badge was never visible while the card was on screen (the game hides it while scrolling). */
+    COUNT_NEVER_READ,
+
+    /** Different pictures showed different counts. */
+    COUNT_DISAGREES,
+
+    /** The artwork or the digit matched poorly (partly covered, glare, blurred by motion). */
+    LOW_CONFIDENCE,
+}
+
 data class ScannedCard(
     val cardId: CardId,
     val copies: Int,
     val confidence: Confidence,
     val needsReview: Boolean,
+    val reason: ReviewReason? = null,
 )
+
+/** How many cards need a review for each reason. */
+data class ReviewBreakdown(
+    val neverCounted: Int,
+    val disagreed: Int,
+    val lowConfidence: Int,
+) {
+    val total: Int get() = neverCounted + disagreed + lowConfidence
+
+    companion object {
+        val NONE = ReviewBreakdown(0, 0, 0)
+    }
+}
 
 /**
  * Collects recognitions across the many frames captured while the player scrolls, and decides per card
@@ -60,11 +86,13 @@ class ScanSession private constructor(
         val counted = seen.filter { it.copies != null }.groupBy { it.copies }
         // A card that appears in the owned list is owned at least once, which is all we can say without a count.
         if (counted.isEmpty()) {
+            val identification = Confidence(seen.maxOf { it.confidence.value })
             return ScannedCard(
                 cardId,
                 MINIMUM_OWNED,
-                Confidence(seen.maxOf { it.confidence.value }),
+                identification,
                 needsReview = true,
+                reason = ReviewReason.COUNT_NEVER_READ,
             )
         }
         // Most confident support wins; on a tie the larger count wins so owned cards are not under-reported.
@@ -75,11 +103,27 @@ class ScanSession private constructor(
                 ).key
         val confidence = counted.getValue(winningCopies).maxOf { it.confidence.value }
         val unanimous = counted.size == 1
+        val reason =
+            when {
+                !unanimous -> ReviewReason.COUNT_DISAGREES
+                confidence < REVIEW_CONFIDENCE_THRESHOLD -> ReviewReason.LOW_CONFIDENCE
+                else -> null
+            }
         return ScannedCard(
             cardId = cardId,
             copies = requireNotNull(winningCopies),
             confidence = Confidence(confidence),
-            needsReview = !unanimous || confidence < REVIEW_CONFIDENCE_THRESHOLD,
+            needsReview = reason != null,
+            reason = reason,
+        )
+    }
+
+    fun breakdown(): ReviewBreakdown {
+        val reasons = summarize().mapNotNull { it.reason }.groupingBy { it }.eachCount()
+        return ReviewBreakdown(
+            neverCounted = reasons[ReviewReason.COUNT_NEVER_READ] ?: 0,
+            disagreed = reasons[ReviewReason.COUNT_DISAGREES] ?: 0,
+            lowConfidence = reasons[ReviewReason.LOW_CONFIDENCE] ?: 0,
         )
     }
 

@@ -156,4 +156,63 @@ class ScanSessionTest {
         shouldThrow<IllegalArgumentException> { TileRecognition(pikachu, copies = 0, confidence = Confidence(0.9)) }
         TileRecognition(pikachu, copies = null, confidence = Confidence(0.9)).copies shouldBe null
     }
+
+    @Test
+    fun `an unreadable count is reported as the reason`() {
+        val result =
+            ScanSession
+                .start()
+                .observe(listOf(unreadable(pikachu, 0.95)))
+                .summarize()
+                .single()
+
+        result.reason shouldBe ReviewReason.COUNT_NEVER_READ
+    }
+
+    @Test
+    fun `disagreeing counts are reported as the reason`() {
+        val session =
+            ScanSession
+                .start()
+                .observe(listOf(seen(pikachu, 1, 0.9)))
+                .observe(listOf(seen(pikachu, 2, 0.9)))
+
+        session.summarize().single().reason shouldBe ReviewReason.COUNT_DISAGREES
+    }
+
+    @Test
+    fun `a doubtful identification is reported as the reason`() {
+        val result =
+            ScanSession
+                .start()
+                .observe(listOf(seen(mew, 1, 0.5)))
+                .summarize()
+                .single()
+
+        result.reason shouldBe ReviewReason.LOW_CONFIDENCE
+    }
+
+    @Test
+    fun `a card that needs no review has no reason`() {
+        val result =
+            ScanSession
+                .start()
+                .observe(listOf(seen(mew, 2, 0.95)))
+                .summarize()
+                .single()
+
+        result.reason shouldBe null
+        result.needsReview shouldBe false
+    }
+
+    @Test
+    fun `the breakdown counts the cards per reason`() {
+        val session =
+            ScanSession.start().observe(
+                listOf(unreadable(pikachu, 0.95), seen(mew, 1, 0.5), seen(CardId("a1-001"), 1, 0.95)),
+            )
+
+        session.breakdown() shouldBe ReviewBreakdown(neverCounted = 1, disagreed = 0, lowConfidence = 1)
+        session.breakdown().total shouldBe 2
+    }
 }

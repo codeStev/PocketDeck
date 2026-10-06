@@ -2,6 +2,7 @@ package dev.pocketdeck.application.scan
 
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.domain.card.CardId
+import dev.pocketdeck.domain.scan.ReviewBreakdown
 import dev.pocketdeck.domain.scan.ScanSession
 import dev.pocketdeck.domain.scan.ScannedCard
 import kotlinx.coroutines.flow.Flow
@@ -15,14 +16,13 @@ data class ScanProgress(
     val distinctCards: Int,
     /** Cards whose identity or count is still uncertain; the player will be asked about them afterwards. */
     val cardsNeedingReview: Int,
+    val breakdown: ReviewBreakdown = ReviewBreakdown.NONE,
 ) {
     companion object {
-        fun of(session: ScanSession) =
-            ScanProgress(
-                framesProcessed = session.framesProcessed,
-                distinctCards = session.distinctCards,
-                cardsNeedingReview = session.summarize().count { it.needsReview },
-            )
+        fun of(session: ScanSession): ScanProgress {
+            val breakdown = session.breakdown()
+            return ScanProgress(session.framesProcessed, session.distinctCards, breakdown.total, breakdown)
+        }
     }
 }
 

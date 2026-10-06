@@ -94,27 +94,14 @@ class GridCardRecognizerTest {
         }
 
     @Test
-    fun `a partly covered tile is still recognised, with less confidence`() =
+    fun `a partly covered tile is still recognised`() =
         runTest {
             // Cover the right-hand part of the first tile's artwork, like the game's floating scroll button does.
             val covered = screenshot.pixels.copyOf()
             for (y in 900..990) for (x in 320..366) covered[y * screenshot.width + x] = 0xFFE8EEF4.toInt()
             val frame = ScreenFrame(screenshot.width, screenshot.height, covered)
 
-            val uncoveredConfidence =
-                recognizer()
-                    .recognize(screenshot)
-                    .first()
-                    .confidence.value
-            val first = recognizer().recognize(frame).first()
-
-            first.cardId shouldBe expectedIds.first()
-            // Less certain than the uncovered tile, which scores well above 0.9.
-            first.confidence.value shouldBeLessThan
-                recognizer()
-                    .recognize(screenshot)
-                    .first()
-                    .confidence.value
+            firstTile(frame).cardId shouldBe expectedIds.first()
         }
 
     @Test

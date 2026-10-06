@@ -82,7 +82,16 @@ class ScanCaptureService : Service() {
         session = openSession(resultCode, resultData)
         dependencies.startCollectionScan()
         overlay = ScanOverlay(this, onStop = { finish(openReview = true) }).also(ScanOverlay::show)
-        scope.launch { dependencies.observeScanProgress().collect { overlay?.update(ProgressText.of(it, automatic)) } }
+        scope.launch {
+            dependencies.observeScanProgress().collect { progress ->
+                overlay?.update(ProgressText.of(progress, automatic))
+                if (progress != null &&
+                    progress.framesProcessed % LOG_EVERY_FRAMES == 0
+                ) {
+                    Log.i(TAG, "Scan progress: $progress")
+                }
+            }
+        }
         scope.launch { runScan(dependencies) }
     }
 
@@ -213,5 +222,6 @@ class ScanCaptureService : Service() {
         const val DISPLAY_NAME = "pocketdeck-scan"
         const val READER_BUFFERS = 2
         const val FAILURE_NOTICE_MILLIS = 2500L
+        const val LOG_EVERY_FRAMES = 10
     }
 }

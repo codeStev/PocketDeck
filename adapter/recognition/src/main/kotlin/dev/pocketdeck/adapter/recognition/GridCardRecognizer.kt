@@ -48,13 +48,11 @@ class GridCardRecognizer(
         // repeated sightings of a card agree with each other.
         val chosen = matches.filter { best.score - it.score <= SAME_ARTWORK_TOLERANCE }.minBy { it.cardId.value }
         val reading = copyCounts.read(frame, tile)
-        val identification = confidenceOf(best.score)
+        val runnerUp = matches.firstOrNull { best.score - it.score > SAME_ARTWORK_TOLERANCE }
+        val identification = IdentificationConfidence.of(best.score, best.score - (runnerUp?.score ?: -1f))
         val confidence = min(identification, reading?.confidence ?: 1.0)
         return TileRecognition(chosen.cardId, reading?.copies, Confidence(confidence))
     }
-
-    private fun confidenceOf(score: Float): Double =
-        ((score - FLOOR_SCORE) / (CERTAIN_MATCH_SCORE - FLOOR_SCORE)).toDouble().coerceIn(0.0, 1.0)
 
     /**
      * Clean matches score about 0.99. Overlays such as the game's floating buttons cover parts of a tile and lower
@@ -70,7 +68,6 @@ class GridCardRecognizer(
         const val MINIMUM_MATCH_SCORE = 0.90f
         const val FLOOR_SCORE = 0.80f
         const val MINIMUM_MARGIN = 0.12f
-        const val CERTAIN_MATCH_SCORE = 0.98f
         const val SAME_ARTWORK_TOLERANCE = 0.004f
     }
 }

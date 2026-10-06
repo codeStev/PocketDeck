@@ -33,6 +33,7 @@ import coil3.compose.AsyncImage
 import dev.pocketdeck.adapter.ui.R
 import dev.pocketdeck.adapter.ui.collection.semanticsLabel
 import dev.pocketdeck.domain.card.CardId
+import dev.pocketdeck.domain.scan.ReviewReason
 
 @Composable
 fun ScanScreen(
@@ -205,6 +206,13 @@ private fun ReviewRow(
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.titleSmall,
                 )
+                item.reason?.let {
+                    Text(
+                        reasonText(it),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
                 if (item.needsReview) {
                     TextButton(onClick = { onAccept(item.cardId) }) {
                         Text(
@@ -223,6 +231,16 @@ private fun ReviewRow(
         }
     }
 }
+
+@Composable
+private fun reasonText(reason: ReviewReason) =
+    stringResource(
+        when (reason) {
+            ReviewReason.COUNT_NEVER_READ -> R.string.review_reason_never_read
+            ReviewReason.COUNT_DISAGREES -> R.string.review_reason_disagrees
+            ReviewReason.LOW_CONFIDENCE -> R.string.review_reason_low_confidence
+        },
+    )
 
 @Composable
 private fun Saved(

@@ -3,6 +3,7 @@ package dev.pocketdeck.adapter.ui.scan
 import dev.pocketdeck.domain.card.CardCatalog
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.card.Language
+import dev.pocketdeck.domain.scan.ReviewReason
 import dev.pocketdeck.domain.scan.ScannedCard
 
 /** One scanned card as shown in the review list; [copies] and [needsReview] change while the player corrects it. */
@@ -13,6 +14,7 @@ data class ReviewItem(
     val copies: Int,
     val confidence: Double,
     val needsReview: Boolean,
+    val reason: ReviewReason? = null,
 )
 
 object ReviewListing {
@@ -33,6 +35,7 @@ object ReviewListing {
                         copies = card.copies,
                         confidence = card.confidence.value,
                         needsReview = card.needsReview,
+                        reason = card.reason,
                     )
                 }
             }.sortedWith(compareByDescending<ReviewItem> { it.needsReview }.thenBy { order.getValue(it.cardId) })

@@ -98,9 +98,11 @@ class ScanViewModel(
     fun onAdjust(
         cardId: CardId,
         delta: Int,
-    ) = updateItem(cardId) { it.copy(copies = (it.copies + delta).coerceAtLeast(MIN_COPIES), needsReview = false) }
+    ) = updateItem(cardId) {
+        it.copy(copies = (it.copies + delta).coerceAtLeast(MIN_COPIES), needsReview = false, reason = null)
+    }
 
-    fun onAccept(cardId: CardId) = updateItem(cardId) { it.copy(needsReview = false) }
+    fun onAccept(cardId: CardId) = updateItem(cardId) { it.copy(needsReview = false, reason = null) }
 
     fun onRemove(cardId: CardId) =
         mutableState.update {
