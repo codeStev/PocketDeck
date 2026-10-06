@@ -87,7 +87,13 @@ private fun DeckCard(
     var expanded by rememberSaveable(item.key) { mutableStateOf(false) }
     Card(Modifier.fillMaxWidth().clickable { expanded = !expanded }) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(item.title, style = MaterialTheme.typography.titleMedium)
+            val title =
+                if (item.substitutes.isEmpty()) {
+                    item.title
+                } else {
+                    "${item.title} · ${stringResource(R.string.decks_with_substitutes)}"
+                }
+            Text(title, style = MaterialTheme.typography.titleMedium)
             Text(originText(item.origin), style = MaterialTheme.typography.labelMedium)
             LinearProgressIndicator(progress = { item.ownedPercent / PERCENT_FULL }, modifier = Modifier.fillMaxWidth())
             Text(stringResource(R.string.decks_owned, item.ownedPercent))
@@ -96,6 +102,7 @@ private fun DeckCard(
                     pluralStringResource(R.plurals.decks_substituted, item.substituteCopies, item.substituteCopies),
                     color = MaterialTheme.colorScheme.tertiary,
                 )
+                item.substitutes.forEach { SubstituteText(it) }
             }
             if (item.missingCopies == 0) {
                 Text(stringResource(R.string.decks_buildable), color = MaterialTheme.colorScheme.primary)
@@ -105,11 +112,10 @@ private fun DeckCard(
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            if (expanded) {
-                item.substitutes.forEach { SubstituteText(it) }
-                item.cards.forEach { CardLine(it) }
-            }
-            OutlinedButton(onClick = { onShowCode(item.key) }) { Text(stringResource(R.string.decks_code_show)) }
+            if (expanded) item.cards.forEach { CardLine(it) }
+            val showCode =
+                if (item.substitutes.isEmpty()) R.string.decks_code_show else R.string.decks_code_show_substituted
+            OutlinedButton(onClick = { onShowCode(item.key) }) { Text(stringResource(showCode)) }
         }
     }
 }

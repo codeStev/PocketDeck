@@ -115,4 +115,7 @@
     <string name="effect_recover_from_discard">recovers from the discard pile</string>
     <string name="effect_counter_damage">hits back</string>
     <string name="decks_substitute_alike">Both: %1$s</string>
+    <string name="decks_with_substitutes">with stand-ins</string>
+    <string name="decks_code_show_substituted">Import code (with stand-ins)</string>
+    <string name="decks_code_contains">This code contains stand-ins:</string>
 </resources>

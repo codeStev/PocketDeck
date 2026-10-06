@@ -115,4 +115,7 @@
     <string name="effect_recover_from_discard">holt aus dem Ablagestapel</string>
     <string name="effect_counter_damage">schlägt zurück</string>
     <string name="decks_substitute_alike">Beide: %1$s</string>
+    <string name="decks_with_substitutes">mit Ersatzkarten</string>
+    <string name="decks_code_show_substituted">Import-Code (mit Ersatzkarten)</string>
+    <string name="decks_code_contains">Dieser Code enthält Ersatzkarten:</string>
 </resources>

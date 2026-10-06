@@ -60,6 +60,12 @@ private fun ReadyContent(code: DeckCodeUi.Ready) {
             contentDescription = stringResource(R.string.decks_code_image, code.title),
             modifier = Modifier.fillMaxWidth().size(QR_SIZE),
         )
+        if (code.substitutes.isNotEmpty()) {
+            Text(stringResource(R.string.decks_code_contains), style = MaterialTheme.typography.titleSmall)
+            code.substitutes.forEach {
+                Text(stringResource(R.string.decks_substitute_line, it.copies, it.replacement, it.original))
+            }
+        }
         Text(stringResource(R.string.decks_code_howto), style = MaterialTheme.typography.bodyMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = { saved = bitmap.saveToGallery(context, fileName(code.title)) }) {

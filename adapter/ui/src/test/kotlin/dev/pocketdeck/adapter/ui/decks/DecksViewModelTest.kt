@@ -15,11 +15,15 @@ import dev.pocketdeck.application.suggest.DeckSuggestionStrategy
 import dev.pocketdeck.application.suggest.SuggestDecksService
 import dev.pocketdeck.domain.card.CardCatalog
 import dev.pocketdeck.domain.card.CardName
+import dev.pocketdeck.domain.card.EffectTag
 import dev.pocketdeck.domain.card.Language
+import dev.pocketdeck.domain.charizardEx
+import dev.pocketdeck.domain.charmander
 import dev.pocketdeck.domain.collection.CardCollection
 import dev.pocketdeck.domain.collection.Inventory
 import dev.pocketdeck.domain.deck.CompletenessCalculator
 import dev.pocketdeck.domain.deck.DeckSuggestion
+import dev.pocketdeck.domain.deck.Substitution
 import dev.pocketdeck.domain.deck.SuggestionOrigin
 import dev.pocketdeck.domain.meta.MetaSnapshot
 import dev.pocketdeck.domain.validFireDeck
@@ -163,7 +167,7 @@ class DecksViewModelTest {
                     .key,
             )
 
-            viewModel.state.value.code shouldBe DeckCodeUi.Ready("Charizard", "AAAA")
+            viewModel.state.value.code shouldBe DeckCodeUi.Ready("Charizard", "AAAA", emptyList())
         }
 
     @Test
@@ -196,5 +200,36 @@ class DecksViewModelTest {
             viewModel.onCloseCode()
 
             viewModel.state.value.code shouldBe null
+        }
+
+    @Test
+    fun `the code of a deck with stand-ins says which cards it swaps`() =
+        runTest(dispatcher) {
+            val deck = validFireDeck()
+            val completeness =
+                CompletenessCalculator().calculate(
+                    deck,
+                    Inventory.of(CardCollection.EMPTY, CardCatalog.EMPTY),
+                )
+            val swap = Substitution(charizardEx, charmander, copies = 2, sharedEffects = setOf(EffectTag.HEAL))
+            val adapted = DeckSuggestion("Charizard", SuggestionOrigin.META, deck, completeness, 1.0, listOf(swap))
+            val suggest =
+                SuggestDecksService(
+                    InMemoryCardCatalogRepository(),
+                    InMemoryCollectionRepository(),
+                    InMemoryMetaSnapshotRepository(),
+                    listOf(DeckSuggestionStrategy { listOf(adapted) }),
+                )
+            val viewModel = DecksViewModel(suggest, succeeding, { Outcome.Success(DeckCode("AAAA")) }, Language.ENGLISH)
+            advanceUntilIdle()
+
+            viewModel.onShowCode(
+                viewModel.state.value.items
+                    .single()
+                    .key,
+            )
+
+            (viewModel.state.value.code as DeckCodeUi.Ready).substitutes shouldBe
+                listOf(SubstituteLine("Charmander", "Charizard ex", 2, listOf(EffectTag.HEAL)))
         }
 }

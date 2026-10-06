@@ -25,6 +25,8 @@ sealed interface DeckCodeUi {
     data class Ready(
         override val title: String,
         val text: String,
+        /** The cards of the deck that are not in the tournament list, so the player knows what the code contains. */
+        val substitutes: List<SubstituteLine>,
     ) : DeckCodeUi
 
     /** The game could not import this deck; [cards] are the cards it does not know (empty if it is the energy). */
@@ -79,7 +81,7 @@ class DecksViewModel(
         val suggestion = suggestions.getOrNull(state.value.items.indexOf(item)) ?: return
         val code =
             when (val outcome = exportDeckCode(suggestion.deck)) {
-                is Outcome.Success -> DeckCodeUi.Ready(item.title, outcome.value.text)
+                is Outcome.Success -> DeckCodeUi.Ready(item.title, outcome.value.text, item.substitutes)
                 is Outcome.Failure -> DeckCodeUi.Unavailable(item.title, outcome.reason.unknownCards())
             }
         mutableState.update { it.copy(code = code) }
