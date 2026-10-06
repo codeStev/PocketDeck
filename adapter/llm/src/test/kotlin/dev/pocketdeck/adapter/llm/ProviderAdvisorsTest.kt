@@ -3,15 +3,14 @@ package dev.pocketdeck.adapter.llm
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.advice.AdviceFeedback
 import dev.pocketdeck.application.advice.AdviceRequest
+import dev.pocketdeck.application.advice.AdvisedCard
 import dev.pocketdeck.application.advice.AdvisorFailure
 import dev.pocketdeck.application.advice.DeckAdvice
 import dev.pocketdeck.application.advice.ProviderAccess
 import dev.pocketdeck.domain.card.CardCatalog
-import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.card.EnergyType
 import dev.pocketdeck.domain.collection.CardCollection
 import dev.pocketdeck.domain.collection.Inventory
-import dev.pocketdeck.domain.meta.DecklistEntry
 import dev.pocketdeck.domain.meta.MetaSnapshot
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -46,12 +45,12 @@ class ProviderAdvisorsTest {
         )
     private val access = ProviderAccess("secret-key", "some/model")
     private val deckJson =
-        """{"title":"Fire Rush","rationale":"Fast attackers.","cards":[{"id":"a1-033","count":2},{"id":"a1-219","count":"1"}],"energy":["fire","Lightning"]}"""
+        """{"title":"Fire Rush","rationale":"Fast attackers.","cards":[{"id":"a1-033","name":"Arcanine ex","count":2},{"id":"a1-219","count":"1"}],"energy":["fire","Lightning"]}"""
     private val expected =
         DeckAdvice(
             "Fire Rush",
             "Fast attackers.",
-            listOf(DecklistEntry(CardId("a1-033"), 2), DecklistEntry(CardId("a1-219"), 1)),
+            listOf(AdvisedCard("a1-033", "Arcanine ex", 2), AdvisedCard("a1-219", null, 1)),
             listOf(EnergyType.FIRE, EnergyType.LIGHTNING),
         )
 

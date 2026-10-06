@@ -14,7 +14,6 @@ import dev.pocketdeck.domain.collection.CardCollection
 import dev.pocketdeck.domain.deck.SuggestionOrigin
 import dev.pocketdeck.domain.giovanni
 import dev.pocketdeck.domain.magmar
-import dev.pocketdeck.domain.meta.DecklistEntry
 import dev.pocketdeck.domain.pokeBall
 import dev.pocketdeck.domain.potion
 import dev.pocketdeck.domain.professorsResearch
@@ -50,7 +49,7 @@ class AskAiForDeckServiceTest {
         DeckAdvice(
             title = "Charizard Fire",
             rationale = "Fire attackers with trainers that find them.",
-            entries = validFireDeck().entries.map { DecklistEntry(it.card.id, it.copies) },
+            entries = validFireDeck().entries.map { AdvisedCard(it.card.id.value, it.card.name.value, it.copies) },
             energyTypes = listOf(EnergyType.FIRE),
         )
 
@@ -101,7 +100,11 @@ class AskAiForDeckServiceTest {
     @Test
     fun `sends back what was wrong and accepts the corrected deck`() =
         runTest {
-            val tooBig = validAdvice.copy(entries = validAdvice.entries + DecklistEntry(potion.id, 2))
+            val tooBig =
+                validAdvice.copy(
+                    entries =
+                        validAdvice.entries + AdvisedCard(potion.id.value, potion.name.value, 2),
+                )
             val advisor = ScriptedAdvisor(listOf(Outcome.Success(tooBig), Outcome.Success(validAdvice)))
 
             val outcome = service(advisor).invoke(null)
@@ -138,13 +141,7 @@ class AskAiForDeckServiceTest {
             val unknown =
                 validAdvice.copy(
                     entries =
-                        listOf(
-                            DecklistEntry(
-                                dev.pocketdeck.domain.card
-                                    .CardId("zz-999"),
-                                2,
-                            ),
-                        ),
+                        listOf(AdvisedCard("zz-999", null, 2)),
                 )
             val advisor = ScriptedAdvisor(listOf(Outcome.Success(unknown), Outcome.Success(validAdvice)))
 
@@ -153,8 +150,9 @@ class AskAiForDeckServiceTest {
             advisor.requests
                 .last()
                 .feedback
-                .single()
-                .problems shouldContain "zz-999 is not a card that exists"
+                .first()
+                .problems
+                .any { it.startsWith("zz-999 is not a card that exists") } shouldBe true
         }
 
     @Test
@@ -200,8 +198,9 @@ class AskAiForDeckServiceTest {
             val split =
                 validAdvice.copy(
                     entries =
-                        validAdvice.entries.filter { it.cardId != potion.id } + DecklistEntry(potion.id, 1) +
-                            DecklistEntry(potion.id, 1),
+                        validAdvice.entries.filter { it.id != potion.id.value } +
+                            AdvisedCard(potion.id.value, potion.name.value, 1) +
+                            AdvisedCard(potion.id.value, potion.name.value, 1),
                 )
 
             val outcome = service(ScriptedAdvisor(listOf(Outcome.Success(split)))).invoke(null)
@@ -226,7 +225,8 @@ class AskAiForDeckServiceTest {
             val swapped =
                 validAdvice.copy(
                     entries =
-                        validAdvice.entries.filter { it.cardId != potion.id } + DecklistEntry(waterHeal.id, 2),
+                        validAdvice.entries.filter { it.id != potion.id.value } +
+                            AdvisedCard(waterHeal.id.value, waterHeal.name.value, 2),
                 )
             val advisor = ScriptedAdvisor(listOf(Outcome.Success(swapped), Outcome.Success(validAdvice)))
 
@@ -241,5 +241,106 @@ class AskAiForDeckServiceTest {
                 it shouldContain "Irida"
                 it shouldContain "Water energy"
             }
+        }
+
+    @Test
+    fun `finds the card by its name when the id the advisor wrote does not exist`() =
+        runTest {
+            val mangled =
+                validAdvice.copy(
+                    entries =
+                        validAdvice.entries.map {
+                            if (it.id ==
+                                potion.id.value
+                            ) {
+                                it.copy(id = "zz-373")
+                            } else {
+                                it
+                            }
+                        },
+                )
+
+            val outcome = service(ScriptedAdvisor(listOf(Outcome.Success(mangled)))).invoke(null)
+
+            (outcome as Outcome.Success).value.deck.copiesNamed(potion.name) shouldBe 2
+        }
+
+    @Test
+    fun `prefers the id when it exists even if the name differs`() =
+        runTest {
+            val wrongName =
+                validAdvice.copy(
+                    entries =
+                        validAdvice.entries.map {
+                            if (it.id ==
+                                potion.id.value
+                            ) {
+                                it.copy(name = "Nonsense")
+                            } else {
+                                it
+                            }
+                        },
+                )
+
+            val outcome = service(ScriptedAdvisor(listOf(Outcome.Success(wrongName)))).invoke(null)
+
+            (outcome as Outcome.Success).value.deck.copiesNamed(potion.name) shouldBe 2
+        }
+
+    @Test
+    fun `suggests the card with the same number when an id is wrong and the name does not help`() =
+        runTest {
+            val unknownName =
+                validAdvice.copy(
+                    entries =
+                        validAdvice.entries.map {
+                            if (it.id ==
+                                potion.id.value
+                            ) {
+                                it.copy(id = "x-${potion.id.value.takeLast(6)}", name = "No Such Card")
+                            } else {
+                                it
+                            }
+                        },
+                )
+            val advisor = ScriptedAdvisor(listOf(Outcome.Success(unknownName), Outcome.Success(validAdvice)))
+
+            service(advisor).invoke(null)
+
+            advisor.requests
+                .last()
+                .feedback
+                .first()
+                .problems
+                .single() shouldContain "not a card that exists"
+        }
+
+    @Test
+    fun `does not use a name to get around a card the player does not own`() =
+        runTest {
+            val ownsNoPotion = ownedAll().withCopies(potion.id, 0)
+            val mangled =
+                validAdvice.copy(
+                    entries =
+                        validAdvice.entries.map {
+                            if (it.id ==
+                                potion.id.value
+                            ) {
+                                it.copy(id = "zz-1")
+                            } else {
+                                it
+                            }
+                        },
+                )
+            val advisor = ScriptedAdvisor(listOf(Outcome.Success(mangled), Outcome.Success(validAdvice)))
+
+            service(advisor, ownsNoPotion).invoke(null)
+
+            advisor.requests
+                .last()
+                .feedback
+                .first()
+                .problems
+                .any { "owns" in it || "not a card" in it } shouldBe true
         }
 }

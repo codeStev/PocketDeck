@@ -52,7 +52,8 @@ object AdvicePromptWriter {
           Attacks are paid with these (colorless cost, written C, can be paid with any energy).
 
         Rules for your answer:
-        - Use only cards from the list of owned cards, by their id, and never more copies than listed.
+        - Use only cards from the list of owned cards. Give each card with its exact id from the list and its name, and never
+          more copies than listed. Copy the ids character by character; do not shorten or guess them.
         - Every trainer must have something to act on in your deck. A trainer that heals or boosts [W] Pokémon needs Water
           Pokémon (and Water energy), one that searches for Pokémon with "Team Rocket" in their name needs such Pokémon,
           one that names Pokémon needs at least one of them, and one that talks about Stage 2 or Mega Pokémon needs those.

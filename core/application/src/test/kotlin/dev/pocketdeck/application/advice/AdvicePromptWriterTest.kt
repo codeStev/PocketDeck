@@ -146,7 +146,13 @@ class AdvicePromptWriterTest {
 
     @Test
     fun `explains what was wrong with an earlier answer`() {
-        val advice = DeckAdvice("T", "R", listOf(DecklistEntry(bulbasaur.id, 2)), listOf(EnergyType.GRASS))
+        val advice =
+            DeckAdvice(
+                "T",
+                "R",
+                listOf(AdvisedCard(bulbasaur.id.value, bulbasaur.name.value, 2)),
+                listOf(EnergyType.GRASS),
+            )
 
         val text = AdviceFeedback(advice, listOf("The deck has 2 cards but must have exactly 20")).describe()
 

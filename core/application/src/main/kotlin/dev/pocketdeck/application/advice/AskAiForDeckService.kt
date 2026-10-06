@@ -4,7 +4,9 @@ import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.catalog.CardCatalogRepository
 import dev.pocketdeck.application.collection.CollectionRepository
 import dev.pocketdeck.application.meta.MetaSnapshotRepository
+import dev.pocketdeck.domain.card.Card
 import dev.pocketdeck.domain.card.CardCatalog
+import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.card.EnergyType
 import dev.pocketdeck.domain.card.TrainerCard
 import dev.pocketdeck.domain.collection.Inventory
@@ -93,21 +95,47 @@ class AskAiForDeckService(
         catalog: CardCatalog,
         inventory: Inventory,
     ): Checked {
+        val resolved = advice.entries.map { it to resolve(it, catalog, inventory) }
         val unknown =
-            advice.entries
-                .filter {
-                    it.cardId !in catalog
-                }.map { "${it.cardId.value} is not a card that exists" }
+            resolved.filter { it.second == null }.map { (entry, _) ->
+                unknownProblem(entry, catalog, inventory)
+            }
         if (unknown.isNotEmpty()) return Checked.Invalid(unknown.distinct())
         val entries =
-            advice.entries
-                .groupBy { it.cardId }
-                .map { (id, listed) -> DeckEntry(requireNotNull(catalog[id]), listed.sumOf { it.copies }) }
+            resolved
+                .groupBy({ requireNotNull(it.second) }, { it.first.copies })
+                .map { (card, copies) -> DeckEntry(card, copies.sum()) }
         val deck = Deck(entries, advice.energyTypes.toSet())
         val problems =
             notOwned(deck, inventory) + energyProblems(advice) + validator.validate(deck).map(::describe) +
                 deadTrainers(deck, catalog)
         return if (problems.isEmpty()) Checked.Valid(deck) else Checked.Invalid(problems)
+    }
+
+    /** The card by its id, or else by its name among the cards the player owns; null when neither names a card. */
+    private fun resolve(
+        entry: AdvisedCard,
+        catalog: CardCatalog,
+        inventory: Inventory,
+    ): Card? {
+        catalog[CardId(entry.id)]?.let { return it }
+        val name = entry.name?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        return catalog.cards.firstOrNull { it.name.value.equals(name, ignoreCase = true) && inventory.copiesOf(it) > 0 }
+    }
+
+    private fun unknownProblem(
+        entry: AdvisedCard,
+        catalog: CardCatalog,
+        inventory: Inventory,
+    ): String {
+        val number = entry.id.substringAfterLast('-')
+        val similar =
+            catalog.cards.firstOrNull {
+                it.id.value.substringAfterLast('-') == number &&
+                    inventory.copiesOf(it) > 0
+            }
+        val hint = similar?.let { "; did you mean ${it.id.value} (${it.name.value})?" }.orEmpty()
+        return "${entry.id} is not a card that exists$hint Use the ids from the list of owned cards exactly"
     }
 
     private fun notOwned(

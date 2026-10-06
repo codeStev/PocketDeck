@@ -2,10 +2,9 @@ package dev.pocketdeck.adapter.llm
 
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.advice.AdviceFormat
+import dev.pocketdeck.application.advice.AdvisedCard
 import dev.pocketdeck.application.advice.AdvisorFailure
 import dev.pocketdeck.application.advice.DeckAdvice
-import dev.pocketdeck.domain.card.CardId
-import dev.pocketdeck.domain.meta.DecklistEntry
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -42,10 +41,12 @@ internal object DeckTool {
                         put("type", "object")
                         putJsonObject("properties") {
                             putJsonObject(AdviceFormat.CARD_ID) { put("type", "string") }
+                            putJsonObject(AdviceFormat.CARD_NAME) { put("type", "string") }
                             putJsonObject(AdviceFormat.CARD_COUNT) { put("type", "integer") }
                         }
                         putJsonArray("required") {
                             add(JsonPrimitive(AdviceFormat.CARD_ID))
+                            add(JsonPrimitive(AdviceFormat.CARD_NAME))
                             add(JsonPrimitive(AdviceFormat.CARD_COUNT))
                         }
                     }
@@ -76,7 +77,8 @@ internal object DeckTool {
                     advice.entries.forEach { entry ->
                         add(
                             buildJsonObject {
-                                put(AdviceFormat.CARD_ID, entry.cardId.value)
+                                put(AdviceFormat.CARD_ID, entry.id)
+                                entry.name?.let { put(AdviceFormat.CARD_NAME, it) }
                                 put(AdviceFormat.CARD_COUNT, entry.copies)
                             },
                         )
@@ -103,7 +105,7 @@ internal object DeckTool {
                             ?: it.contentOrNull?.trim()?.toIntOrNull()
                     }
                 if (id.isNullOrBlank() || count == null || count < 1) return unusable("A card entry has no id or count")
-                DecklistEntry(CardId(id.trim()), count)
+                AdvisedCard(id.trim(), fields[AdviceFormat.CARD_NAME]?.jsonPrimitive?.contentOrNull?.trim(), count)
             }
         val energy =
             (input[AdviceFormat.ENERGY] as? JsonArray).orEmpty().mapNotNull {

@@ -10,6 +10,7 @@ object AdviceFormat {
     const val RATIONALE = "rationale"
     const val CARDS = "cards"
     const val CARD_ID = "id"
+    const val CARD_NAME = "name"
     const val CARD_COUNT = "count"
     const val ENERGY = "energy"
 

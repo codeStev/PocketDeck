@@ -4,14 +4,23 @@ import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.domain.card.CardCatalog
 import dev.pocketdeck.domain.card.EnergyType
 import dev.pocketdeck.domain.collection.Inventory
-import dev.pocketdeck.domain.meta.DecklistEntry
 import dev.pocketdeck.domain.meta.MetaSnapshot
+
+/**
+ * One card as an advisor wrote it. Advisors are good with names and poor with ids (they mangle `a4b-373` into `b4-373`),
+ * so the name comes along and settles it when the id does not exist.
+ */
+data class AdvisedCard(
+    val id: String,
+    val name: String?,
+    val copies: Int,
+)
 
 /** A deck an advisor came up with, before anybody has checked it. */
 data class DeckAdvice(
     val title: String,
     val rationale: String,
-    val entries: List<DecklistEntry>,
+    val entries: List<AdvisedCard>,
     val energyTypes: List<EnergyType>,
 )
 
