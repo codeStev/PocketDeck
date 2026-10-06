@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Legacy (API 29-30) counterpart of data_extraction_rules.xml: nothing is backed up. -->
+<full-backup-content>
+    <exclude domain="root" path="." />
+</full-backup-content>

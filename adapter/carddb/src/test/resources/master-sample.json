@@ -1,0 +1,552 @@
+{
+ "schemaVersion": 1,
+ "generatedAt": "2026-10-06T15:21:04+00:00",
+ "sets": [
+  {
+   "id": "a1",
+   "en": "Genetic Apex",
+   "releaseDate": "2024-10-30",
+   "de": "Unschlagbare Gene"
+  },
+  {
+   "id": "a1a",
+   "en": "Mythical Island",
+   "releaseDate": "2024-12-17",
+   "de": "Mysteriöse Insel"
+  },
+  {
+   "id": "a2",
+   "en": "Space-Time Smackdown",
+   "releaseDate": "2025-01-29",
+   "de": "Kollision von Raum und Zeit"
+  },
+  {
+   "id": "a2a",
+   "en": "Triumphant Light",
+   "releaseDate": "2025-02-28",
+   "de": "Licht des Triumphs"
+  },
+  {
+   "id": "a2b",
+   "en": "Shining Revelry",
+   "releaseDate": "2025-03-27",
+   "de": "Glänzendes Festival"
+  },
+  {
+   "id": "b2",
+   "en": "Fantastical Parade",
+   "releaseDate": "2026-01-29",
+   "de": "Traumhafte Parade"
+  },
+  {
+   "id": "b3a",
+   "en": "Paradox Drive",
+   "releaseDate": "2026-05-28",
+   "de": null
+  },
+  {
+   "id": "b4",
+   "en": "Ruler of the Skies",
+   "releaseDate": "2026-07-30",
+   "de": null
+  }
+ ],
+ "cards": [
+  {
+   "id": "a1-001",
+   "set": "a1",
+   "number": 1,
+   "kind": "pokemon",
+   "names": {
+    "en": "Bulbasaur",
+    "de": "Bisasam"
+   },
+   "germanNameSource": "tcgdex",
+   "gameplayKey": "Bulbasaur#ba21adc868c9",
+   "rarity": "◊",
+   "rarityCode": "C",
+   "packs": [
+    "Mewtwo"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/a1/001.webp",
+    "de": "https://assets.tcgdex.net/de/tcgp/A1/001/high.webp"
+   },
+   "energyType": "grass",
+   "stage": "basic",
+   "evolvesFrom": null,
+   "hp": 70,
+   "retreatCost": 1,
+   "weakness": "fire",
+   "ability": null,
+   "attacks": [
+    {
+     "cost": "GC",
+     "name": "Vine Whip",
+     "damage": 40,
+     "effect": null
+    }
+   ],
+   "isEx": false,
+   "isMega": false
+  },
+  {
+   "id": "a1-002",
+   "set": "a1",
+   "number": 2,
+   "kind": "pokemon",
+   "names": {
+    "en": "Ivysaur",
+    "de": "Bisaknosp"
+   },
+   "germanNameSource": "tcgdex",
+   "gameplayKey": "Ivysaur#fb618b48b9e0",
+   "rarity": "◊◊",
+   "rarityCode": "U",
+   "packs": [
+    "Mewtwo"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/a1/002.webp",
+    "de": "https://assets.tcgdex.net/de/tcgp/A1/002/high.webp"
+   },
+   "energyType": "grass",
+   "stage": "stage1",
+   "evolvesFrom": {
+    "en": "Bulbasaur",
+    "de": "Bisasam"
+   },
+   "hp": 90,
+   "retreatCost": 2,
+   "weakness": "fire",
+   "ability": null,
+   "attacks": [
+    {
+     "cost": "GCC",
+     "name": "Razor Leaf",
+     "damage": 60,
+     "effect": null
+    }
+   ],
+   "isEx": false,
+   "isMega": false
+  },
+  {
+   "id": "a1-003",
+   "set": "a1",
+   "number": 3,
+   "kind": "pokemon",
+   "names": {
+    "en": "Venusaur",
+    "de": "Bisaflor"
+   },
+   "germanNameSource": "tcgdex",
+   "gameplayKey": "Venusaur#98f67d57b019",
+   "rarity": "◊◊◊",
+   "rarityCode": "R",
+   "packs": [
+    "Mewtwo"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/a1/003.webp",
+    "de": "https://assets.tcgdex.net/de/tcgp/A1/003/high.webp"
+   },
+   "energyType": "grass",
+   "stage": "stage2",
+   "evolvesFrom": {
+    "en": "Ivysaur",
+    "de": "Bisaknosp"
+   },
+   "hp": 160,
+   "retreatCost": 3,
+   "weakness": "fire",
+   "ability": null,
+   "attacks": [
+    {
+     "cost": "GGCC",
+     "name": "Mega Drain",
+     "damage": 80,
+     "effect": "Heal 30 damage from this Pokémon."
+    }
+   ],
+   "isEx": false,
+   "isMega": false
+  },
+  {
+   "id": "a1-004",
+   "set": "a1",
+   "number": 4,
+   "kind": "pokemon",
+   "names": {
+    "en": "Venusaur ex",
+    "de": "Bisaflor ex"
+   },
+   "germanNameSource": "tcgdex",
+   "gameplayKey": "Venusaur ex#c241412f8fde",
+   "rarity": "◊◊◊◊",
+   "rarityCode": "RR",
+   "packs": [
+    "Mewtwo"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/a1/004.webp",
+    "de": "https://assets.tcgdex.net/de/tcgp/A1/004/high.webp"
+   },
+   "energyType": "grass",
+   "stage": "stage2",
+   "evolvesFrom": {
+    "en": "Ivysaur",
+    "de": "Bisaknosp"
+   },
+   "hp": 190,
+   "retreatCost": 3,
+   "weakness": "fire",
+   "ability": null,
+   "attacks": [
+    {
+     "cost": "GCC",
+     "name": "Razor Leaf",
+     "damage": 60,
+     "effect": null
+    },
+    {
+     "cost": "GGCC",
+     "name": "Giant Bloom",
+     "damage": 100,
+     "effect": "Heal 30 damage from this Pokémon."
+    }
+   ],
+   "isEx": true,
+   "isMega": false
+  },
+  {
+   "id": "a1-094",
+   "set": "a1",
+   "number": 94,
+   "kind": "pokemon",
+   "names": {
+    "en": "Pikachu",
+    "de": "Pikachu"
+   },
+   "germanNameSource": "tcgdex",
+   "gameplayKey": "Pikachu#4543416995ec",
+   "rarity": "◊",
+   "rarityCode": "C",
+   "packs": [
+    "Pikachu"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/a1/094.webp",
+    "de": "https://assets.tcgdex.net/de/tcgp/A1/094/high.webp"
+   },
+   "energyType": "lightning",
+   "stage": "basic",
+   "evolvesFrom": null,
+   "hp": 60,
+   "retreatCost": 1,
+   "weakness": "fighting",
+   "ability": null,
+   "attacks": [
+    {
+     "cost": "L",
+     "name": "Gnaw",
+     "damage": 20,
+     "effect": null
+    }
+   ],
+   "isEx": false,
+   "isMega": false
+  },
+  {
+   "id": "a1a-025",
+   "set": "a1a",
+   "number": 25,
+   "kind": "pokemon",
+   "names": {
+    "en": "Pikachu",
+    "de": "Pikachu"
+   },
+   "germanNameSource": "tcgdex",
+   "gameplayKey": "Pikachu#fd4a42b2ccba",
+   "rarity": "◊",
+   "rarityCode": "C",
+   "packs": [
+    "Mew"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/a1a/025.webp",
+    "de": "https://assets.tcgdex.net/de/tcgp/A1a/025/high.webp"
+   },
+   "energyType": "lightning",
+   "stage": "basic",
+   "evolvesFrom": null,
+   "hp": 60,
+   "retreatCost": 1,
+   "weakness": "fighting",
+   "ability": null,
+   "attacks": [
+    {
+     "cost": "L",
+     "name": "Circle Circuit",
+     "damage": 10,
+     "effect": "This attack does 10 damage for each of your Benched [L] Pokémon."
+    }
+   ],
+   "isEx": false,
+   "isMega": false
+  },
+  {
+   "id": "a2a-025",
+   "set": "a2a",
+   "number": 25,
+   "kind": "pokemon",
+   "names": {
+    "en": "Pikachu",
+    "de": "Pikachu"
+   },
+   "germanNameSource": "tcgdex",
+   "gameplayKey": "Pikachu#65bf3a8b8d97",
+   "rarity": "◊",
+   "rarityCode": "C",
+   "packs": [
+    "Arceus"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/a2a/025.webp",
+    "de": "https://assets.tcgdex.net/de/tcgp/A2a/025/high.webp"
+   },
+   "energyType": "lightning",
+   "stage": "basic",
+   "evolvesFrom": null,
+   "hp": 60,
+   "retreatCost": 1,
+   "weakness": "fighting",
+   "ability": null,
+   "attacks": [
+    {
+     "cost": "L",
+     "name": "Spark",
+     "damage": 10,
+     "effect": "This attack also does 10 damage to 1 of your opponent's Benched Pokémon."
+    }
+   ],
+   "isEx": false,
+   "isMega": false
+  },
+  {
+   "id": "a1-219",
+   "set": "a1",
+   "number": 219,
+   "kind": "trainer",
+   "names": {
+    "en": "Erika",
+    "de": "Erika"
+   },
+   "germanNameSource": "tcgdex",
+   "gameplayKey": "Erika#19e971acdaef",
+   "rarity": "◊◊",
+   "rarityCode": "U",
+   "packs": [
+    "Charizard"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/a1/219.webp",
+    "de": "https://assets.tcgdex.net/de/tcgp/A1/219/high.webp"
+   },
+   "trainerKind": "supporter",
+   "text": "Heal 50 damage from 1 of your [ G ] Pokémon."
+  },
+  {
+   "id": "a2-147",
+   "set": "a2",
+   "number": 147,
+   "kind": "trainer",
+   "names": {
+    "en": "Giant Cape",
+    "de": "Riesige Robe"
+   },
+   "germanNameSource": "tcgdex",
+   "gameplayKey": "Giant Cape#f1681ddb4cfe",
+   "rarity": "◊◊",
+   "rarityCode": "U",
+   "packs": [
+    "Dialga"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/a2/147.webp",
+    "de": "https://assets.tcgdex.net/de/tcgp/A2/147/high.webp"
+   },
+   "trainerKind": "tool",
+   "text": "The Pokémon this card is attached to gets +20 HP."
+  },
+  {
+   "id": "b2-153",
+   "set": "b2",
+   "number": 153,
+   "kind": "trainer",
+   "names": {
+    "en": "Training Area",
+    "de": "Training Area"
+   },
+   "germanNameSource": "fallback",
+   "gameplayKey": "Training Area#df6f213d1144",
+   "rarity": "◊◊",
+   "rarityCode": "U",
+   "packs": [
+    "Gardevoir"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/b2/153.webp",
+    "de": null
+   },
+   "trainerKind": "stadium",
+   "text": "Attacks used by Stage 1 Pokémon in play (both yours and your opponent's) do +10 damage to the opponent's Active Pokémon."
+  },
+  {
+   "id": "a1-216",
+   "set": "a1",
+   "number": 216,
+   "kind": "trainer",
+   "names": {
+    "en": "Helix Fossil",
+    "de": "Helixfossil"
+   },
+   "germanNameSource": "tcgdex",
+   "gameplayKey": "Helix Fossil#75c6859c1a08",
+   "rarity": "◊",
+   "rarityCode": "C",
+   "packs": [
+    "Pikachu"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/a1/216.webp",
+    "de": "https://assets.tcgdex.net/de/tcgp/A1/216/high.webp"
+   },
+   "trainerKind": "item",
+   "text": "Play this card as if it were a 40-HP Basic [ C ] Pokémon. At any time during your turn, you may discard this card from play. This card can't retreat."
+  },
+  {
+   "id": "b3a-100",
+   "set": "b3a",
+   "number": 100,
+   "kind": "pokemon",
+   "names": {
+    "en": "Klawf",
+    "de": "Klibbe"
+   },
+   "germanNameSource": "learned",
+   "gameplayKey": "Klawf#dd3901c34315",
+   "rarity": "☆",
+   "rarityCode": "S",
+   "packs": [
+    "Paradox Drive"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/b3a/100.webp",
+    "de": null
+   },
+   "energyType": "fighting",
+   "stage": "basic",
+   "evolvesFrom": null,
+   "hp": 100,
+   "retreatCost": 3,
+   "weakness": "grass",
+   "ability": null,
+   "attacks": [
+    {
+     "cost": "FF",
+     "name": "Adrenaline Hammer",
+     "damage": 70,
+     "effect": "This Pokémon is now Confused."
+    }
+   ],
+   "isEx": false,
+   "isMega": false
+  },
+  {
+   "id": "a2b-108",
+   "set": "a2b",
+   "number": 108,
+   "kind": "pokemon",
+   "names": {
+    "en": "Charizard ex",
+    "de": "Glurak ex"
+   },
+   "germanNameSource": "tcgdex",
+   "gameplayKey": "Charizard ex#324553b573d2",
+   "rarity": "☆☆",
+   "rarityCode": "SSR",
+   "packs": [
+    "Shining"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/a2b/108.webp",
+    "de": "https://assets.tcgdex.net/de/tcgp/A2b/108/high.webp"
+   },
+   "energyType": "fire",
+   "stage": "stage2",
+   "evolvesFrom": {
+    "en": "Charmeleon",
+    "de": "Glutexo"
+   },
+   "hp": 180,
+   "retreatCost": 3,
+   "weakness": "water",
+   "ability": null,
+   "attacks": [
+    {
+     "cost": "R",
+     "name": "Stoke",
+     "damage": null,
+     "effect": "Take 3 [R] Energy from your Energy Zone and attach it to this Pokémon."
+    },
+    {
+     "cost": "RRRCC",
+     "name": "Steam Artillery",
+     "damage": 150,
+     "effect": null
+    }
+   ],
+   "isEx": true,
+   "isMega": false
+  },
+  {
+   "id": "b4-203",
+   "set": "b4",
+   "number": 203,
+   "kind": "pokemon",
+   "names": {
+    "en": "Mega Rayquaza ex",
+    "de": "Mega-Rayquaza ex"
+   },
+   "germanNameSource": "species",
+   "gameplayKey": "Mega Rayquaza ex#e5f60ed6542c",
+   "rarity": "☆☆☆",
+   "rarityCode": "IM",
+   "packs": [
+    "Ruler of the Skies"
+   ],
+   "artwork": {
+    "en": "https://raw.githubusercontent.com/PocketDecks/pokemon-tcg-pocket-cards/refs/heads/main/images/webp/cards/b4/203.webp",
+    "de": null
+   },
+   "energyType": "dragon",
+   "stage": "basic",
+   "evolvesFrom": null,
+   "hp": 180,
+   "retreatCost": 1,
+   "weakness": "none",
+   "ability": null,
+   "attacks": [
+    {
+     "cost": "RL",
+     "name": "Mega Burst",
+     "damage": 50,
+     "effect": "Discard all [R] and [L] Energy from this Pokémon, and this attack does 50 damage for each Energy you discarded in this way."
+    }
+   ],
+   "isEx": true,
+   "isMega": true
+  }
+ ]
+}

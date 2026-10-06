@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="collection_title">My collection</string>
+    <string name="collection_stats">Unique: %1$d / %2$d · Total copies: %3$d</string>
+    <string name="collection_search_hint">Search cards</string>
+    <string name="collection_owned_only">Owned only</string>
+    <string name="collection_sync">Reload card database</string>
+    <string name="collection_syncing">Loading card database…</string>
+    <string name="collection_sync_unreachable">Could not load the card database: %1$s</string>
+    <string name="collection_sync_empty">The card database came back empty.</string>
+    <string name="collection_retry">Retry</string>
+    <string name="collection_no_results">No cards match.</string>
+    <string name="collection_add_copy">Add a copy of %1$s</string>
+    <string name="collection_remove_copy">Remove a copy of %1$s</string>
+    <string name="collection_copies">×%1$d</string>
+</resources>
