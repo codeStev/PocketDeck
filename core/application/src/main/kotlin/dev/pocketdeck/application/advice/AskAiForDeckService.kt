@@ -27,13 +27,22 @@ class AskAiForDeckService(
     private val advisor: DeckAdvisor,
     private val validator: DeckValidator = DeckValidator(),
     private val completeness: CompletenessCalculator = CompletenessCalculator(),
+    private val diagnostics: AdvisorDiagnostics = AdvisorDiagnostics.NONE,
 ) : AskAiForDeck {
     override suspend fun invoke(wish: String?): Outcome<DeckSuggestion, AskAiFailure> {
         val catalog = catalogs.current()
         val inventory = Inventory.of(collections.current(), catalog)
         val meta = snapshots.current()
         var feedback = emptyList<AdviceFeedback>()
-        repeat(MAX_ATTEMPTS) {
+        diagnostics.note(
+            "Asking for a deck (wish: ${wish ?: "none"}); the player owns ${catalog.cards.count {
+                inventory.copiesOf(
+                    it,
+                ) > 0
+            }} cards",
+        )
+        repeat(MAX_ATTEMPTS) { attempt ->
+            diagnostics.note("Attempt ${attempt + 1} of $MAX_ATTEMPTS")
             val advice =
                 when (
                     val outcome =
@@ -53,8 +62,15 @@ class AskAiForDeckService(
                     is Outcome.Success -> outcome.value
                 }
             when (val checked = check(advice, catalog, inventory)) {
-                is Checked.Valid -> return Outcome.Success(suggestionOf(advice, checked.deck, inventory))
-                is Checked.Invalid -> feedback = feedback + AdviceFeedback(advice, checked.problems)
+                is Checked.Valid -> {
+                    diagnostics.note("The deck \"${advice.title}\" is valid")
+                    return Outcome.Success(suggestionOf(advice, checked.deck, inventory))
+                }
+
+                is Checked.Invalid -> {
+                    diagnostics.note("The deck was rejected: ${checked.problems.joinToString("; ")}")
+                    feedback = feedback + AdviceFeedback(advice, checked.problems)
+                }
             }
         }
         return Outcome.Failure(AskAiFailure.NoValidDeck(feedback.last().problems))

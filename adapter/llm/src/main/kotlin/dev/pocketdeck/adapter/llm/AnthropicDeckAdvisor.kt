@@ -5,6 +5,7 @@ import dev.pocketdeck.application.advice.AdviceFeedback
 import dev.pocketdeck.application.advice.AdviceFormat
 import dev.pocketdeck.application.advice.AdvicePromptWriter
 import dev.pocketdeck.application.advice.AdviceRequest
+import dev.pocketdeck.application.advice.AdvisorDiagnostics
 import dev.pocketdeck.application.advice.AdvisorFailure
 import dev.pocketdeck.application.advice.DeckAdvice
 import dev.pocketdeck.application.advice.ProviderAccess
@@ -29,12 +30,22 @@ import kotlinx.serialization.json.putJsonObject
 class AnthropicDeckAdvisor(
     private val client: HttpClient,
     private val baseUrl: String = "https://api.anthropic.com",
+    private val diagnostics: AdvisorDiagnostics = AdvisorDiagnostics.NONE,
 ) : ProviderDeckAdvisor {
     override suspend fun advise(
         request: AdviceRequest,
         access: ProviderAccess,
     ): Outcome<DeckAdvice, AdvisorFailure> =
-        when (val reply = client.postJson("$baseUrl/v1/messages", headers(access), body(request, access), ::classify)) {
+        when (
+            val reply =
+                client.postJson(
+                    "$baseUrl/v1/messages",
+                    headers(access),
+                    body(request, access),
+                    diagnostics,
+                    ::classify,
+                )
+        ) {
             is Reply.Failed -> Outcome.Failure(reply.failure)
             is Reply.Answer -> toolInput(reply.json)?.let(DeckTool::parse) ?: unusable(reply.json)
         }

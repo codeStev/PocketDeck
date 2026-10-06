@@ -6,6 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.pocketdeck.LogAdvisorDiagnostics
 import dev.pocketdeck.LogScanDiagnostics
 import dev.pocketdeck.adapter.carddb.MasterCatalogSource
 import dev.pocketdeck.adapter.limitless.LimitlessMetaDecklistSource
@@ -25,6 +26,7 @@ import dev.pocketdeck.adapter.ui.decks.AiAssistant
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
 import dev.pocketdeck.adapter.ui.settings.SettingsViewModel
+import dev.pocketdeck.application.advice.AdvisorDiagnostics
 import dev.pocketdeck.application.advice.AdvisorProvider
 import dev.pocketdeck.application.advice.AdvisorSettingsStore
 import dev.pocketdeck.application.advice.AskAiForDeck
@@ -218,16 +220,22 @@ object AppModule {
     ): AdvisorSettingsStore = SharedPreferencesAdvisorSettingsStore(context)
 
     @Provides
+    @Singleton
+    fun advisorDiagnostics(): AdvisorDiagnostics = LogAdvisorDiagnostics()
+
+    @Provides
     fun deckAdvisor(
         settings: AdvisorSettingsStore,
         client: HttpClient,
+        diagnostics: AdvisorDiagnostics,
     ): DeckAdvisor =
         ConfiguredDeckAdvisor(
             settings,
             mapOf(
-                AdvisorProvider.ANTHROPIC to AnthropicDeckAdvisor(client),
-                AdvisorProvider.OPENROUTER to OpenRouterDeckAdvisor(client),
+                AdvisorProvider.ANTHROPIC to AnthropicDeckAdvisor(client, diagnostics = diagnostics),
+                AdvisorProvider.OPENROUTER to OpenRouterDeckAdvisor(client, diagnostics = diagnostics),
             ),
+            diagnostics,
         )
 
     @Provides
@@ -236,7 +244,8 @@ object AppModule {
         collections: CollectionRepository,
         snapshots: MetaSnapshotRepository,
         advisor: DeckAdvisor,
-    ): AskAiForDeck = AskAiForDeckService(catalogs, collections, snapshots, advisor)
+        diagnostics: AdvisorDiagnostics,
+    ): AskAiForDeck = AskAiForDeckService(catalogs, collections, snapshots, advisor, diagnostics = diagnostics)
 
     @Provides
     fun aiAssistant(

@@ -157,4 +157,26 @@ class ConfiguredDeckAdvisorTest {
 
         s.usable() shouldBe emptyList()
     }
+
+    @Test
+    fun `notes which provider and model it asks and how it went, never the key`() =
+        runTest {
+            val notes = mutableListOf<String>()
+            val busy = Recording(Outcome.Failure(AdvisorFailure.Busy("rate limited")))
+            val ok = Recording(Outcome.Success(advice))
+            val both =
+                settings(AdvisorProvider.ANTHROPIC to "secret-a", AdvisorProvider.OPENROUTER to "secret-o")
+                    .withOrder(listOf(AdvisorProvider.OPENROUTER, AdvisorProvider.ANTHROPIC))
+
+            ConfiguredDeckAdvisor(
+                FakeStore(both),
+                mapOf(AdvisorProvider.ANTHROPIC to ok, AdvisorProvider.OPENROUTER to busy),
+                AdvisorDiagnostics { notes += it },
+            ).advise(request)
+
+            notes.any { "OPENROUTER" in it && "openrouter/free" in it } shouldBe true
+            notes.any { "Busy" in it || "busy" in it } shouldBe true
+            notes.any { "ANTHROPIC" in it } shouldBe true
+            notes.none { "secret" in it } shouldBe true
+        }
 }

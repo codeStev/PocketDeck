@@ -1,5 +1,6 @@
 package dev.pocketdeck.adapter.llm
 
+import dev.pocketdeck.application.advice.AdvisorDiagnostics
 import dev.pocketdeck.application.advice.AdvisorFailure
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
@@ -16,6 +17,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.io.IOException
+import kotlin.time.TimeSource
 
 /** What came back from a request: the answer's JSON, or why there is none. */
 internal sealed interface Reply {
@@ -39,9 +41,12 @@ internal suspend fun HttpClient.postJson(
     url: String,
     headers: Map<String, String>,
     body: JsonObject,
+    diagnostics: AdvisorDiagnostics,
     classify: (status: Int, message: String) -> AdvisorFailure,
 ): Reply =
     try {
+        diagnostics.note("POST $url (${body.toString().length} characters)")
+        val started = TimeSource.Monotonic.markNow()
         val response =
             post(url) {
                 headers.forEach { (name, value) -> header(name, value) }
@@ -50,6 +55,7 @@ internal suspend fun HttpClient.postJson(
             }
         val text = response.bodyAsText()
         val status = response.status.value
+        diagnostics.note("HTTP $status, ${text.length} characters, ${started.elapsedNow().inWholeMilliseconds} ms")
         if (status in 200..299) {
             readJson(text)?.let { Reply.Answer(it) } ?: Reply.Failed(AdvisorFailure.Unusable("The answer is not JSON"))
         } else {
@@ -58,6 +64,7 @@ internal suspend fun HttpClient.postJson(
     } catch (failure: CancellationException) {
         throw failure
     } catch (failure: IOException) {
+        diagnostics.note("Request failed: ${failure::class.simpleName}: ${failure.message}")
         Reply.Failed(AdvisorFailure.NotReachable(failure.message ?: failure::class.simpleName.orEmpty()))
     }
 

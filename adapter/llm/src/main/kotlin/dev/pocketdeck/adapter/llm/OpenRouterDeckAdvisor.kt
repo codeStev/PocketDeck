@@ -5,6 +5,7 @@ import dev.pocketdeck.application.advice.AdviceFeedback
 import dev.pocketdeck.application.advice.AdviceFormat
 import dev.pocketdeck.application.advice.AdvicePromptWriter
 import dev.pocketdeck.application.advice.AdviceRequest
+import dev.pocketdeck.application.advice.AdvisorDiagnostics
 import dev.pocketdeck.application.advice.AdvisorFailure
 import dev.pocketdeck.application.advice.DeckAdvice
 import dev.pocketdeck.application.advice.ProviderAccess
@@ -31,6 +32,7 @@ import kotlinx.serialization.json.putJsonObject
 class OpenRouterDeckAdvisor(
     private val client: HttpClient,
     private val baseUrl: String = "https://openrouter.ai/api/v1",
+    private val diagnostics: AdvisorDiagnostics = AdvisorDiagnostics.NONE,
 ) : ProviderDeckAdvisor {
     override suspend fun advise(
         request: AdviceRequest,
@@ -42,6 +44,7 @@ class OpenRouterDeckAdvisor(
                     "$baseUrl/chat/completions",
                     headers(access),
                     body(request, access),
+                    diagnostics,
                     ::classify,
                 )
         ) {
