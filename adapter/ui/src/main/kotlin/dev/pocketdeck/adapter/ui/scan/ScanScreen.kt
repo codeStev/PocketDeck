@@ -163,6 +163,10 @@ private fun Review(
                 Text(stringResource(R.string.review_check_hint), style = MaterialTheme.typography.bodySmall)
             }
             state.notice?.let { Text(noticeText(it), color = MaterialTheme.colorScheme.error) }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Switch(checked = state.replaceCollection, onCheckedChange = onReplaceChanged)
+                Text(stringResource(R.string.review_replace), style = MaterialTheme.typography.bodyMedium)
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
                     onClick = onConfirm,
