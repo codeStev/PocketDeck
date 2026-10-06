@@ -100,7 +100,7 @@ class CollectionScanTest {
             val review =
                 listOf(ScannedCard(charmander.id, copies = 2, confidence = Confidence(0.9), needsReview = false))
 
-            confirm(review) shouldBe Outcome.Success(ConfirmedScan(updatedCards = 1))
+            confirm(review, replaceCollection = false) shouldBe Outcome.Success(ConfirmedScan(updatedCards = 1))
 
             collections.current().copiesOf(charmander.id) shouldBe 2
         }
@@ -111,7 +111,10 @@ class CollectionScanTest {
             collections.save(CardCollection.EMPTY.withCopies(magmar.id, 1))
             val confirm = ConfirmScanResultsService(catalogs, collections)
 
-            confirm(listOf(ScannedCard(charmander.id, 2, Confidence(0.9), needsReview = false)))
+            confirm(
+                listOf(ScannedCard(charmander.id, 2, Confidence(0.9), needsReview = false)),
+                replaceCollection = false,
+            )
 
             collections.current().copiesOf(magmar.id) shouldBe 1
         }
@@ -127,7 +130,8 @@ class CollectionScanTest {
                     ScannedCard(unknown, 1, Confidence(0.9), needsReview = false),
                 )
 
-            confirm(review) shouldBe Outcome.Failure(ConfirmScanFailure.UnknownCards(listOf(unknown)))
+            confirm(review, replaceCollection = false) shouldBe
+                Outcome.Failure(ConfirmScanFailure.UnknownCards(listOf(unknown)))
 
             collections.current() shouldBe CardCollection.EMPTY
         }
@@ -164,5 +168,33 @@ class CollectionScanTest {
                 finish()
                 awaitItem() shouldBe null
             }
+        }
+
+    @Test
+    fun `replacing the collection drops cards that the scan did not find`() =
+        runTest {
+            collections.save(CardCollection.EMPTY.withCopies(magmar.id, 4))
+            val confirm = ConfirmScanResultsService(catalogs, collections)
+
+            confirm(
+                listOf(ScannedCard(charmander.id, 2, Confidence(0.9), needsReview = false)),
+                replaceCollection = true,
+            )
+
+            collections.current().copiesOf(charmander.id) shouldBe 2
+            collections.current().copiesOf(magmar.id) shouldBe 0
+        }
+
+    @Test
+    fun `a rejected review does not touch the collection even when replacing`() =
+        runTest {
+            collections.save(CardCollection.EMPTY.withCopies(magmar.id, 4))
+            val confirm = ConfirmScanResultsService(catalogs, collections)
+            val review = listOf(ScannedCard(CardId("ghost"), 1, Confidence(0.9), needsReview = false))
+
+            confirm(review, replaceCollection = true) shouldBe
+                Outcome.Failure(ConfirmScanFailure.UnknownCards(listOf(CardId("ghost"))))
+
+            collections.current().copiesOf(magmar.id) shouldBe 4
         }
 }

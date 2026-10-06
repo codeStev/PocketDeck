@@ -45,6 +45,9 @@ object ScanCapture {
     /** Sent to the app's launch activity when the player stops a scan, so it can show the review. */
     const val ACTION_REVIEW = "dev.pocketdeck.action.REVIEW_SCAN"
 
+    /** Boolean extra of [ACTION_REVIEW]: the scan went from the top to the end of the list. */
+    const val EXTRA_COMPLETE = "complete"
+
     internal const val ACTION_START = "dev.pocketdeck.action.START_SCAN"
     internal const val ACTION_STOP = "dev.pocketdeck.action.STOP_SCAN"
     internal const val EXTRA_RESULT_CODE = "resultCode"

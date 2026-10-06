@@ -175,4 +175,22 @@ class CollectionViewModelTest {
 
             state.items.single().name shouldBe "Glurak ex"
         }
+
+    @Test
+    fun `typed text is available at once while the list follows after a short pause`() =
+        runTest(dispatcher) {
+            catalogs.replaceAll(listOf(charmander, magmar))
+            val viewModel = viewModel()
+            settled(viewModel).items.size shouldBe 2
+
+            viewModel.onQueryChange("m")
+            viewModel.onQueryChange("ma")
+            viewModel.onQueryChange("mag")
+
+            // The text field must never wait for the filtering, or keystrokes get lost.
+            viewModel.queryText.value shouldBe "mag"
+            viewModel.state.value.items.size shouldBe 2
+
+            settled(viewModel).items.map { it.name } shouldBe listOf("Magmar")
+        }
 }

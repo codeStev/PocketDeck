@@ -215,4 +215,42 @@ class ScanSessionTest {
         session.breakdown() shouldBe ReviewBreakdown(neverCounted = 1, disagreed = 0, lowConfidence = 1)
         session.breakdown().total shouldBe 2
     }
+
+    @Test
+    fun `a view that combines several prints beats views that saw only one of them`() {
+        val session =
+            ScanSession
+                .start()
+                .observe(listOf(TileRecognition(pikachu, copies = 3, confidence = Confidence(0.95))))
+                .observe(listOf(TileRecognition(pikachu, copies = 5, confidence = Confidence(0.95), parts = 2)))
+                .observe(listOf(TileRecognition(pikachu, copies = 3, confidence = Confidence(0.95))))
+
+        val result = session.summarize().single()
+
+        result.copies shouldBe 5
+        result.needsReview shouldBe false
+    }
+
+    @Test
+    fun `equally complete views that disagree are still flagged`() {
+        val session =
+            ScanSession
+                .start()
+                .observe(listOf(TileRecognition(pikachu, copies = 5, confidence = Confidence(0.95), parts = 2)))
+                .observe(listOf(TileRecognition(pikachu, copies = 4, confidence = Confidence(0.95), parts = 2)))
+
+        session.summarize().single().reason shouldBe ReviewReason.COUNT_DISAGREES
+    }
+
+    @Test
+    fun `a combined view needs at least one tile`() {
+        shouldThrow<IllegalArgumentException> {
+            TileRecognition(
+                pikachu,
+                copies = 2,
+                confidence = Confidence(0.9),
+                parts = 0,
+            )
+        }
+    }
 }

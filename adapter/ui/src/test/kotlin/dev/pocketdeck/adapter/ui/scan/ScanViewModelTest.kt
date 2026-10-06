@@ -97,7 +97,7 @@ class ScanViewModelTest {
             scanSeeing(tile(charmander, 2), tile(magmar, null, confidence = 0.9))
             val viewModel = viewModel()
 
-            viewModel.onReviewRequested()
+            viewModel.onReviewRequested(complete = false)
             advanceUntilIdle()
 
             val state = viewModel.state.value
@@ -111,7 +111,7 @@ class ScanViewModelTest {
         runTest(dispatcher) {
             val viewModel = viewModel()
 
-            viewModel.onReviewRequested()
+            viewModel.onReviewRequested(complete = false)
             advanceUntilIdle()
 
             viewModel.state.value.phase shouldBe ScanPhase.IDLE
@@ -123,7 +123,7 @@ class ScanViewModelTest {
         runTest(dispatcher) {
             scanSeeing(tile(magmar, null))
             val viewModel = viewModel()
-            viewModel.onReviewRequested()
+            viewModel.onReviewRequested(complete = false)
             advanceUntilIdle()
 
             viewModel.onAdjust(magmar.id, delta = 2)
@@ -139,7 +139,7 @@ class ScanViewModelTest {
         runTest(dispatcher) {
             scanSeeing(tile(charmander, 1))
             val viewModel = viewModel()
-            viewModel.onReviewRequested()
+            viewModel.onReviewRequested(complete = false)
             advanceUntilIdle()
 
             viewModel.onAdjust(charmander.id, delta = -5)
@@ -154,7 +154,7 @@ class ScanViewModelTest {
         runTest(dispatcher) {
             scanSeeing(tile(charmander, 1), tile(magmar, 1))
             val viewModel = viewModel()
-            viewModel.onReviewRequested()
+            viewModel.onReviewRequested(complete = false)
             advanceUntilIdle()
 
             viewModel.onRemove(magmar.id)
@@ -168,7 +168,7 @@ class ScanViewModelTest {
         runTest(dispatcher) {
             scanSeeing(tile(charmander, 2), tile(magmar, 1))
             val viewModel = viewModel()
-            viewModel.onReviewRequested()
+            viewModel.onReviewRequested(complete = false)
             advanceUntilIdle()
             viewModel.onAdjust(charmander.id, delta = 1)
             viewModel.onRemove(magmar.id)
@@ -187,7 +187,7 @@ class ScanViewModelTest {
         runTest(dispatcher) {
             scanSeeing(tile(charmander, 2))
             val viewModel = viewModel()
-            viewModel.onReviewRequested()
+            viewModel.onReviewRequested(complete = false)
             advanceUntilIdle()
 
             viewModel.onDiscard()
@@ -201,7 +201,7 @@ class ScanViewModelTest {
         runTest(dispatcher) {
             scanSeeing(tile(charmander, 2))
             val viewModel = viewModel()
-            viewModel.onReviewRequested()
+            viewModel.onReviewRequested(complete = false)
             advanceUntilIdle()
             viewModel.onConfirm()
             advanceUntilIdle()
@@ -235,7 +235,7 @@ class ScanViewModelTest {
             scanSeeing(tile(charmander, 2))
             val viewModel = viewModel()
             viewModel.onAutomaticChanged(false)
-            viewModel.onReviewRequested()
+            viewModel.onReviewRequested(complete = false)
             advanceUntilIdle()
             viewModel.onConfirm()
             advanceUntilIdle()
@@ -243,5 +243,61 @@ class ScanViewModelTest {
             viewModel.onDone()
 
             viewModel.state.value.automatic shouldBe false
+        }
+
+    @Test
+    fun `a complete scan offers to replace the whole collection`() =
+        runTest(dispatcher) {
+            scanSeeing(tile(charmander, 2))
+            val viewModel = viewModel()
+
+            viewModel.onReviewRequested(complete = true)
+            advanceUntilIdle()
+
+            viewModel.state.value.replaceCollection shouldBe true
+        }
+
+    @Test
+    fun `a partial scan only updates what it saw`() =
+        runTest(dispatcher) {
+            scanSeeing(tile(charmander, 2))
+            val viewModel = viewModel()
+
+            viewModel.onReviewRequested(complete = false)
+            advanceUntilIdle()
+
+            viewModel.state.value.replaceCollection shouldBe false
+        }
+
+    @Test
+    fun `confirming a complete scan removes cards that were not found`() =
+        runTest(dispatcher) {
+            collections.save(collections.current().withCopies(magmar.id, 5))
+            scanSeeing(tile(charmander, 2))
+            val viewModel = viewModel()
+            viewModel.onReviewRequested(complete = true)
+            advanceUntilIdle()
+
+            viewModel.onConfirm()
+            advanceUntilIdle()
+
+            collections.current().copiesOf(magmar.id) shouldBe 0
+            collections.current().copiesOf(charmander.id) shouldBe 2
+        }
+
+    @Test
+    fun `the player can turn replacing off`() =
+        runTest(dispatcher) {
+            collections.save(collections.current().withCopies(magmar.id, 5))
+            scanSeeing(tile(charmander, 2))
+            val viewModel = viewModel()
+            viewModel.onReviewRequested(complete = true)
+            advanceUntilIdle()
+            viewModel.onReplaceChanged(false)
+
+            viewModel.onConfirm()
+            advanceUntilIdle()
+
+            collections.current().copiesOf(magmar.id) shouldBe 5
         }
 }

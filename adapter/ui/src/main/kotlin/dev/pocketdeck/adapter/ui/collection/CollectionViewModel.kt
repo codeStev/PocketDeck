@@ -12,10 +12,12 @@ import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.card.Language
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
@@ -23,6 +25,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** Talks to the application only through its inbound ports. */
+@OptIn(FlowPreview::class)
 class CollectionViewModel(
     observeCatalog: ObserveCardCatalog,
     observeCollection: ObserveCollection,
@@ -32,6 +35,10 @@ class CollectionViewModel(
     listingDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     private val query = MutableStateFlow("")
+
+    /** What the player has typed so far; updates immediately so the text field never lags behind the keyboard. */
+    val queryText: StateFlow<String> = query
+
     private val ownedOnly = MutableStateFlow(false)
     private val syncState = MutableStateFlow<SyncState>(SyncState.Idle)
 
@@ -115,5 +122,6 @@ class CollectionViewModel(
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
+        const val QUERY_DEBOUNCE_MS = 200L
     }
 }

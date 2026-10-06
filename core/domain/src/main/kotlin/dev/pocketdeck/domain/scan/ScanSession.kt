@@ -19,9 +19,16 @@ data class TileRecognition(
     val cardId: CardId,
     val copies: Int?,
     val confidence: Confidence,
+    /**
+     * How many tiles of the same card this observation adds up. Reprints with identical artwork are indistinguishable,
+     * so when several of them are on screen together their counts are summed into one observation; a view that
+     * combined more tiles is a more complete picture of the card than one that saw only a part.
+     */
+    val parts: Int = 1,
 ) {
     init {
         require(copies == null || copies >= 1) { "A recognised tile shows at least one copy but was $copies" }
+        require(parts >= 1) { "An observation combines at least one tile but was $parts" }
     }
 }
 
@@ -83,7 +90,9 @@ class ScanSession private constructor(
         cardId: CardId,
         seen: List<TileRecognition>,
     ): ScannedCard {
-        val counted = seen.filter { it.copies != null }.groupBy { it.copies }
+        // The most complete views win: a frame that showed all twin prints beats frames that showed only some.
+        val mostParts = seen.filter { it.copies != null }.maxOfOrNull { it.parts }
+        val counted = seen.filter { it.copies != null && it.parts == mostParts }.groupBy { it.copies }
         // A card that appears in the owned list is owned at least once, which is all we can say without a count.
         if (counted.isEmpty()) {
             val identification = Confidence(seen.maxOf { it.confidence.value })

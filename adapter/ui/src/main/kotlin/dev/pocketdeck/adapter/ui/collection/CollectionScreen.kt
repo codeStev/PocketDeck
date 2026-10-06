@@ -49,8 +49,10 @@ private const val DETAIL_LINES = 2
 @Composable
 fun CollectionScreen(viewModel: CollectionViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val queryText by viewModel.queryText.collectAsStateWithLifecycle()
     CollectionContent(
         state = state,
+        queryText = queryText,
         onQueryChange = viewModel::onQueryChange,
         onOwnedOnlyChange = viewModel::onOwnedOnlyChange,
         onAdjust = viewModel::adjust,
@@ -62,6 +64,7 @@ fun CollectionScreen(viewModel: CollectionViewModel) {
 @Composable
 internal fun CollectionContent(
     state: CollectionUiState,
+    queryText: String,
     onQueryChange: (String) -> Unit,
     onOwnedOnlyChange: (Boolean) -> Unit,
     onAdjust: (CardId, Int) -> Unit,
@@ -80,7 +83,7 @@ internal fun CollectionContent(
         },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
-            Filters(state, onQueryChange, onOwnedOnlyChange)
+            Filters(state, queryText, onQueryChange, onOwnedOnlyChange)
             SyncBanner(state.sync, onSync)
             when {
                 state.items.isEmpty() && state.sync == SyncState.Syncing -> {
@@ -104,12 +107,13 @@ internal fun CollectionContent(
 @Composable
 private fun Filters(
     state: CollectionUiState,
+    queryText: String,
     onQueryChange: (String) -> Unit,
     onOwnedOnlyChange: (Boolean) -> Unit,
 ) {
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedTextField(
-            value = state.query,
+            value = queryText,
             onValueChange = onQueryChange,
             label = { Text(stringResource(R.string.collection_search_hint)) },
             singleLine = true,

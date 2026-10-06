@@ -104,12 +104,22 @@ class CardIndexTest {
     }
 
     @Test
-    fun `the shipped index covers every card of the master dataset`() {
+    fun `the shipped index holds one entry per distinct artwork`() {
         val index = TestImages.loadIndex()
 
-        index.size shouldBe 4317
+        // 4,317 printed cards, of which 700 are reprints of another card with identical artwork and effect.
+        index.size shouldBe 3617
         index.parameters.width shouldBe 48
         index.parameters.height shouldBe 28
-        (index.thumbnailOf(CardId("a2b-108")).size) shouldBe 48 * 28
+        index.thumbnailOf(CardId("a2b-108")).size shouldBe 48 * 28
+    }
+
+    @Test
+    fun `a reprint is represented by the lowest id of its artwork`() {
+        val index = TestImages.loadIndex()
+
+        // a4b-061 reprints a1-039 (same artwork, same effect), so only the original is in the index.
+        index.thumbnailOf(CardId("a1-039")).size shouldBe 48 * 28
+        shouldThrow<IllegalArgumentException> { index.thumbnailOf(CardId("a4b-061")) }
     }
 }

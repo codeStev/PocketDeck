@@ -31,6 +31,8 @@ data class ScanUiState(
     val notice: ScanNotice? = null,
     /** Whether the app scrolls the game by itself during the next scan. */
     val automatic: Boolean = true,
+    /** Whether saving makes the scan the whole collection (cards it did not find become 0). */
+    val replaceCollection: Boolean = false,
 )
 
 /** Drives the scan and review screens through the application's inbound ports only. */
@@ -67,7 +69,7 @@ class ScanViewModel(
     }
 
     /** The scan was stopped (from the floating button): fetch its result for the player to check. */
-    fun onReviewRequested() {
+    fun onReviewRequested(complete: Boolean) {
         viewModelScope.launch {
             when (val outcome = finishScan()) {
                 is Outcome.Failure -> {
@@ -88,6 +90,7 @@ class ScanViewModel(
                             progress = null,
                             review = items,
                             notice = null,
+                            replaceCollection = complete,
                         )
                     }
                 }
@@ -101,6 +104,8 @@ class ScanViewModel(
     ) = updateItem(cardId) {
         it.copy(copies = (it.copies + delta).coerceAtLeast(MIN_COPIES), needsReview = false, reason = null)
     }
+
+    fun onReplaceChanged(replace: Boolean) = mutableState.update { it.copy(replaceCollection = replace) }
 
     fun onAccept(cardId: CardId) = updateItem(cardId) { it.copy(needsReview = false, reason = null) }
 
@@ -117,6 +122,7 @@ class ScanViewModel(
 
     fun onConfirm() {
         val review = mutableState.value.review
+        val replace = mutableState.value.replaceCollection
         viewModelScope.launch {
             val scanned =
                 review.map {
@@ -127,7 +133,7 @@ class ScanViewModel(
                         needsReview = false,
                     )
                 }
-            when (val outcome = confirmScan(scanned)) {
+            when (val outcome = confirmScan(scanned, replace)) {
                 is Outcome.Success -> {
                     mutableState.update {
                         it.copy(

@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
 
     private var selectedTab by mutableStateOf(AppTab.COLLECTION)
     private var reviewRequests by mutableIntStateOf(0)
+    private var reviewIsComplete = false
     private var autoScrollEnabled by mutableStateOf(false)
     private var pendingAutomatic = true
 
@@ -50,7 +51,13 @@ class MainActivity : ComponentActivity() {
             PocketDeckTheme {
                 val collectionViewModel = viewModel<CollectionViewModel>(factory = collectionViewModelFactory)
                 val scanViewModel = viewModel<ScanViewModel>(factory = scanViewModelFactory)
-                LaunchedEffect(reviewRequests) { if (reviewRequests > 0) scanViewModel.onReviewRequested() }
+                LaunchedEffect(reviewRequests) {
+                    if (reviewRequests >
+                        0
+                    ) {
+                        scanViewModel.onReviewRequested(reviewIsComplete)
+                    }
+                }
 
                 val captureConsent =
                     rememberLauncherForActivityResult(RequestScreenCapture()) { consent ->
@@ -109,6 +116,7 @@ class MainActivity : ComponentActivity() {
     private fun handle(intent: Intent?) {
         if (intent?.action == ScanCapture.ACTION_REVIEW) {
             selectedTab = AppTab.SCAN
+            reviewIsComplete = intent.getBooleanExtra(ScanCapture.EXTRA_COMPLETE, false)
             reviewRequests++
         }
     }

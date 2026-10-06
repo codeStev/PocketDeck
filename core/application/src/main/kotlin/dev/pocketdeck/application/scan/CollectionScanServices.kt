@@ -3,6 +3,7 @@ package dev.pocketdeck.application.scan
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.catalog.CardCatalogRepository
 import dev.pocketdeck.application.collection.CollectionRepository
+import dev.pocketdeck.domain.collection.CardCollection
 import dev.pocketdeck.domain.scan.ScanSession
 import dev.pocketdeck.domain.scan.ScannedCard
 import kotlinx.coroutines.flow.map
@@ -48,12 +49,16 @@ class ConfirmScanResultsService(
     private val catalogs: CardCatalogRepository,
     private val collections: CollectionRepository,
 ) : ConfirmScanResults {
-    override suspend fun invoke(review: List<ScannedCard>): Outcome<ConfirmedScan, ConfirmScanFailure> {
+    override suspend fun invoke(
+        review: List<ScannedCard>,
+        replaceCollection: Boolean,
+    ): Outcome<ConfirmedScan, ConfirmScanFailure> {
         val catalog = catalogs.current()
         val unknown = review.map { it.cardId }.filter { it !in catalog }
         if (unknown.isNotEmpty()) return Outcome.Failure(ConfirmScanFailure.UnknownCards(unknown))
 
-        val updated = review.fold(collections.current()) { acc, card -> acc.withCopies(card.cardId, card.copies) }
+        val base = if (replaceCollection) CardCollection.EMPTY else collections.current()
+        val updated = review.fold(base) { acc, card -> acc.withCopies(card.cardId, card.copies) }
         collections.save(updated)
         return Outcome.Success(ConfirmedScan(updatedCards = review.size))
     }

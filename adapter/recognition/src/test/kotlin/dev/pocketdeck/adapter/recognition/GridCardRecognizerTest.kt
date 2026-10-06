@@ -122,4 +122,56 @@ class GridCardRecognizerTest {
 
             first.cardId shouldBe CardId("aa-original")
         }
+
+    @Test
+    fun `identical tiles in one frame are different prints and their counts add up`() =
+        runTest {
+            // Copy the first tile onto the other two of its row: three prints of the same card side by side.
+            val tiles = CollectionGridDetector().detect(screenshot).take(3)
+            val pixels = screenshot.pixels.copyOf()
+            for (target in tiles.drop(1)) {
+                for (y in 0 until tiles[0].height) {
+                    for (x in 0 until tiles[0].width) {
+                        pixels[(target.y + y) * screenshot.width + target.x + x] =
+                            screenshot.pixels[(tiles[0].y + y) * screenshot.width + tiles[0].x + x]
+                    }
+                }
+            }
+            val frame = ScreenFrame(screenshot.width, screenshot.height, pixels)
+            val twoPerTile = CopyCountReader { _, _ -> CopyCountReading(copies = 2, confidence = 1.0) }
+
+            val recognitions = recognizer(twoPerTile).recognize(frame)
+
+            val combined = recognitions.single { it.cardId == expectedIds.first() }
+            combined.copies shouldBe 6
+            combined.parts shouldBe 3
+            recognitions.size shouldBe 7
+        }
+
+    @Test
+    fun `one unreadable twin makes the combined count unknown`() =
+        runTest {
+            val tiles = CollectionGridDetector().detect(screenshot).take(2)
+            val pixels = screenshot.pixels.copyOf()
+            for (y in 0 until tiles[0].height) {
+                for (x in 0 until tiles[0].width) {
+                    pixels[(tiles[1].y + y) * screenshot.width + tiles[1].x + x] =
+                        screenshot.pixels[(tiles[0].y + y) * screenshot.width + tiles[0].x + x]
+                }
+            }
+            val frame = ScreenFrame(screenshot.width, screenshot.height, pixels)
+            var first = true
+            val oneUnreadable =
+                CopyCountReader {
+                    _,
+                    _,
+                    ->
+                    if (first) null.also { first = false } else CopyCountReading(2, 1.0)
+                }
+
+            val combined = recognizer(oneUnreadable).recognize(frame).single { it.cardId == expectedIds.first() }
+
+            combined.copies shouldBe null
+            combined.parts shouldBe 2
+        }
 }

@@ -132,7 +132,7 @@ class ScanCaptureService : Service() {
         try {
             if (automatic) {
                 when (val outcome = dependencies.automaticScan(capturer, AccessibilityGridScroller())()) {
-                    is Outcome.Success -> finish(openReview = true)
+                    is Outcome.Success -> finish(openReview = true, complete = true)
                     is Outcome.Failure -> endAutomaticScan(outcome.reason)
                 }
             } else {
@@ -158,20 +158,24 @@ class ScanCaptureService : Service() {
         finish(openReview = reason != AutoScanFailure.ScanNotRunning)
     }
 
-    private fun finish(openReview: Boolean) {
+    private fun finish(
+        openReview: Boolean,
+        complete: Boolean = false,
+    ) {
         val current = session ?: return
         session = null
         overlay?.remove()
         overlay = null
         current.release()
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
-        if (openReview) openReviewScreen()
+        if (openReview) openReviewScreen(complete)
         stopSelf()
     }
 
-    private fun openReviewScreen() {
+    private fun openReviewScreen(complete: Boolean) {
         val launch = packageManager.getLaunchIntentForPackage(packageName) ?: return
         launch.action = ScanCapture.ACTION_REVIEW
+        launch.putExtra(ScanCapture.EXTRA_COMPLETE, complete)
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         startActivity(launch)
     }

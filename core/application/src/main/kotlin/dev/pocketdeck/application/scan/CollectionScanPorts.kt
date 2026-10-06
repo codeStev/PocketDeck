@@ -56,7 +56,13 @@ fun interface FinishCollectionScan {
     operator fun invoke(): Outcome<List<ScannedCard>, ScanFailure>
 }
 
-/** Inbound port: write a (possibly player-corrected) review into the collection. */
+/**
+ * Inbound port: write a (possibly player-corrected) review into the collection. A scan that covered the whole list
+ * can [replaceCollection]: cards that were not found are then no longer owned. A partial scan only updates what it saw.
+ */
 fun interface ConfirmScanResults {
-    suspend operator fun invoke(review: List<ScannedCard>): Outcome<ConfirmedScan, ConfirmScanFailure>
+    suspend operator fun invoke(
+        review: List<ScannedCard>,
+        replaceCollection: Boolean,
+    ): Outcome<ConfirmedScan, ConfirmScanFailure>
 }

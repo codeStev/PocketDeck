@@ -34,7 +34,21 @@ class GridCardRecognizer(
 
     override suspend fun recognize(frame: ScreenFrame): List<TileRecognition> =
         withContext(Dispatchers.Default) {
-            detector.detect(frame).mapNotNull { recognizeTile(frame, it) }
+            combinePrints(detector.detect(frame).mapNotNull { recognizeTile(frame, it) })
+        }
+
+    /**
+     * Reprints with identical artwork resolve to one card, so tiles of the same card in one frame are different prints
+     * lying side by side: their counts add up. One unreadable count makes the sum unknown.
+     */
+    private fun combinePrints(recognitions: List<TileRecognition>): List<TileRecognition> =
+        recognitions.groupBy { it.cardId }.map { (cardId, tiles) ->
+            if (tiles.size == 1) {
+                tiles.single()
+            } else {
+                val copies = if (tiles.any { it.copies == null }) null else tiles.sumOf { requireNotNull(it.copies) }
+                TileRecognition(cardId, copies, Confidence(tiles.minOf { it.confidence.value }), parts = tiles.size)
+            }
         }
 
     private fun recognizeTile(

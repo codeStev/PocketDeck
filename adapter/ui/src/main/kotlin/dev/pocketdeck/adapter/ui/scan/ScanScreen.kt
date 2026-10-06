@@ -52,6 +52,7 @@ fun ScanScreen(
         onAdjust = viewModel::onAdjust,
         onAccept = viewModel::onAccept,
         onRemove = viewModel::onRemove,
+        onReplaceChanged = viewModel::onReplaceChanged,
         onConfirm = viewModel::onConfirm,
         onDiscard = viewModel::onDiscard,
         onDone = viewModel::onDone,
@@ -68,6 +69,7 @@ internal fun ScanContent(
     onAdjust: (CardId, Int) -> Unit,
     onAccept: (CardId) -> Unit,
     onRemove: (CardId) -> Unit,
+    onReplaceChanged: (Boolean) -> Unit,
     onConfirm: () -> Unit,
     onDiscard: () -> Unit,
     onDone: () -> Unit,
@@ -78,7 +80,7 @@ internal fun ScanContent(
         }
 
         ScanPhase.REVIEW -> {
-            Review(state, onAdjust, onAccept, onRemove, onConfirm, onDiscard)
+            Review(state, onAdjust, onAccept, onRemove, onReplaceChanged, onConfirm, onDiscard)
         }
 
         ScanPhase.SAVED -> {
@@ -149,6 +151,7 @@ private fun Review(
     onAdjust: (CardId, Int) -> Unit,
     onAccept: (CardId) -> Unit,
     onRemove: (CardId) -> Unit,
+    onReplaceChanged: (Boolean) -> Unit,
     onConfirm: () -> Unit,
     onDiscard: () -> Unit,
 ) {
