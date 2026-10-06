@@ -88,7 +88,8 @@
     }
    ],
    "isEx": false,
-   "isMega": false
+   "isMega": false,
+   "gameEntityId": 10
   },
   {
    "id": "a1-002",
@@ -129,7 +130,8 @@
     }
    ],
    "isEx": false,
-   "isMega": false
+   "isMega": false,
+   "gameEntityId": 20
   },
   {
    "id": "a1-003",
@@ -170,7 +172,8 @@
     }
    ],
    "isEx": false,
-   "isMega": false
+   "isMega": false,
+   "gameEntityId": 30
   },
   {
    "id": "a1-004",
@@ -217,7 +220,8 @@
     }
    ],
    "isEx": true,
-   "isMega": false
+   "isMega": false,
+   "gameEntityId": 40
   },
   {
    "id": "a1-094",
@@ -255,7 +259,8 @@
     }
    ],
    "isEx": false,
-   "isMega": false
+   "isMega": false,
+   "gameEntityId": 940
   },
   {
    "id": "a1a-025",
@@ -293,7 +298,8 @@
     }
    ],
    "isEx": false,
-   "isMega": false
+   "isMega": false,
+   "gameEntityId": 2390
   },
   {
    "id": "a2a-025",
@@ -331,7 +337,8 @@
     }
    ],
    "isEx": false,
-   "isMega": false
+   "isMega": false,
+   "gameEntityId": 4490
   },
   {
    "id": "a1-219",
@@ -354,7 +361,8 @@
     "de": "https://assets.tcgdex.net/de/tcgp/A1/219/high.webp"
    },
    "trainerKind": "supporter",
-   "text": "Heal 50 damage from 1 of your [ G ] Pokémon."
+   "text": "Heal 50 damage from 1 of your [ G ] Pokémon.",
+   "gameEntityId": 110
   },
   {
    "id": "a2-147",
@@ -377,7 +385,8 @@
     "de": "https://assets.tcgdex.net/de/tcgp/A2/147/high.webp"
    },
    "trainerKind": "tool",
-   "text": "The Pokémon this card is attached to gets +20 HP."
+   "text": "The Pokémon this card is attached to gets +20 HP.",
+   "gameEntityId": 290
   },
   {
    "id": "b2-153",
@@ -400,7 +409,8 @@
     "de": null
    },
    "trainerKind": "stadium",
-   "text": "Attacks used by Stage 1 Pokémon in play (both yours and your opponent's) do +10 damage to the opponent's Active Pokémon."
+   "text": "Attacks used by Stage 1 Pokémon in play (both yours and your opponent's) do +10 damage to the opponent's Active Pokémon.",
+   "gameEntityId": 1140
   },
   {
    "id": "a1-216",
@@ -423,7 +433,8 @@
     "de": "https://assets.tcgdex.net/de/tcgp/A1/216/high.webp"
    },
    "trainerKind": "item",
-   "text": "Play this card as if it were a 40-HP Basic [ C ] Pokémon. At any time during your turn, you may discard this card from play. This card can't retreat."
+   "text": "Play this card as if it were a 40-HP Basic [ C ] Pokémon. At any time during your turn, you may discard this card from play. This card can't retreat.",
+   "gameEntityId": 80
   },
   {
    "id": "b3a-100",
@@ -461,7 +472,8 @@
     }
    ],
    "isEx": false,
-   "isMega": false
+   "isMega": false,
+   "gameEntityId": 15700
   },
   {
    "id": "a2b-108",
@@ -508,7 +520,8 @@
     }
    ],
    "isEx": true,
-   "isMega": false
+   "isMega": false,
+   "gameEntityId": 5290
   },
   {
    "id": "b4-203",
@@ -546,7 +559,8 @@
     }
    ],
    "isEx": true,
-   "isMega": true
+   "isMega": true,
+   "gameEntityId": 20810
   }
  ]
 }

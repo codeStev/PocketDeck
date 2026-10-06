@@ -28,7 +28,10 @@ def trainer(card_id="a1-219", name="Erika", **overrides):
 
 SPECIES = {"1": {"en": "Bulbasaur", "de": "Bisasam"}, "2": {"en": "Ivysaur", "de": "Bisaknosp"}}
 TCGDEX = {"sets": {"A1": "Unschlagbare Gene"}, "cards": {"A1-001": {"name": "Bisasam", "image": "https://x.test/de/A1/001"}}}
-FLIBUSTIER = [{"set": "A1", "number": 1, "rarity": "C", "packs": ["Mewtwo", "Pikachu"]}]
+FLIBUSTIER = [
+    {"set": "A1", "number": 1, "rarity": "C", "packs": ["Mewtwo", "Pikachu"], "image": "cPK_10_000010_00_FUSHIGIDANE_C.webp"},
+    {"set": "PROMO-A", "number": 7, "rarity": "P", "packs": [], "image": "cTR_90_000040_00_HAKASENOKENKYU_C.webp"},
+]
 
 
 def build(v5):
@@ -46,6 +49,19 @@ class MergeTests(unittest.TestCase):
         self.assertEqual(record["packs"], ["Mewtwo", "Pikachu"])
         self.assertEqual((record["kind"], record["energyType"], record["stage"], record["hp"]), ("pokemon", "grass", "basic", 70))
         self.assertEqual(record["attacks"], [{"cost": "GC", "name": "Vine Whip", "damage": 40, "effect": None}])
+
+    def test_records_the_games_own_id_of_each_card(self):
+        # The game's deck codes name cards by the number in the asset file name, not by set and number.
+        pokemon_record = build([pokemon()])["cards"][0]
+        promo = build([trainer("pa-007", "Professor's Research", set_code="pa")])["cards"][0]
+
+        self.assertEqual(pokemon_record["gameEntityId"], 10)
+        self.assertEqual(promo["gameEntityId"], 40)
+
+    def test_a_card_the_games_database_does_not_know_has_no_game_id(self):
+        record = build([pokemon("a1-002", "Ivysaur", stage="Stage 1", evolves_from="Bulbasaur", health=90)])["cards"][0]
+
+        self.assertIsNone(record["gameEntityId"])
 
     def test_evolution_records_name_their_predecessor_in_both_languages(self):
         ivysaur = pokemon("a1-002", "Ivysaur", stage="Stage 1", evolves_from="Bulbasaur", health=90)

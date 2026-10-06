@@ -10,6 +10,9 @@ sealed interface Card {
     val gameplayKey: GameplayKey
     val artwork: ArtworkUrl?
 
+    /** The number the game itself uses for this card; its deck codes name cards by it. Null if it is not known. */
+    val gameEntityId: Int?
+
     /** The name as printed in German; equals [name] when no translation is known. */
     val germanName: CardName
 
@@ -31,6 +34,7 @@ data class PokemonCard(
     override val gameplayKey: GameplayKey = GameplayKey.of(name),
     override val artwork: ArtworkUrl? = null,
     override val germanName: CardName = name,
+    override val gameEntityId: Int? = null,
 ) : Card {
     init {
         require(hp > 0) { "hp must be positive but was $hp" }
@@ -54,4 +58,5 @@ data class TrainerCard(
     override val gameplayKey: GameplayKey = GameplayKey.of(name),
     override val artwork: ArtworkUrl? = null,
     override val germanName: CardName = name,
+    override val gameEntityId: Int? = null,
 ) : Card

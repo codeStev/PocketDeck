@@ -13,6 +13,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,14 +31,17 @@ import dev.pocketdeck.domain.deck.SuggestionOrigin
 @Composable
 fun DecksScreen(viewModel: DecksViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    DecksContent(state, viewModel::onRefresh)
+    DecksContent(state, viewModel::onRefresh, viewModel::onShowCode, viewModel::onCloseCode)
 }
 
 @Composable
 internal fun DecksContent(
     state: DecksUiState,
     onRefresh: () -> Unit,
+    onShowCode: (String) -> Unit,
+    onCloseCode: () -> Unit,
 ) {
+    state.code?.let { DeckCodeDialog(it, onCloseCode) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding =
@@ -46,7 +50,7 @@ internal fun DecksContent(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { Header(state, onRefresh) }
-        items(state.items, key = { it.key }) { item -> DeckCard(item) }
+        items(state.items, key = { it.key }) { item -> DeckCard(item, onShowCode) }
     }
 }
 
@@ -76,7 +80,10 @@ private fun noticeText(notice: DecksNotice) =
     )
 
 @Composable
-private fun DeckCard(item: DeckItem) {
+private fun DeckCard(
+    item: DeckItem,
+    onShowCode: (String) -> Unit,
+) {
     var expanded by rememberSaveable(item.key) { mutableStateOf(false) }
     Card(Modifier.fillMaxWidth().clickable { expanded = !expanded }) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -93,6 +100,7 @@ private fun DeckCard(item: DeckItem) {
                 )
             }
             if (expanded) item.cards.forEach { CardLine(it) }
+            OutlinedButton(onClick = { onShowCode(item.key) }) { Text(stringResource(R.string.decks_code_show)) }
         }
     }
 }

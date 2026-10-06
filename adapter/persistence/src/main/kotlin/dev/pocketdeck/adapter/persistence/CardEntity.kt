@@ -20,6 +20,8 @@ internal data class CardEntity(
     val evolvesFrom: String?,
     val retreatCost: Int?,
     val trainerKind: String?,
+    // Added in schema version 4; rows migrated from version 3 have none until the next sync.
+    val gameEntityId: Int? = null,
 )
 
 @Entity(tableName = "owned_card")

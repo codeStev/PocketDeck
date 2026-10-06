@@ -60,6 +60,12 @@ class MasterCatalogSourceTest {
         }
 
     @Test
+    fun `carries the number the game itself uses for the card`() =
+        runTest {
+            cards().getValue("a1-001").gameEntityId shouldBe 10
+        }
+
+    @Test
     fun `maps evolutions with their predecessor`() =
         runTest {
             (cards().getValue("a1-002") as PokemonCard).run {

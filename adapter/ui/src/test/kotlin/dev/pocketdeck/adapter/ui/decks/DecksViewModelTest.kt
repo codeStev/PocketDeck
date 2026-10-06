@@ -1,6 +1,10 @@
 package dev.pocketdeck.adapter.ui.decks
 
 import dev.pocketdeck.application.Outcome
+import dev.pocketdeck.application.deckcode.DeckCode
+import dev.pocketdeck.application.deckcode.DeckCodeFailure
+import dev.pocketdeck.application.deckcode.ExportDeckCode
+import dev.pocketdeck.application.deckcode.ExportDeckCodeService
 import dev.pocketdeck.application.fakes.InMemoryCardCatalogRepository
 import dev.pocketdeck.application.fakes.InMemoryCollectionRepository
 import dev.pocketdeck.application.meta.InMemoryMetaSnapshotRepository
@@ -10,6 +14,7 @@ import dev.pocketdeck.application.meta.RefreshMetaSnapshotService
 import dev.pocketdeck.application.suggest.DeckSuggestionStrategy
 import dev.pocketdeck.application.suggest.SuggestDecksService
 import dev.pocketdeck.domain.card.CardCatalog
+import dev.pocketdeck.domain.card.CardName
 import dev.pocketdeck.domain.card.Language
 import dev.pocketdeck.domain.collection.CardCollection
 import dev.pocketdeck.domain.collection.Inventory
@@ -52,7 +57,10 @@ class DecksViewModelTest {
             listOf(DeckSuggestion("Charizard", SuggestionOrigin.META, deck, completeness, 1.0))
         }
 
-    private fun viewModel(refresh: RefreshMetaSnapshot): DecksViewModel {
+    private fun viewModel(
+        refresh: RefreshMetaSnapshot,
+        export: ExportDeckCode = ExportDeckCodeService(),
+    ): DecksViewModel {
         val suggest =
             SuggestDecksService(
                 InMemoryCardCatalogRepository(),
@@ -60,7 +68,7 @@ class DecksViewModelTest {
                 snapshots,
                 listOf(strategy),
             )
-        return DecksViewModel(suggest, refresh, Language.ENGLISH)
+        return DecksViewModel(suggest, refresh, export, Language.ENGLISH)
     }
 
     private val succeeding = RefreshMetaSnapshot { Outcome.Success(MetaSnapshot.EMPTY) }
@@ -122,9 +130,17 @@ class DecksViewModelTest {
         runTest(dispatcher) {
             var succeed = false
             val viewModel =
-                viewModel {
-                    if (succeed) Outcome.Success(MetaSnapshot.EMPTY) else Outcome.Failure(MetaSourceFailure.NoDecklists)
-                }
+                viewModel(
+                    RefreshMetaSnapshot {
+                        if (succeed) {
+                            Outcome.Success(
+                                MetaSnapshot.EMPTY,
+                            )
+                        } else {
+                            Outcome.Failure(MetaSourceFailure.NoDecklists)
+                        }
+                    },
+                )
             advanceUntilIdle()
 
             succeed = true
@@ -132,5 +148,53 @@ class DecksViewModelTest {
             advanceUntilIdle()
 
             viewModel.state.value.notice shouldBe null
+        }
+
+    @Test
+    fun `shows the code of a deck the game can import`() =
+        runTest(dispatcher) {
+            val code = DeckCode("AAAA")
+            val viewModel = viewModel(succeeding, { Outcome.Success(code) })
+            advanceUntilIdle()
+
+            viewModel.onShowCode(
+                viewModel.state.value.items
+                    .single()
+                    .key,
+            )
+
+            viewModel.state.value.code shouldBe DeckCodeUi.Ready("Charizard", "AAAA")
+        }
+
+    @Test
+    fun `explains why a deck has no code`() =
+        runTest(dispatcher) {
+            val viewModel =
+                viewModel(succeeding, { Outcome.Failure(DeckCodeFailure.UnknownToGame(listOf(CardName("Mystery")))) })
+            advanceUntilIdle()
+
+            viewModel.onShowCode(
+                viewModel.state.value.items
+                    .single()
+                    .key,
+            )
+
+            viewModel.state.value.code shouldBe DeckCodeUi.Unavailable("Charizard", listOf("Mystery"))
+        }
+
+    @Test
+    fun `closing the code hides it`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(succeeding, { Outcome.Success(DeckCode("AAAA")) })
+            advanceUntilIdle()
+            viewModel.onShowCode(
+                viewModel.state.value.items
+                    .single()
+                    .key,
+            )
+
+            viewModel.onCloseCode()
+
+            viewModel.state.value.code shouldBe null
         }
 }

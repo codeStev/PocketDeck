@@ -1,6 +1,7 @@
 """Merges the upstream datasets into one master record per printed card."""
 
 import hashlib
+import re
 from datetime import datetime, timezone
 
 from .names import NameBook, SpeciesNames, canonical_spellings, normalize_tcgdex_name, tcgdex_id_to_master_id
@@ -87,7 +88,7 @@ def repair_names(v5: list) -> tuple:
 def build_master(v5: list, flibustier: list, species: dict, tcgdex: dict, generated_at: str = None) -> dict:
     """Pure function over already-loaded sources, so it can be tested without any network."""
     v5, repaired_names = repair_names(v5)
-    extras = {(c["set"].lower(), int(c["number"])): c for c in flibustier}
+    extras = {(_set_code(c["set"]), int(c["number"])): c for c in flibustier}
     german_names = {
         tcgdex_id_to_master_id(card_id): normalize_tcgdex_name(entry["name"])
         for card_id, entry in tcgdex["cards"].items()
@@ -111,6 +112,20 @@ def build_master(v5: list, flibustier: list, species: dict, tcgdex: dict, genera
         "sets": _sets(v5, tcgdex),
         "cards": cards,
     }
+
+
+def _set_code(flibustier_set: str) -> str:
+    """The promo sets are `PROMO-A` there and `pa` here."""
+    return flibustier_set.lower().replace("promo-", "p")
+
+
+_ENTITY_FILE = re.compile(r"^c(?:PK|TR)_\d+_(\d{6})_", re.IGNORECASE)
+
+
+def _entity_id(image):
+    """The game names a card by the number in its asset file name; its deck codes use that number."""
+    match = _ENTITY_FILE.match(image or "")
+    return int(match.group(1)) if match else None
 
 
 def _sets(v5: list, tcgdex: dict) -> list:
@@ -141,6 +156,7 @@ def _card_record(card, extras, book, german_images, evolves_from_de) -> dict:
         "gameplayKey": gameplay_key(card),
         "rarity": card["rarity"],
         "rarityCode": extra.get("rarity"),
+        "gameEntityId": _entity_id(extra.get("image")),
         "packs": extra.get("packs") or ([card["pack"]] if card.get("pack") else []),
         "artwork": {"en": card["image"], "de": _german_artwork(german_images.get(card["id"]))},
     }

@@ -36,6 +36,8 @@ import dev.pocketdeck.application.collection.ObserveCollection
 import dev.pocketdeck.application.collection.ObserveCollectionService
 import dev.pocketdeck.application.collection.RestorePreviousCollection
 import dev.pocketdeck.application.collection.RestorePreviousCollectionService
+import dev.pocketdeck.application.deckcode.ExportDeckCode
+import dev.pocketdeck.application.deckcode.ExportDeckCodeService
 import dev.pocketdeck.application.meta.InMemoryMetaSnapshotRepository
 import dev.pocketdeck.application.meta.MetaDecklistSource
 import dev.pocketdeck.application.meta.MetaSnapshotRepository
@@ -208,8 +210,12 @@ object AppModule {
     fun decksViewModelFactory(
         suggestDecks: SuggestDecks,
         refreshMetaSnapshot: RefreshMetaSnapshot,
+        exportDeckCode: ExportDeckCode,
         language: Language,
-    ) = DecksViewModel.Factory(suggestDecks, refreshMetaSnapshot, language)
+    ) = DecksViewModel.Factory(suggestDecks, refreshMetaSnapshot, exportDeckCode, language)
+
+    @Provides
+    fun exportDeckCode(): ExportDeckCode = ExportDeckCodeService()
 
     @Provides
     fun scanViewModelFactory(

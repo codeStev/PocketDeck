@@ -27,11 +27,18 @@ class CardEntityMapperTest {
             gameplayKey = GameplayKey("Charizard ex#abc"),
             artwork = ArtworkUrl("https://example.test/a1-036.webp"),
             germanName = CardName("Glurak ex"),
+            gameEntityId = 360,
         )
     private val bulbasaur: Card =
         PokemonCard(CardId("a1-001"), CardName("Bulbasaur"), EnergyType.GRASS, Stage.BASIC, hp = 70)
     private val giovanni: Card =
-        TrainerCard(CardId("a1-223"), CardName("Giovanni"), TrainerKind.SUPPORTER, GameplayKey("Giovanni#x"))
+        TrainerCard(
+            CardId("a1-223"),
+            CardName("Giovanni"),
+            TrainerKind.SUPPORTER,
+            GameplayKey("Giovanni#x"),
+            gameEntityId = 230,
+        )
 
     @Test
     fun `every kind of card survives a round trip through its entity`() {

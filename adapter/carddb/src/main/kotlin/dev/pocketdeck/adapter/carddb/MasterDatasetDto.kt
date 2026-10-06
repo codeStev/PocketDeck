@@ -22,6 +22,7 @@ internal data class MasterCardDto(
     val hp: Int? = null,
     val retreatCost: Int? = null,
     val trainerKind: String? = null,
+    val gameEntityId: Int? = null,
 )
 
 @Serializable

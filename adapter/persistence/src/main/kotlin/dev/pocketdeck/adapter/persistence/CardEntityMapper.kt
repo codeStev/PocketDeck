@@ -45,6 +45,7 @@ private fun Card.baseEntity(kind: String) =
         evolvesFrom = null,
         retreatCost = null,
         trainerKind = null,
+        gameEntityId = gameEntityId,
     )
 
 /** Throws [IllegalStateException] for rows this app version cannot have written (corrupt or newer database). */
@@ -67,6 +68,7 @@ private fun CardEntity.toPokemon() =
         gameplayKey = GameplayKey(gameplayKey),
         artwork = artworkUrl?.let(::ArtworkUrl),
         germanName = germanNameOrEnglish(),
+        gameEntityId = gameEntityId,
     )
 
 private fun CardEntity.toTrainer() =
@@ -77,6 +79,7 @@ private fun CardEntity.toTrainer() =
         gameplayKey = GameplayKey(gameplayKey),
         artwork = artworkUrl?.let(::ArtworkUrl),
         germanName = germanNameOrEnglish(),
+        gameEntityId = gameEntityId,
     )
 
 private fun CardEntity.germanNameOrEnglish() = CardName(germanName.ifBlank { name })

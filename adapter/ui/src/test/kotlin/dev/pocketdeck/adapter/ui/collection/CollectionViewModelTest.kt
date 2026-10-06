@@ -76,6 +76,16 @@ class CollectionViewModelTest {
         }
 
     @Test
+    fun `downloads again when the stored cards lack the game's card numbers`() =
+        runTest(dispatcher) {
+            catalogs.replaceAll(listOf(charmander.copy(gameEntityId = null)))
+
+            settled(viewModel())
+
+            catalogs.current().cards.map { it.name.value } shouldBe listOf("Charmander", "Magmar")
+        }
+
+    @Test
     fun `does not download again when a catalog is already stored`() =
         runTest(dispatcher) {
             catalogs.replaceAll(listOf(charmander))

@@ -72,4 +72,13 @@
     </plurals>
     <string name="decks_card_line">%1$d× %2$s</string>
     <string name="decks_card_missing">es fehlen %1$d</string>
+    <string name="decks_code_show">Import-Code für das Spiel</string>
+    <string name="decks_code_close">Schließen</string>
+    <string name="decks_code_image">Import-Code von %1$s</string>
+    <string name="decks_code_howto">Im Spiel: Karten, Decks, Neu erstellen, Code scannen. Scanne diesen Code mit einem anderen Gerät oder speichere das Bild und wähle „Gespeichertes Bild scannen“.</string>
+    <string name="decks_code_save">Bild speichern</string>
+    <string name="decks_code_copy">Code kopieren</string>
+    <string name="decks_code_saved">In Bilder/PocketDeck gespeichert.</string>
+    <string name="decks_code_save_failed">Das Bild konnte nicht gespeichert werden.</string>
+    <string name="decks_code_unavailable">Das Spiel kann dieses Deck nicht importieren. Es kennt diese Karten nicht:</string>
 </resources>

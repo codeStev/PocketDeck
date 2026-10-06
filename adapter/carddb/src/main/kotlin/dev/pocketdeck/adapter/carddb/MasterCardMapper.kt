@@ -40,6 +40,7 @@ private fun MasterCardDto.toPokemon(): PokemonCard =
             gameplayKey = GameplayKey(gameplayKey),
             artwork = bestArtwork(),
             germanName = CardName(names.de),
+            gameEntityId = gameEntityId,
         )
     } catch (invalid: InvalidCardData) {
         throw invalid
@@ -55,6 +56,7 @@ private fun MasterCardDto.toTrainer() =
         gameplayKey = GameplayKey(gameplayKey),
         artwork = bestArtwork(),
         germanName = CardName(names.de),
+        gameEntityId = gameEntityId,
     )
 
 /** The player's game is usually German, so the German picture matches what they see in the game. */

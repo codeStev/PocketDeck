@@ -21,6 +21,7 @@ fun basicPokemon(
     stage = Stage.BASIC,
     hp = 60,
     gameplayKey = gameplayKey,
+    gameEntityId = entityIdOf(id),
 )
 
 fun evolvedPokemon(
@@ -36,10 +37,14 @@ fun evolvedPokemon(
     stage = stage,
     hp = 90,
     evolvesFrom = CardName(evolvesFrom),
+    gameEntityId = entityIdOf(id),
 )
 
 fun trainer(
     name: String,
     kind: TrainerKind = TrainerKind.ITEM,
     id: String = "T-$name",
-) = TrainerCard(id = CardId(id), name = CardName(name), kind = kind)
+) = TrainerCard(id = CardId(id), name = CardName(name), kind = kind, gameEntityId = entityIdOf(id))
+
+/** A stable stand-in for the number the game gives a card. */
+private fun entityIdOf(id: String) = (id.hashCode() and 0xFFFFF) + 1
