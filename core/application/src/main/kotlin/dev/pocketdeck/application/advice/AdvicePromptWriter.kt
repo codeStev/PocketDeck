@@ -53,6 +53,10 @@ object AdvicePromptWriter {
 
         Rules for your answer:
         - Use only cards from the list of owned cards, by their id, and never more copies than listed.
+        - Every trainer must have something to act on in your deck. A trainer that heals or boosts [W] Pokémon needs Water
+          Pokémon (and Water energy), one that searches for Pokémon with "Team Rocket" in their name needs such Pokémon,
+          one that names Pokémon needs at least one of them, and one that talks about Stage 2 or Mega Pokémon needs those.
+          Never include a trainer whose condition the deck cannot meet.
         - Prefer cards that work together and a clear plan; use the tournament picture as evidence of what is strong.
         - Call the tool ${AdviceFormat.TOOL_NAME} exactly once with the finished deck. Do not answer in any other way.
         """.trimIndent()

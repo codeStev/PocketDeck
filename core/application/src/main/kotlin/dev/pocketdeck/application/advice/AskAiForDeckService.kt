@@ -6,6 +6,7 @@ import dev.pocketdeck.application.collection.CollectionRepository
 import dev.pocketdeck.application.meta.MetaSnapshotRepository
 import dev.pocketdeck.domain.card.CardCatalog
 import dev.pocketdeck.domain.card.EnergyType
+import dev.pocketdeck.domain.card.TrainerCard
 import dev.pocketdeck.domain.collection.Inventory
 import dev.pocketdeck.domain.deck.CompletenessCalculator
 import dev.pocketdeck.domain.deck.Deck
@@ -14,6 +15,7 @@ import dev.pocketdeck.domain.deck.DeckSuggestion
 import dev.pocketdeck.domain.deck.DeckValidator
 import dev.pocketdeck.domain.deck.DeckViolation
 import dev.pocketdeck.domain.deck.SuggestionOrigin
+import dev.pocketdeck.domain.deck.TrainerPlayability
 
 /**
  * Asks an advisor for a deck and does not take its word for it: every answer is checked against the cards that exist,
@@ -102,7 +104,9 @@ class AskAiForDeckService(
                 .groupBy { it.cardId }
                 .map { (id, listed) -> DeckEntry(requireNotNull(catalog[id]), listed.sumOf { it.copies }) }
         val deck = Deck(entries, advice.energyTypes.toSet())
-        val problems = notOwned(deck, inventory) + energyProblems(advice) + validator.validate(deck).map(::describe)
+        val problems =
+            notOwned(deck, inventory) + energyProblems(advice) + validator.validate(deck).map(::describe) +
+                deadTrainers(deck, catalog)
         return if (problems.isEmpty()) Checked.Valid(deck) else Checked.Invalid(problems)
     }
 
@@ -118,6 +122,21 @@ class AskAiForDeckService(
                 val owned = inventory.copiesOf(card)
                 "${card.name.value}: the player owns ${copies(owned)} but the deck uses $used".takeIf { used > owned }
             }
+
+    /** A trainer that talks about Water Pokémon or "Team Rocket" does nothing in a deck without them. */
+    private fun deadTrainers(
+        deck: Deck,
+        catalog: CardCatalog,
+    ): List<String> {
+        val playability = TrainerPlayability(catalog)
+        return deck.entries.map { it.card }.filterIsInstance<TrainerCard>().mapNotNull { trainer ->
+            val unmet = playability.unmet(trainer, deck)
+            "${trainer.name.value} cannot do anything in this deck; it needs ${unmet.joinToString(
+                " and ",
+            ) { it.describe() }}"
+                .takeIf { unmet.isNotEmpty() }
+        }
+    }
 
     private fun copies(count: Int) = if (count == 1) "1 copy" else "$count copies"
 

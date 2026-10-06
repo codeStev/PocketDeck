@@ -134,4 +134,12 @@ class DeckSubstituterEffectsTest {
 
         substitute(unknown, trainer("Other", TrainerKind.ITEM, "Draw 2 cards.")) shouldBe null
     }
+
+    @Test
+    fun `a trainer is not a stand-in when its condition cannot be met in the deck`() {
+        val ownDraw = trainer("Research", TrainerKind.SUPPORTER, "Draw 2 cards.")
+        val picky = trainer("Picky", TrainerKind.SUPPORTER, "Draw 3 cards. Choose 1 of your [ F ] Pokémon in play.")
+
+        substitute(ownDraw, picky) shouldBe null
+    }
 }

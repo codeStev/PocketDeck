@@ -276,4 +276,38 @@ class HeuristicDeckBuilderTest {
             setOf(EnergyType.FIRE),
             TournamentResult(1, 3, 1, 0),
         )
+
+    @Test
+    fun `leaves out a trainer that has nothing to act on in the deck, however popular it is`() {
+        val waterHeal =
+            trainer(
+                "Irida",
+                TrainerKind.SUPPORTER,
+                "Heal 40 damage from each of your Pokémon that has any [ W ] Energy attached.",
+            )
+        val rocketSearch =
+            trainer(
+                "Rocket Researcher",
+                TrainerKind.SUPPORTER,
+                "Put a random Pokémon that has “Team Rocket” in its name from your deck into your hand.",
+            )
+        val everything =
+            fire + waterHeal + rocketSearch + trainers + (1..4).map { trainer("Filler $it", TrainerKind.TOOL, null) }
+        val catalog = CardCatalog(everything)
+        val owned = everything.fold(CardCollection.EMPTY) { c, card -> c.withCopies(card.id, 2) }
+        val meta =
+            MetaSnapshot(listOf(Archetype(ArchetypeName("A"), List(10) { playing(waterHeal, rocketSearch) }, 1.0)))
+
+        val deck =
+            HeuristicDeckBuilder()
+                .build(
+                    catalog,
+                    Inventory.of(owned, catalog),
+                    DeckFocus(energyTypes = setOf(EnergyType.FIRE)),
+                    CardPopularity.of(meta, catalog),
+                )!!
+                .deck
+
+        deck.entries.none { it.card == waterHeal || it.card == rocketSearch } shouldBe true
+    }
 }

@@ -48,10 +48,11 @@ class DeckSubstituter(
         if (holes.isEmpty()) return null
         val spare = spareCopies(deck, inventory, catalog).toMutableMap()
         var entries = deck.entries
+        val playability = TrainerPlayability(catalog)
         val substitutions = mutableListOf<Substitution>()
         for (hole in holes) {
             repeat(hole.missingCopies) {
-                val stand = standIn(hole.card, Context(deck, entries), spare, catalog) ?: return@repeat
+                val stand = standIn(hole.card, Context(deck, entries, playability), spare, catalog) ?: return@repeat
                 spare[stand.gameplayKey] = spare.getValue(stand.gameplayKey) - 1
                 entries = swap(entries, hole.card, stand)
                 substitutions += Substitution(hole.card, stand, 1, sharedEffectsOf(hole.card, stand))
@@ -65,6 +66,7 @@ class DeckSubstituter(
     private class Context(
         val deck: Deck,
         val entries: List<DeckEntry>,
+        val playability: TrainerPlayability,
     )
 
     /** What the player owns beyond what the deck already uses; replacing must not take from another card of the deck. */
@@ -96,7 +98,7 @@ class DeckSubstituter(
                 context.entries.filter { it.card.name == candidate.name }.sumOf { it.copies } <
                     Deck.MAX_COPIES_PER_NAME
             }.mapNotNull { candidate ->
-                similarity(hole, candidate, context.deck, themes)?.let { candidate to it }
+                similarity(hole, candidate, context, themes)?.let { candidate to it }
             }.minWithOrNull(
                 compareByDescending<Pair<Card, Double>> {
                     it.second
@@ -108,12 +110,12 @@ class DeckSubstituter(
     private fun similarity(
         hole: Card,
         candidate: Card,
-        deck: Deck,
+        context: Context,
         themes: Set<EffectTag>,
     ): Double? =
         when {
-            hole is PokemonCard && candidate is PokemonCard -> pokemonSimilarity(hole, candidate, deck, themes)
-            hole is TrainerCard && candidate is TrainerCard -> trainerSimilarity(hole, candidate)
+            hole is PokemonCard && candidate is PokemonCard -> pokemonSimilarity(hole, candidate, context.deck, themes)
+            hole is TrainerCard && candidate is TrainerCard -> trainerSimilarity(hole, candidate, context)
             else -> null
         }
 
@@ -137,10 +139,12 @@ class DeckSubstituter(
     private fun trainerSimilarity(
         hole: TrainerCard,
         candidate: TrainerCard,
+        context: Context,
     ): Double? {
         val wanted = EffectClassifier.tagsOf(hole)
         val same = candidate.kind == hole.kind && wanted.isNotEmpty() && wanted == EffectClassifier.tagsOf(candidate)
-        return if (same) 1.0 else null
+        // A stand-in that does nothing in this deck (it needs Water Pokémon, say) is no stand-in.
+        return if (same && context.playability.unmet(candidate, context.deck).isEmpty()) 1.0 else null
     }
 
     /** The effects the rest of the deck is built around: its own, and the ones that complement them. */

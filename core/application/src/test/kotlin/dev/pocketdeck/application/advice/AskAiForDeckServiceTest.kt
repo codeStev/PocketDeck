@@ -23,6 +23,7 @@ import dev.pocketdeck.domain.sabrina
 import dev.pocketdeck.domain.validFireDeck
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
@@ -206,5 +207,39 @@ class AskAiForDeckServiceTest {
             val outcome = service(ScriptedAdvisor(listOf(Outcome.Success(split)))).invoke(null)
 
             (outcome as Outcome.Success).value.deck.copiesNamed(potion.name) shouldBe 2
+        }
+
+    @Test
+    fun `sends back a trainer that has nothing to act on in the deck`() =
+        runTest {
+            val waterHeal =
+                dev.pocketdeck.domain.card.TrainerCard(
+                    dev.pocketdeck.domain.card
+                        .CardId("t-heal"),
+                    dev.pocketdeck.domain.card
+                        .CardName("Irida"),
+                    dev.pocketdeck.domain.card.TrainerKind.SUPPORTER,
+                    effect = "Heal 40 damage from each of your Pokémon that has any [ W ] Energy attached.",
+                )
+            val withHeal = CardCatalog(cards + waterHeal)
+            val owned = ownedAll().withCopies(waterHeal.id, 2)
+            val swapped =
+                validAdvice.copy(
+                    entries =
+                        validAdvice.entries.filter { it.cardId != potion.id } + DecklistEntry(waterHeal.id, 2),
+                )
+            val advisor = ScriptedAdvisor(listOf(Outcome.Success(swapped), Outcome.Success(validAdvice)))
+
+            AskAiForDeckService(
+                InMemoryCardCatalogRepository(withHeal),
+                InMemoryCollectionRepository(owned),
+                InMemoryMetaSnapshotRepository(),
+                advisor,
+            ).invoke(null)
+
+            advisor.requests.last().feedback.single().problems.single().let {
+                it shouldContain "Irida"
+                it shouldContain "Water energy"
+            }
         }
 }

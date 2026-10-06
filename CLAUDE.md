@@ -128,3 +128,9 @@ New way of driving the app => new driving adapter calling inbound ports.
 - Settings live in their own tab (`adapter/ui/settings`: `SettingsViewModel` + `SettingsScreen`); "AI" is the first section
   (keys, models, provider order; explicit Save). A new section is another composable in `SettingsContent`. The Decks tab only
   asks the AI and points to Settings when no key is set up.
+- Trainer playability (`TrainerPlayability`, domain): many trainers only act on something specific ("[W] Pokémon", "[W] Energy
+  attached", Pokémon with “Team Rocket” in their name, named Pokémon, Stage 2, Mega ex). The conditions are read from the
+  English text into `Requirement`s; a trainer with unmet requirements is a dead card in that deck. Used by the heuristic
+  builder (never picks one), the AI answer check (sent back as a problem), the stand-in search, and told to the AI in the
+  prompt. Checked on the real data: it flags 0.75% of the trainer copies in 1,171 live tournament decks, mostly lists that
+  have no energy recorded; meta suggestions are not filtered (strong players chose them).

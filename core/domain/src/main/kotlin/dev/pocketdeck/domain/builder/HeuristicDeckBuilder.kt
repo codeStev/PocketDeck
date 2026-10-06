@@ -7,6 +7,7 @@ import dev.pocketdeck.domain.card.TrainerCard
 import dev.pocketdeck.domain.collection.Inventory
 import dev.pocketdeck.domain.deck.Deck
 import dev.pocketdeck.domain.deck.DeckValidator
+import dev.pocketdeck.domain.deck.TrainerPlayability
 import dev.pocketdeck.domain.meta.CardPopularity
 import kotlin.math.pow
 
@@ -28,8 +29,9 @@ class HeuristicDeckBuilder(
         val owned = OwnedCards(catalog, inventory)
         val lines = LineFinder.linesOf(owned)
         return energyOptions(focus, owned)
-            .mapNotNull { energy -> buildFor(owned, lines, energy, Wish(focus, popularity)) }
-            .maxByOrNull { it.rating }
+            .mapNotNull { energy ->
+                buildFor(owned, lines, energy, Wish(focus, popularity, TrainerPlayability(catalog)))
+            }.maxByOrNull { it.rating }
     }
 
     /** The Pokémon worth building a deck around, strongest first, each with the lines it needs. */
@@ -95,7 +97,7 @@ class HeuristicDeckBuilder(
         val draft = DeckDraft(owned)
         val picked = (listOfNotNull(seed) + ranked.filter { it != seed }).filter { tryAdd(draft, it) }
         if (picked.isEmpty()) return null
-        fillWithTrainers(draft, owned, popularity)
+        fillWithTrainers(draft, owned, popularity, wish.playability, energy)
         fillWithPokemon(draft, picked + ranked.filter { it !in picked })
         return draft
             .takeIf { it.size == Deck.SIZE }
@@ -130,9 +132,13 @@ class HeuristicDeckBuilder(
         draft: DeckDraft,
         owned: OwnedCards,
         popularity: CardPopularity,
+        playability: TrainerPlayability,
+        energy: Set<EnergyType>,
     ) {
+        // A trainer that talks about Water Pokémon or "Team Rocket" is a dead card in a deck without them.
+        val pokemonOnly = draft.toDeck(energy)
         val ranked =
-            owned.trainers.sortedWith(
+            owned.trainers.filter { playability.unmet(it, pokemonOnly).isEmpty() }.sortedWith(
                 compareByDescending<TrainerCard> { CardRatings.trainerRating(it, popularity) }.thenBy { it.name.value },
             )
         ranked.forEach { draft.add(it, if (CardRatings.trainerRating(it, popularity) >= GOOD_TRAINER) 2 else 1) }
@@ -192,6 +198,7 @@ class HeuristicDeckBuilder(
     private class Wish(
         val focus: DeckFocus,
         val popularity: CardPopularity,
+        val playability: TrainerPlayability,
     )
 
     private companion object {
