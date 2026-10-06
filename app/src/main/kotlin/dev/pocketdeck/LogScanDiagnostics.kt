@@ -5,6 +5,7 @@ import dev.pocketdeck.application.scan.PageReport
 import dev.pocketdeck.application.scan.ScanDiagnostics
 import dev.pocketdeck.domain.scan.ReviewReason
 import dev.pocketdeck.domain.scan.ScannedCard
+import dev.pocketdeck.domain.scan.TileRecognition
 
 /** Writes what the scanner saw to the log (tag `PocketDeckScan`), to find where counts or cards go missing. */
 class LogScanDiagnostics : ScanDiagnostics {
@@ -15,6 +16,12 @@ class LogScanDiagnostics : ScanDiagnostics {
             "Page ${report.page}: tiles=${analysis?.tilesRecognized} expectedCounts=${analysis?.countsExpected} " +
                 "readCounts=${analysis?.countsRead} waited=${report.waitedPolls * POLL_MS} ms timedOut=${report.timedOut}",
         )
+        analysis?.let {
+            Log.i(
+                TAG,
+                "Page ${report.page} tiles: ${it.tiles.joinToString(" ") { tile -> describe(tile) }}",
+            )
+        }
     }
 
     override fun scanFinished(review: List<ScannedCard>) {
@@ -31,6 +38,8 @@ class LogScanDiagnostics : ScanDiagnostics {
             }
         }
     }
+
+    private fun describe(tile: TileRecognition) = "${tile.cardId.value}x${tile.copies ?: "?"}p${tile.parts}"
 
     private companion object {
         const val TAG = "PocketDeckScan"

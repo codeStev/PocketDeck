@@ -32,6 +32,7 @@ class SubmitScanFrameService(
                 recognitions.size,
                 expected.size,
                 expected.count { it.copies != null },
+                recognitions,
             )
         return Outcome.Success(analysis)
     }

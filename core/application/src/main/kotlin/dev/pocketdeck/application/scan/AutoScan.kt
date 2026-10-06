@@ -2,6 +2,7 @@ package dev.pocketdeck.application.scan
 
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.domain.scan.ScannedCard
+import dev.pocketdeck.domain.scan.TileRecognition
 
 /** Where the card grid sits in a frame, in pixels; enough to size and place a scroll gesture. */
 data class GridGeometry(
@@ -47,6 +48,8 @@ data class FrameAnalysis(
     val countsExpected: Int,
     /** Of the expected ones, how many have a readable count already. */
     val countsRead: Int,
+    /** What each tile was recognised as, in reading order; for diagnostics only. */
+    val tiles: List<TileRecognition> = emptyList(),
 ) {
     val countsVisible: Boolean get() = countsRead >= countsExpected
 }
