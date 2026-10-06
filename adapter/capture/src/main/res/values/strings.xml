@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scan_channel_name">Collection scan</string>
+    <string name="scan_notification_title">Scanning your collection</string>
+    <string name="scan_notification_text">Scroll through My Cards in the game, then tap Stop.</string>
+    <string name="scan_stop">Stop</string>
+</resources>

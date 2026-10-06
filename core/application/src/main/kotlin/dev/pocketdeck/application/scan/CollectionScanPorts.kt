@@ -2,7 +2,9 @@ package dev.pocketdeck.application.scan
 
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.domain.card.CardId
+import dev.pocketdeck.domain.scan.ScanSession
 import dev.pocketdeck.domain.scan.ScannedCard
+import kotlinx.coroutines.flow.Flow
 
 sealed interface ScanFailure {
     data object NoActiveScan : ScanFailure
@@ -11,7 +13,18 @@ sealed interface ScanFailure {
 data class ScanProgress(
     val framesProcessed: Int,
     val distinctCards: Int,
-)
+    /** Cards whose identity or count is still uncertain; the player will be asked about them afterwards. */
+    val cardsNeedingReview: Int,
+) {
+    companion object {
+        fun of(session: ScanSession) =
+            ScanProgress(
+                framesProcessed = session.framesProcessed,
+                distinctCards = session.distinctCards,
+                cardsNeedingReview = session.summarize().count { it.needsReview },
+            )
+    }
+}
 
 data class ConfirmedScan(
     val updatedCards: Int,
@@ -31,6 +44,11 @@ fun interface StartCollectionScan {
 /** Inbound port: analyse one captured frame and fold it into the running scan. */
 fun interface SubmitScanFrame {
     suspend operator fun invoke(frame: ScreenFrame): Outcome<ScanProgress, ScanFailure>
+}
+
+/** Inbound port: follow the running scan; emits null while no scan is running. */
+fun interface ObserveScanProgress {
+    operator fun invoke(): Flow<ScanProgress?>
 }
 
 /** Inbound port: end the scan and obtain the merged cards for the player to review. */

@@ -16,6 +16,8 @@ dependencies {
     implementation(project(":adapter:ui"))
     implementation(project(":adapter:persistence"))
     implementation(project(":adapter:carddb"))
+    implementation(project(":adapter:recognition"))
+    implementation(project(":adapter:capture"))
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

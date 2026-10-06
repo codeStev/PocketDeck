@@ -13,4 +13,33 @@
     <string name="collection_add_copy">Add a copy of %1$s</string>
     <string name="collection_remove_copy">Remove a copy of %1$s</string>
     <string name="collection_copies">×%1$d</string>
+    <string name="tab_collection">Collection</string>
+    <string name="tab_scan">Scan</string>
+    <string name="scan_title">Scan your collection</string>
+    <string name="scan_intro">The app reads your cards from the screen while you scroll through My Cards in the game.</string>
+    <string name="scan_step_view">In My Cards choose the view with 3 cards per row. Only that view shows how many copies you own.</string>
+    <string name="scan_step_start">Tap Start, then open the game. A small button stays on screen.</string>
+    <string name="scan_step_scroll">Scroll slowly and pause for a moment on every screen, so the numbers can appear.</string>
+    <string name="scan_step_stop">Tap Stop on the small button. You can then check the result before it is saved.</string>
+    <string name="scan_start">Start scan</string>
+    <plurals name="scan_running">
+        <item quantity="one">A scan is running: %1$d card found so far.</item>
+        <item quantity="other">A scan is running: %1$d cards found so far.</item>
+    </plurals>
+    <string name="scan_nothing_to_review">There was no scan to review.</string>
+    <string name="scan_save_failed">The result could not be saved.</string>
+    <string name="review_title">Check the result</string>
+    <string name="review_summary">Found: %1$d · to check: %2$d</string>
+    <string name="review_check_hint">Cards marked "check" were not read reliably: the count or the card itself may be wrong.</string>
+    <string name="review_looks_right">Looks right</string>
+    <string name="review_check">check</string>
+    <string name="review_save">Save to collection</string>
+    <string name="review_discard">Discard</string>
+    <string name="review_remove">Remove %1$s from the result</string>
+    <string name="saved_title">Collection updated</string>
+    <plurals name="saved_summary">
+        <item quantity="one">%1$d card was written to your collection.</item>
+        <item quantity="other">%1$d cards were written to your collection.</item>
+    </plurals>
+    <string name="saved_done">Done</string>
 </resources>

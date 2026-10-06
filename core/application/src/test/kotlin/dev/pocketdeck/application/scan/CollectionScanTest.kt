@@ -1,5 +1,6 @@
 package dev.pocketdeck.application.scan
 
+import app.cash.turbine.test
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.fakes.FakeCardRecognizer
 import dev.pocketdeck.application.fakes.InMemoryCardCatalogRepository
@@ -29,6 +30,12 @@ class CollectionScanTest {
         confidence: Double = 0.9,
     ) = TileRecognition(id, copies, Confidence(confidence))
 
+    private fun progress(
+        frames: Int,
+        cards: Int,
+        needingReview: Int = 0,
+    ) = Outcome.Success(ScanProgress(frames, cards, needingReview))
+
     private val start = StartCollectionScanService(sessions)
 
     private fun submit(recognizer: FakeCardRecognizer) = SubmitScanFrameService(recognizer, sessions)
@@ -52,8 +59,8 @@ class CollectionScanTest {
             val submitFrame = submit(recognizer)
             start()
 
-            submitFrame(frame) shouldBe Outcome.Success(ScanProgress(framesProcessed = 1, distinctCards = 1))
-            submitFrame(frame) shouldBe Outcome.Success(ScanProgress(framesProcessed = 2, distinctCards = 2))
+            submitFrame(frame) shouldBe progress(1, 1)
+            submitFrame(frame) shouldBe progress(2, 2)
             recognizer.framesSeen.size shouldBe 2
         }
 
@@ -120,5 +127,35 @@ class CollectionScanTest {
             confirm(review) shouldBe Outcome.Failure(ConfirmScanFailure.UnknownCards(listOf(unknown)))
 
             collections.current() shouldBe CardCollection.EMPTY
+        }
+
+    @Test
+    fun `progress counts the cards that will need a review`() =
+        runTest {
+            val unreadableCount = TileRecognition(charmander.id, copies = null, confidence = Confidence(0.95))
+            val submitFrame = submit(FakeCardRecognizer(listOf(unreadableCount, seen(magmar.id, 1))))
+            start()
+
+            submitFrame(frame) shouldBe Outcome.Success(ScanProgress(1, 2, cardsNeedingReview = 1))
+        }
+
+    @Test
+    fun `observers follow a scan from its start to its end`() =
+        runTest {
+            val observe = ObserveScanProgressService(sessions)
+            val submitFrame = submit(FakeCardRecognizer(listOf(seen(charmander.id, 1))))
+
+            observe().test {
+                awaitItem() shouldBe null
+
+                start()
+                awaitItem() shouldBe ScanProgress(0, 0, 0)
+
+                submitFrame(frame)
+                awaitItem() shouldBe ScanProgress(1, 1, 0)
+
+                finish()
+                awaitItem() shouldBe null
+            }
         }
 }

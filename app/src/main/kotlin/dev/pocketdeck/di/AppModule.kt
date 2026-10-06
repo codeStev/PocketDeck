@@ -9,7 +9,13 @@ import dagger.hilt.components.SingletonComponent
 import dev.pocketdeck.adapter.carddb.MasterCatalogSource
 import dev.pocketdeck.adapter.persistence.PocketDeckDatabases
 import dev.pocketdeck.adapter.persistence.PocketDeckStorage
+import dev.pocketdeck.adapter.recognition.BadgeDigitReader
+import dev.pocketdeck.adapter.recognition.CardIndex
+import dev.pocketdeck.adapter.recognition.CollectionGridDetector
+import dev.pocketdeck.adapter.recognition.DigitTemplates
+import dev.pocketdeck.adapter.recognition.GridCardRecognizer
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
+import dev.pocketdeck.adapter.ui.scan.ScanViewModel
 import dev.pocketdeck.application.catalog.CardCatalogRepository
 import dev.pocketdeck.application.catalog.CardCatalogSource
 import dev.pocketdeck.application.catalog.ObserveCardCatalog
@@ -21,6 +27,19 @@ import dev.pocketdeck.application.collection.AdjustOwnedCountService
 import dev.pocketdeck.application.collection.CollectionRepository
 import dev.pocketdeck.application.collection.ObserveCollection
 import dev.pocketdeck.application.collection.ObserveCollectionService
+import dev.pocketdeck.application.scan.CardRecognizer
+import dev.pocketdeck.application.scan.ConfirmScanResults
+import dev.pocketdeck.application.scan.ConfirmScanResultsService
+import dev.pocketdeck.application.scan.FinishCollectionScan
+import dev.pocketdeck.application.scan.FinishCollectionScanService
+import dev.pocketdeck.application.scan.InMemoryScanSessionStore
+import dev.pocketdeck.application.scan.ObserveScanProgress
+import dev.pocketdeck.application.scan.ObserveScanProgressService
+import dev.pocketdeck.application.scan.ScanSessionStore
+import dev.pocketdeck.application.scan.StartCollectionScan
+import dev.pocketdeck.application.scan.StartCollectionScanService
+import dev.pocketdeck.application.scan.SubmitScanFrame
+import dev.pocketdeck.application.scan.SubmitScanFrameService
 import dev.pocketdeck.domain.card.Language
 import java.util.Locale
 import javax.inject.Singleton
@@ -72,7 +91,53 @@ object AppModule {
         collections: CollectionRepository,
     ): AdjustOwnedCount = AdjustOwnedCountService(catalogs, collections)
 
+    // --- scanning: recognition adapter and the scan use cases
+    @Provides
+    @Singleton
+    fun cardIndex(
+        @ApplicationContext context: Context,
+    ): CardIndex = context.assets.open(CARD_INDEX_ASSET).use(CardIndex::read)
+
+    @Provides
+    @Singleton
+    fun cardRecognizer(index: CardIndex): CardRecognizer =
+        GridCardRecognizer(index, CollectionGridDetector(), BadgeDigitReader(DigitTemplates.fromResource()))
+
+    @Provides
+    @Singleton
+    fun scanSessionStore(): ScanSessionStore = InMemoryScanSessionStore()
+
+    @Provides
+    fun startCollectionScan(sessions: ScanSessionStore): StartCollectionScan = StartCollectionScanService(sessions)
+
+    @Provides
+    fun submitScanFrame(
+        recognizer: CardRecognizer,
+        sessions: ScanSessionStore,
+    ): SubmitScanFrame = SubmitScanFrameService(recognizer, sessions)
+
+    @Provides
+    fun finishCollectionScan(sessions: ScanSessionStore): FinishCollectionScan = FinishCollectionScanService(sessions)
+
+    @Provides
+    fun observeScanProgress(sessions: ScanSessionStore): ObserveScanProgress = ObserveScanProgressService(sessions)
+
+    @Provides
+    fun confirmScanResults(
+        catalogs: CardCatalogRepository,
+        collections: CollectionRepository,
+    ): ConfirmScanResults = ConfirmScanResultsService(catalogs, collections)
+
     // --- driving adapter wiring
+    @Provides
+    fun scanViewModelFactory(
+        observeProgress: ObserveScanProgress,
+        finishScan: FinishCollectionScan,
+        confirmScan: ConfirmScanResults,
+        observeCatalog: ObserveCardCatalog,
+        language: Language,
+    ) = ScanViewModel.Factory(observeProgress, finishScan, confirmScan, observeCatalog, language)
+
     @Provides
     fun collectionViewModelFactory(
         observeCatalog: ObserveCardCatalog,
@@ -83,4 +148,5 @@ object AppModule {
     ) = CollectionViewModel.Factory(observeCatalog, observeCollection, adjustOwnedCount, syncCardCatalog, language)
 
     private const val MASTER_DATASET_ASSET = "master_cards.json"
+    private const val CARD_INDEX_ASSET = "card_index.bin"
 }

@@ -4,6 +4,11 @@
     <!-- Card artwork is loaded from the network (the card data itself is bundled). -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Lets the app start the game after a scan has been started. -->
+    <queries>
+        <package android:name="jp.pokemon.pokemontcgp" />
+    </queries>
+
     <application
         android:name=".PocketDeckApplication"
         android:allowBackup="false"

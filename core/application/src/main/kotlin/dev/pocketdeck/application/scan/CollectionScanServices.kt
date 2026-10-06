@@ -5,6 +5,7 @@ import dev.pocketdeck.application.catalog.CardCatalogRepository
 import dev.pocketdeck.application.collection.CollectionRepository
 import dev.pocketdeck.domain.scan.ScanSession
 import dev.pocketdeck.domain.scan.ScannedCard
+import kotlinx.coroutines.flow.map
 
 class StartCollectionScanService(
     private val sessions: ScanSessionStore,
@@ -20,8 +21,14 @@ class SubmitScanFrameService(
         val session = sessions.current() ?: return Outcome.Failure(ScanFailure.NoActiveScan)
         val updated = session.observe(recognizer.recognize(frame))
         sessions.save(updated)
-        return Outcome.Success(ScanProgress(updated.framesProcessed, updated.distinctCards))
+        return Outcome.Success(ScanProgress.of(updated))
     }
+}
+
+class ObserveScanProgressService(
+    private val sessions: ScanSessionStore,
+) : ObserveScanProgress {
+    override fun invoke() = sessions.observe().map { session -> session?.let(ScanProgress::of) }
 }
 
 class FinishCollectionScanService(
