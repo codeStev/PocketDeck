@@ -6,6 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.pocketdeck.LogScanDiagnostics
 import dev.pocketdeck.adapter.carddb.MasterCatalogSource
 import dev.pocketdeck.adapter.persistence.PocketDeckDatabases
 import dev.pocketdeck.adapter.persistence.PocketDeckStorage
@@ -42,6 +43,7 @@ import dev.pocketdeck.application.scan.GridLocator
 import dev.pocketdeck.application.scan.InMemoryScanSessionStore
 import dev.pocketdeck.application.scan.ObserveScanProgress
 import dev.pocketdeck.application.scan.ObserveScanProgressService
+import dev.pocketdeck.application.scan.ScanDiagnostics
 import dev.pocketdeck.application.scan.ScanSessionStore
 import dev.pocketdeck.application.scan.StartCollectionScan
 import dev.pocketdeck.application.scan.StartCollectionScanService
@@ -139,7 +141,14 @@ object AppModule {
     ): SubmitScanFrame = SubmitScanFrameService(recognizer, sessions)
 
     @Provides
-    fun finishCollectionScan(sessions: ScanSessionStore): FinishCollectionScan = FinishCollectionScanService(sessions)
+    @Singleton
+    fun scanDiagnostics(): ScanDiagnostics = LogScanDiagnostics()
+
+    @Provides
+    fun finishCollectionScan(
+        sessions: ScanSessionStore,
+        diagnostics: ScanDiagnostics,
+    ): FinishCollectionScan = FinishCollectionScanService(sessions, diagnostics)
 
     @Provides
     fun observeScanProgress(sessions: ScanSessionStore): ObserveScanProgress = ObserveScanProgressService(sessions)

@@ -45,11 +45,14 @@ class ObserveScanProgressService(
 
 class FinishCollectionScanService(
     private val sessions: ScanSessionStore,
+    private val diagnostics: ScanDiagnostics = ScanDiagnostics.NONE,
 ) : FinishCollectionScan {
     override fun invoke(): Outcome<List<ScannedCard>, ScanFailure> {
         val session = sessions.current() ?: return Outcome.Failure(ScanFailure.NoActiveScan)
         sessions.clear()
-        return Outcome.Success(session.summarize())
+        val review = session.summarize()
+        diagnostics.scanFinished(review)
+        return Outcome.Success(review)
     }
 }
 

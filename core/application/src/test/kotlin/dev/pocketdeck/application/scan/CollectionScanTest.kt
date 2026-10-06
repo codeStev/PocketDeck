@@ -303,4 +303,31 @@ class CollectionScanTest {
 
             backup.load() shouldBe older
         }
+
+    @Test
+    fun `finishing reports the review to the diagnostics`() =
+        runTest {
+            val reported = mutableListOf<List<ScannedCard>>()
+            val diagnostics =
+                object : ScanDiagnostics {
+                    override fun pageSettled(report: PageReport) = Unit
+
+                    override fun scanFinished(review: List<ScannedCard>) {
+                        reported += review
+                    }
+                }
+            val submitFrame =
+                submit(
+                    FakeCardRecognizer(
+                        listOf(seen(charmander.id, 2), TileRecognition(magmar.id, null, Confidence(0.9))),
+                    ),
+                )
+            start()
+            submitFrame(frame)
+
+            val review = (FinishCollectionScanService(sessions, diagnostics)() as Outcome.Success).value
+
+            reported shouldBe listOf(review)
+            review.single { it.cardId == magmar.id }.reason shouldBe ReviewReason.COUNT_NEVER_READ
+        }
 }

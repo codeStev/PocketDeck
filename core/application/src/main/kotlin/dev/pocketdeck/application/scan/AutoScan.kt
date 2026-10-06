@@ -1,6 +1,7 @@
 package dev.pocketdeck.application.scan
 
 import dev.pocketdeck.application.Outcome
+import dev.pocketdeck.domain.scan.ScannedCard
 
 /** Where the card grid sits in a frame, in pixels; enough to size and place a scroll gesture. */
 data class GridGeometry(
@@ -82,12 +83,19 @@ data class PageReport(
     val timedOut: Boolean,
 )
 
-/** Outbound port: receives a report for every page the auto-scroller settles on. */
-fun interface ScanDiagnostics {
+/** Outbound port: receives what the scanner saw, to find out where counts or cards go missing. */
+interface ScanDiagnostics {
+    /** Called for every page the auto-scroller settles on. */
     fun pageSettled(report: PageReport)
 
+    /** Called when a scan ends, with everything it found and why each card is (not) trusted. */
+    fun scanFinished(review: List<ScannedCard>) = Unit
+
     companion object {
-        val NONE = ScanDiagnostics { }
+        val NONE =
+            object : ScanDiagnostics {
+                override fun pageSettled(report: PageReport) = Unit
+            }
     }
 }
 
