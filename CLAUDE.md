@@ -90,3 +90,8 @@ New way of driving the app => new driving adapter calling inbound ports.
 - Scan paging: `AutoScanService` measures the real scroll distance (`measureScrollShift`) and corrects the swipe length;
   swipes hold still at the end (`GridScrollService.drag`) because a flick makes the game's list glide on.
 - One card read under different counts (each reading >= 0.8) is several prints with the same art: counts are added.
+- Deck import codes (verified in the game by the user): `ExportDeckCodeService` writes base64 of `u8 n, n x u24be (trainer
+  entity id + 10,000,000), u8 n, n x u24be (pokemon entity id), u8 n, n x u8 energy`, one entry per copy; energy 1-8 =
+  grass, fire, water, lightning, psychic, fighting, darkness, metal. Entity ids (`gameEntityId`) come from the asset file
+  name in the flibustier dataset. The Decks tab shows it as a QR (ZXing, version 9, error correction H) the game's
+  "Scan Code" / "Scan Saved Image" reads.
