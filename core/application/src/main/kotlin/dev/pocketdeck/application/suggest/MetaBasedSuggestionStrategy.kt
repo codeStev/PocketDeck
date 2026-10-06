@@ -5,6 +5,7 @@ import dev.pocketdeck.domain.card.PokemonCard
 import dev.pocketdeck.domain.deck.CompletenessCalculator
 import dev.pocketdeck.domain.deck.Deck
 import dev.pocketdeck.domain.deck.DeckEntry
+import dev.pocketdeck.domain.deck.DeckSubstituter
 import dev.pocketdeck.domain.deck.DeckSuggestion
 import dev.pocketdeck.domain.deck.DeckValidator
 import dev.pocketdeck.domain.deck.SuggestionOrigin
@@ -19,11 +20,35 @@ import kotlin.math.pow
 class MetaBasedSuggestionStrategy(
     private val completeness: CompletenessCalculator = CompletenessCalculator(),
     private val validator: DeckValidator = DeckValidator(),
+    private val substituter: DeckSubstituter = DeckSubstituter(),
 ) : DeckSuggestionStrategy {
     override fun suggest(context: SuggestionContext): List<DeckSuggestion> =
         context.meta.archetypes
             .take(MAX_ARCHETYPES)
-            .mapNotNull { archetype -> bestVariant(archetype, context) }
+            .flatMap { archetype -> offersFor(archetype, context) }
+
+    /** The list closest to what the player owns and, if it has holes, the same list with Pokémon they own instead. */
+    private fun offersFor(
+        archetype: Archetype,
+        context: SuggestionContext,
+    ): List<DeckSuggestion> {
+        val best = bestVariant(archetype, context) ?: return emptyList()
+        return listOfNotNull(best, withSubstitutes(archetype, best, context))
+    }
+
+    private fun withSubstitutes(
+        archetype: Archetype,
+        original: DeckSuggestion,
+        context: SuggestionContext,
+    ): DeckSuggestion? {
+        if (original.completeness.isBuildable) return null
+        val adapted = substituter.substitute(original.deck, context.inventory, context.catalog) ?: return null
+        val suggestion = suggestion(archetype, adapted.deck, context)
+        val swapped = adapted.substitutions.sumOf { it.copies }
+        return suggestion
+            .copy(score = suggestion.score * SUBSTITUTE_PENALTY.pow(swapped), substitutions = adapted.substitutions)
+            .takeIf { it.completeness.missingCopies < original.completeness.missingCopies }
+    }
 
     private fun bestVariant(
         archetype: Archetype,
@@ -79,5 +104,8 @@ class MetaBasedSuggestionStrategy(
         const val MAX_ARCHETYPES = 12
         const val MAX_VARIANTS = 25
         const val COMPLETENESS_WEIGHT = 2.0
+
+        /** A stand-in changes how the deck plays, so each swapped card costs a tenth of the score. */
+        const val SUBSTITUTE_PENALTY = 0.9
     }
 }

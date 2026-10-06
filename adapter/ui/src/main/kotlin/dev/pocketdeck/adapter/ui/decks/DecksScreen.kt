@@ -91,6 +91,12 @@ private fun DeckCard(
             Text(originText(item.origin), style = MaterialTheme.typography.labelMedium)
             LinearProgressIndicator(progress = { item.ownedPercent / PERCENT_FULL }, modifier = Modifier.fillMaxWidth())
             Text(stringResource(R.string.decks_owned, item.ownedPercent))
+            if (item.substitutes.isNotEmpty()) {
+                Text(
+                    pluralStringResource(R.plurals.decks_substituted, item.substituteCopies, item.substituteCopies),
+                    color = MaterialTheme.colorScheme.tertiary,
+                )
+            }
             if (item.missingCopies == 0) {
                 Text(stringResource(R.string.decks_buildable), color = MaterialTheme.colorScheme.primary)
             } else {
@@ -99,7 +105,10 @@ private fun DeckCard(
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            if (expanded) item.cards.forEach { CardLine(it) }
+            if (expanded) {
+                item.substitutes.forEach { SubstituteText(it) }
+                item.cards.forEach { CardLine(it) }
+            }
             OutlinedButton(onClick = { onShowCode(item.key) }) { Text(stringResource(R.string.decks_code_show)) }
         }
     }
@@ -113,6 +122,15 @@ private fun originText(origin: SuggestionOrigin) =
             SuggestionOrigin.HEURISTIC -> R.string.decks_origin_heuristic
         },
     )
+
+@Composable
+private fun SubstituteText(line: SubstituteLine) {
+    Text(
+        stringResource(R.string.decks_substitute_line, line.copies, line.replacement, line.original),
+        color = MaterialTheme.colorScheme.tertiary,
+        style = MaterialTheme.typography.bodyMedium,
+    )
+}
 
 @Composable
 private fun CardLine(line: DeckCardLine) {

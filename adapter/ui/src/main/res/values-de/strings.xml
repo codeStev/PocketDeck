@@ -81,4 +81,9 @@
     <string name="decks_code_saved">In Bilder/PocketDeck gespeichert.</string>
     <string name="decks_code_save_failed">Das Bild konnte nicht gespeichert werden.</string>
     <string name="decks_code_unavailable">Das Spiel kann dieses Deck nicht importieren. Es kennt diese Karten nicht:</string>
+    <plurals name="decks_substituted">
+        <item quantity="one">Nutzt %1$d Ersatzkarte, die du besitzt</item>
+        <item quantity="other">Nutzt %1$d Ersatzkarten, die du besitzt</item>
+    </plurals>
+    <string name="decks_substitute_line">%1$d× %2$s statt %3$s</string>
 </resources>

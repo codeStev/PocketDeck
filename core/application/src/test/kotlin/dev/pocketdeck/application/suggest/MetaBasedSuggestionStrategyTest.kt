@@ -1,5 +1,6 @@
 package dev.pocketdeck.application.suggest
 
+import dev.pocketdeck.domain.basicPokemon
 import dev.pocketdeck.domain.card.CardCatalog
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.card.EnergyType
@@ -138,5 +139,49 @@ class MetaBasedSuggestionStrategyTest {
                 .single()
 
         (owned.score > empty.score) shouldBe true
+    }
+
+    @Test
+    fun `also offers the deck with substitutes for the pokemon the player lacks`() {
+        val elekid = basicPokemon("Elekid", id = "t-elekid")
+        val withElekid = CardCatalog(allCards + elekid)
+        val owned =
+            (allCards - magmar).map { it to 2 } + (elekid to 2)
+        val inventory =
+            Inventory.of(owned.fold(CardCollection.EMPTY) { c, (card, n) -> c.withCopies(card.id, n) }, withElekid)
+
+        val result =
+            MetaBasedSuggestionStrategy().suggest(
+                SuggestionContext(withElekid, inventory, snapshot(archetype("Charizard", list()))),
+            )
+
+        result.size shouldBe 2
+        val plain = result.first { it.substitutions.isEmpty() }
+        val adapted = result.first { it.substitutions.isNotEmpty() }
+        plain.completeness.isBuildable shouldBe false
+        adapted.completeness.isBuildable shouldBe true
+        adapted.substitutions.single().replacement shouldBe elekid
+    }
+
+    @Test
+    fun `a deck with substitutes ranks below the same deck owned as printed`() {
+        val elekid = basicPokemon("Elekid", id = "t-elekid")
+        val withElekid = CardCatalog(allCards + elekid)
+
+        fun inventory(cards: List<dev.pocketdeck.domain.card.Card>) =
+            Inventory.of(cards.fold(CardCollection.EMPTY) { c, card -> c.withCopies(card.id, 2) }, withElekid)
+        val meta = snapshot(archetype("Charizard", list()))
+
+        val printed =
+            MetaBasedSuggestionStrategy()
+                .suggest(
+                    SuggestionContext(withElekid, inventory(allCards + elekid), meta),
+                ).single()
+        val adapted =
+            MetaBasedSuggestionStrategy()
+                .suggest(SuggestionContext(withElekid, inventory(allCards - magmar + elekid), meta))
+                .first { it.substitutions.isNotEmpty() }
+
+        (printed.score > adapted.score) shouldBe true
     }
 }

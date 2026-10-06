@@ -8,6 +8,7 @@ import dev.pocketdeck.domain.collection.CardCollection
 import dev.pocketdeck.domain.collection.Inventory
 import dev.pocketdeck.domain.deck.CompletenessCalculator
 import dev.pocketdeck.domain.deck.DeckSuggestion
+import dev.pocketdeck.domain.deck.Substitution
 import dev.pocketdeck.domain.deck.SuggestionOrigin
 import dev.pocketdeck.domain.validFireDeck
 import io.kotest.matchers.shouldBe
@@ -85,5 +86,23 @@ class DeckListingTest {
             .map { it.name }
             .contains("Glumanda") shouldBe
             true
+    }
+
+    @Test
+    fun `lists the substitutes with the card they replace`() {
+        val base = suggestion(cards.associateWith { 2 })
+        val adapted = base.copy(substitutions = listOf(Substitution(charizardEx, charmander, copies = 2)))
+
+        val item = DeckListing.build(listOf(adapted), Language.ENGLISH).single()
+
+        item.substitutes shouldBe
+            listOf(SubstituteLine(replacement = "Charmander", original = "Charizard ex", copies = 2))
+        item.substituteCopies shouldBe 2
+    }
+
+    @Test
+    fun `a deck as printed has no substitutes`() {
+        DeckListing.build(listOf(suggestion(cards.associateWith { 2 })), Language.ENGLISH).single().substitutes shouldBe
+            emptyList()
     }
 }

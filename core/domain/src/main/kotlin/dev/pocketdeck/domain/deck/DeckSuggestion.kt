@@ -11,4 +11,6 @@ data class DeckSuggestion(
     val completeness: DeckCompleteness,
     /** Higher is better; comparable only between suggestions of the same list. */
     val score: Double,
+    /** What the player would play instead of cards they lack; empty when the deck is the original list. */
+    val substitutions: List<Substitution> = emptyList(),
 )

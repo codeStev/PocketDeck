@@ -81,4 +81,9 @@
     <string name="decks_code_saved">Saved to Pictures/PocketDeck.</string>
     <string name="decks_code_save_failed">The image could not be saved.</string>
     <string name="decks_code_unavailable">The game cannot import this deck. It does not know these cards:</string>
+    <plurals name="decks_substituted">
+        <item quantity="one">Uses %1$d stand-in card you own</item>
+        <item quantity="other">Uses %1$d stand-in cards you own</item>
+    </plurals>
+    <string name="decks_substitute_line">%1$d× %2$s instead of %3$s</string>
 </resources>

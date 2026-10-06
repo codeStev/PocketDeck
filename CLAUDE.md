@@ -95,3 +95,6 @@ New way of driving the app => new driving adapter calling inbound ports.
   grass, fire, water, lightning, psychic, fighting, darkness, metal. Entity ids (`gameEntityId`) come from the asset file
   name in the flibustier dataset. The Decks tab shows it as a QR (ZXing, version 9, error correction H) the game's
   "Scan Code" / "Scan Saved Image" reads.
+- Substitution: `DeckSubstituter` (domain) replaces missing Pokémon only (same energy type, stage, evolution predecessor and
+  ex status, spare copies, legal deck afterwards); trainers are never substituted because their effect is unknown to the
+  model. `MetaBasedSuggestionStrategy` offers such a variant next to the printed list, scored 0.9 per swapped card lower.

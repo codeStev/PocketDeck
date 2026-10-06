@@ -13,6 +13,13 @@ data class DeckCardLine(
     val missingCopies: Int,
 )
 
+/** [copies] of the card [original] are played as [replacement], which the player owns. */
+data class SubstituteLine(
+    val replacement: String,
+    val original: String,
+    val copies: Int,
+)
+
 /** A suggested deck as shown in the list. */
 data class DeckItem(
     val key: String,
@@ -22,7 +29,10 @@ data class DeckItem(
     val missingCopies: Int,
     val totalCopies: Int,
     val cards: List<DeckCardLine>,
-)
+    val substitutes: List<SubstituteLine> = emptyList(),
+) {
+    val substituteCopies: Int get() = substitutes.sumOf { it.copies }
+}
 
 object DeckListing {
     fun build(
@@ -58,6 +68,10 @@ object DeckListing {
             missingCopies = suggestion.completeness.missingCopies,
             totalCopies = suggestion.completeness.totalCopies,
             cards = lines,
+            substitutes =
+                suggestion.substitutions.map {
+                    SubstituteLine(it.replacement.nameIn(language).value, it.original.nameIn(language).value, it.copies)
+                },
         )
     }
 
