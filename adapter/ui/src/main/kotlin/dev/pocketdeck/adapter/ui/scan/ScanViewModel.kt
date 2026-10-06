@@ -29,6 +29,8 @@ data class ScanUiState(
     val review: List<ReviewItem> = emptyList(),
     val savedCards: Int = 0,
     val notice: ScanNotice? = null,
+    /** Whether the app scrolls the game by itself during the next scan. */
+    val automatic: Boolean = true,
 )
 
 /** Drives the scan and review screens through the application's inbound ports only. */
@@ -143,7 +145,9 @@ class ScanViewModel(
 
     fun onDiscard() = mutableState.update { it.copy(phase = ScanPhase.IDLE, review = emptyList(), notice = null) }
 
-    fun onDone() = mutableState.update { ScanUiState() }
+    fun onAutomaticChanged(automatic: Boolean) = mutableState.update { it.copy(automatic = automatic) }
+
+    fun onDone() = mutableState.update { ScanUiState(automatic = it.automatic) }
 
     private fun updateItem(
         cardId: CardId,

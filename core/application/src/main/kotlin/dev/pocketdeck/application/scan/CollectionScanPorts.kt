@@ -43,7 +43,7 @@ fun interface StartCollectionScan {
 
 /** Inbound port: analyse one captured frame and fold it into the running scan. */
 fun interface SubmitScanFrame {
-    suspend operator fun invoke(frame: ScreenFrame): Outcome<ScanProgress, ScanFailure>
+    suspend operator fun invoke(frame: ScreenFrame): Outcome<FrameAnalysis, ScanFailure>
 }
 
 /** Inbound port: follow the running scan; emits null while no scan is running. */

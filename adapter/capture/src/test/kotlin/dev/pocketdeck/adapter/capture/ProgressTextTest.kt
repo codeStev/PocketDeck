@@ -26,4 +26,11 @@ class ProgressTextTest {
         ProgressText.of(ScanProgress(0, 0, 0)) shouldBe "Scroll through My Cards"
         ProgressText.of(null) shouldBe "Scroll through My Cards"
     }
+
+    @Test
+    fun `in automatic mode the text says the app is scrolling by itself`() {
+        ProgressText.of(null, automatic = true) shouldBe "Scanning…"
+        ProgressText.of(ScanProgress(5, 12, 0), automatic = true) shouldBe "Scanning… 12 cards"
+        ProgressText.of(ScanProgress(5, 12, 3), automatic = true) shouldBe "Scanning… 12 cards · 3 to check"
+    }
 }

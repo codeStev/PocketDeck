@@ -71,3 +71,12 @@ New way of driving the app => new driving adapter calling inbound ports.
   background-coloured zones; a floating scroll button overlaps the bottom-right of the grid.
 - Card names are German in-game; the illustration region is language independent, so matching uses illustrations only.
 - Reprints with identical artwork cannot be told apart on screen; the recognizer deterministically picks the lowest id.
+
+## Scanning flow (live)
+- `ScanCaptureService` (MediaProjection, foreground) provides frames through the `ScreenCapturer` port; the application
+  layer owns the loops: `ManualScanService` (feed frames while the player scrolls) and `AutoScanService` (rewind to the
+  top, then page down with one row of overlap, waiting for the screen to rest and the count badges to fade in, until
+  the list stops moving). Swipes go through the `GridScroller` port, implemented by `GridScrollService`, an
+  AccessibilityService the player switches on in the system settings (gestures only, no screen reading).
+- `SubmitScanFrame` returns a `FrameAnalysis` (tiles recognised, counts readable) which the auto-scroll policy uses.
+- Logs: tag `PocketDeckScan` (per-frame analysis time, skipped frames).

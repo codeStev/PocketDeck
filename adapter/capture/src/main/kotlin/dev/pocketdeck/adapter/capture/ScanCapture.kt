@@ -49,16 +49,19 @@ object ScanCapture {
     internal const val ACTION_STOP = "dev.pocketdeck.action.STOP_SCAN"
     internal const val EXTRA_RESULT_CODE = "resultCode"
     internal const val EXTRA_RESULT_DATA = "resultData"
+    internal const val EXTRA_AUTOMATIC = "automatic"
 
     fun start(
         context: Context,
         consent: ScreenCaptureConsent,
+        automatic: Boolean,
     ) {
         val intent =
             Intent(context, ScanCaptureService::class.java)
                 .setAction(ACTION_START)
                 .putExtra(EXTRA_RESULT_CODE, consent.resultCode)
                 .putExtra(EXTRA_RESULT_DATA, consent.data)
+                .putExtra(EXTRA_AUTOMATIC, automatic)
         ContextCompat.startForegroundService(context, intent)
     }
 

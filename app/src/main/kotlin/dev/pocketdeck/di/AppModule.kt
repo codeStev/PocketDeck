@@ -12,6 +12,7 @@ import dev.pocketdeck.adapter.persistence.PocketDeckStorage
 import dev.pocketdeck.adapter.recognition.BadgeDigitReader
 import dev.pocketdeck.adapter.recognition.CardIndex
 import dev.pocketdeck.adapter.recognition.CollectionGridDetector
+import dev.pocketdeck.adapter.recognition.DetectorGridLocator
 import dev.pocketdeck.adapter.recognition.DigitTemplates
 import dev.pocketdeck.adapter.recognition.GridCardRecognizer
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
@@ -32,6 +33,7 @@ import dev.pocketdeck.application.scan.ConfirmScanResults
 import dev.pocketdeck.application.scan.ConfirmScanResultsService
 import dev.pocketdeck.application.scan.FinishCollectionScan
 import dev.pocketdeck.application.scan.FinishCollectionScanService
+import dev.pocketdeck.application.scan.GridLocator
 import dev.pocketdeck.application.scan.InMemoryScanSessionStore
 import dev.pocketdeck.application.scan.ObserveScanProgress
 import dev.pocketdeck.application.scan.ObserveScanProgressService
@@ -102,6 +104,9 @@ object AppModule {
     @Singleton
     fun cardRecognizer(index: CardIndex): CardRecognizer =
         GridCardRecognizer(index, CollectionGridDetector(), BadgeDigitReader(DigitTemplates.fromResource()))
+
+    @Provides
+    fun gridLocator(): GridLocator = DetectorGridLocator(CollectionGridDetector())
 
     @Provides
     @Singleton

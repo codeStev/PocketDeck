@@ -17,11 +17,14 @@ class SubmitScanFrameService(
     private val recognizer: CardRecognizer,
     private val sessions: ScanSessionStore,
 ) : SubmitScanFrame {
-    override suspend fun invoke(frame: ScreenFrame): Outcome<ScanProgress, ScanFailure> {
+    override suspend fun invoke(frame: ScreenFrame): Outcome<FrameAnalysis, ScanFailure> {
         val session = sessions.current() ?: return Outcome.Failure(ScanFailure.NoActiveScan)
-        val updated = session.observe(recognizer.recognize(frame))
+        val recognitions = recognizer.recognize(frame)
+        val updated = session.observe(recognitions)
         sessions.save(updated)
-        return Outcome.Success(ScanProgress.of(updated))
+        val analysis =
+            FrameAnalysis(ScanProgress.of(updated), recognitions.size, recognitions.count { it.copies != null })
+        return Outcome.Success(analysis)
     }
 }
 

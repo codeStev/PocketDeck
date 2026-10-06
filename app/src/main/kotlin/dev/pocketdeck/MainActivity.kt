@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dagger.hilt.android.AndroidEntryPoint
+import dev.pocketdeck.adapter.capture.AutoScroll
 import dev.pocketdeck.adapter.capture.OverlayPermission
 import dev.pocketdeck.adapter.capture.RequestScreenCapture
 import dev.pocketdeck.adapter.capture.ScanCapture
@@ -38,6 +39,8 @@ class MainActivity : ComponentActivity() {
 
     private var selectedTab by mutableStateOf(AppTab.COLLECTION)
     private var reviewRequests by mutableIntStateOf(0)
+    private var autoScrollEnabled by mutableStateOf(false)
+    private var pendingAutomatic = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,7 +55,7 @@ class MainActivity : ComponentActivity() {
                 val captureConsent =
                     rememberLauncherForActivityResult(RequestScreenCapture()) { consent ->
                         if (consent != null) {
-                            ScanCapture.start(this@MainActivity, consent)
+                            ScanCapture.start(this@MainActivity, consent, pendingAutomatic)
                             openGame()
                         }
                     }
@@ -69,7 +72,10 @@ class MainActivity : ComponentActivity() {
                     scanViewModel = scanViewModel,
                     selectedTab = selectedTab,
                     onTabSelected = { selectedTab = it },
-                    onStartScan = {
+                    autoScrollEnabled = autoScrollEnabled,
+                    onOpenAccessibilitySettings = { startActivity(AutoScroll.settingsIntent()) },
+                    onStartScan = { automatic ->
+                        pendingAutomatic = automatic
                         when {
                             !OverlayPermission.isGranted(this@MainActivity) -> {
                                 overlaySettings.launch(OverlayPermission.settingsIntent(this@MainActivity))
@@ -87,6 +93,12 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // The player may just have switched the accessibility service on or off in the system settings.
+        autoScrollEnabled = AutoScroll.isEnabled(this)
     }
 
     override fun onNewIntent(intent: Intent) {

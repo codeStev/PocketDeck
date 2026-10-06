@@ -23,7 +23,9 @@ fun PocketDeckApp(
     scanViewModel: ScanViewModel,
     selectedTab: AppTab,
     onTabSelected: (AppTab) -> Unit,
-    onStartScan: () -> Unit,
+    autoScrollEnabled: Boolean,
+    onOpenAccessibilitySettings: () -> Unit,
+    onStartScan: (automatic: Boolean) -> Unit,
 ) {
     Scaffold(
         bottomBar = {
@@ -46,7 +48,7 @@ fun PocketDeckApp(
         Box(Modifier.padding(padding)) {
             when (selectedTab) {
                 AppTab.COLLECTION -> CollectionScreen(collectionViewModel)
-                AppTab.SCAN -> ScanScreen(scanViewModel, onStartScan)
+                AppTab.SCAN -> ScanScreen(scanViewModel, autoScrollEnabled, onOpenAccessibilitySettings, onStartScan)
             }
         }
     }

@@ -42,4 +42,8 @@
         <item quantity="other">%1$d cards were written to your collection.</item>
     </plurals>
     <string name="saved_done">Done</string>
+    <string name="scan_automatic_label">Scroll automatically</string>
+    <string name="scan_automatic_on">PocketDeck scrolls the list for you, from the top to the end. Do not touch the screen while it runs; tap Stop on the small button to end early.</string>
+    <string name="scan_automatic_needs_service">To scroll for you, switch on "PocketDeck auto-scroll" in the Accessibility settings. It only performs swipes and reads nothing on the screen.</string>
+    <string name="scan_open_accessibility">Open Accessibility settings</string>
 </resources>

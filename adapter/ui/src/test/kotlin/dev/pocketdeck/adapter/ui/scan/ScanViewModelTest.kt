@@ -210,4 +210,38 @@ class ScanViewModelTest {
 
             viewModel.state.value.phase shouldBe ScanPhase.IDLE
         }
+
+    @Test
+    fun `scrolling automatically is the default`() =
+        runTest(dispatcher) {
+            viewModel().state.value.automatic shouldBe true
+        }
+
+    @Test
+    fun `the player can switch automatic scrolling off and on`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+
+            viewModel.onAutomaticChanged(false)
+            viewModel.state.value.automatic shouldBe false
+
+            viewModel.onAutomaticChanged(true)
+            viewModel.state.value.automatic shouldBe true
+        }
+
+    @Test
+    fun `the choice survives finishing a scan`() =
+        runTest(dispatcher) {
+            scanSeeing(tile(charmander, 2))
+            val viewModel = viewModel()
+            viewModel.onAutomaticChanged(false)
+            viewModel.onReviewRequested()
+            advanceUntilIdle()
+            viewModel.onConfirm()
+            advanceUntilIdle()
+
+            viewModel.onDone()
+
+            viewModel.state.value.automatic shouldBe false
+        }
 }

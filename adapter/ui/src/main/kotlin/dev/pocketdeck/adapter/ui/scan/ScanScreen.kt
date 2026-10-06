@@ -16,6 +16,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,11 +37,16 @@ import dev.pocketdeck.domain.card.CardId
 @Composable
 fun ScanScreen(
     viewModel: ScanViewModel,
-    onStartScan: () -> Unit,
+    autoScrollEnabled: Boolean,
+    onOpenAccessibilitySettings: () -> Unit,
+    onStartScan: (automatic: Boolean) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     ScanContent(
         state = state,
+        autoScrollEnabled = autoScrollEnabled,
+        onAutomaticChanged = viewModel::onAutomaticChanged,
+        onOpenAccessibilitySettings = onOpenAccessibilitySettings,
         onStartScan = onStartScan,
         onAdjust = viewModel::onAdjust,
         onAccept = viewModel::onAccept,
@@ -54,7 +60,10 @@ fun ScanScreen(
 @Composable
 internal fun ScanContent(
     state: ScanUiState,
-    onStartScan: () -> Unit,
+    autoScrollEnabled: Boolean,
+    onAutomaticChanged: (Boolean) -> Unit,
+    onOpenAccessibilitySettings: () -> Unit,
+    onStartScan: (Boolean) -> Unit,
     onAdjust: (CardId, Int) -> Unit,
     onAccept: (CardId) -> Unit,
     onRemove: (CardId) -> Unit,
@@ -63,22 +72,52 @@ internal fun ScanContent(
     onDone: () -> Unit,
 ) {
     when (state.phase) {
-        ScanPhase.IDLE, ScanPhase.SCANNING -> Instructions(state, onStartScan)
-        ScanPhase.REVIEW -> Review(state, onAdjust, onAccept, onRemove, onConfirm, onDiscard)
-        ScanPhase.SAVED -> Saved(state.savedCards, onDone)
+        ScanPhase.IDLE, ScanPhase.SCANNING -> {
+            Instructions(state, autoScrollEnabled, onAutomaticChanged, onOpenAccessibilitySettings, onStartScan)
+        }
+
+        ScanPhase.REVIEW -> {
+            Review(state, onAdjust, onAccept, onRemove, onConfirm, onDiscard)
+        }
+
+        ScanPhase.SAVED -> {
+            Saved(state.savedCards, onDone)
+        }
     }
 }
 
 @Composable
 private fun Instructions(
     state: ScanUiState,
-    onStartScan: () -> Unit,
+    autoScrollEnabled: Boolean,
+    onAutomaticChanged: (Boolean) -> Unit,
+    onOpenAccessibilitySettings: () -> Unit,
+    onStartScan: (Boolean) -> Unit,
 ) {
+    val needsService = state.automatic && !autoScrollEnabled
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(stringResource(R.string.scan_title), style = MaterialTheme.typography.headlineSmall)
         Text(stringResource(R.string.scan_intro))
-        listOf(R.string.scan_step_view, R.string.scan_step_start, R.string.scan_step_scroll, R.string.scan_step_stop)
-            .forEachIndexed { index, step -> Text("${index + 1}. ${stringResource(step)}") }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Switch(checked = state.automatic, onCheckedChange = onAutomaticChanged)
+            Text(stringResource(R.string.scan_automatic_label), style = MaterialTheme.typography.titleMedium)
+        }
+        if (state.automatic) {
+            val hint = if (autoScrollEnabled) R.string.scan_automatic_on else R.string.scan_automatic_needs_service
+            Text(stringResource(hint), style = MaterialTheme.typography.bodyMedium)
+        }
+        val steps =
+            if (state.automatic) {
+                listOf(R.string.scan_step_view, R.string.scan_step_start)
+            } else {
+                listOf(
+                    R.string.scan_step_view,
+                    R.string.scan_step_start,
+                    R.string.scan_step_scroll,
+                    R.string.scan_step_stop,
+                )
+            }
+        steps.forEachIndexed { index, step -> Text("${index + 1}. ${stringResource(step)}") }
         Spacer(Modifier.height(8.dp))
         state.progress?.let {
             Text(
@@ -87,7 +126,12 @@ private fun Instructions(
             )
         }
         state.notice?.let { Text(noticeText(it), color = MaterialTheme.colorScheme.error) }
-        Button(onClick = onStartScan, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.scan_start)) }
+        Button(
+            onClick = { if (needsService) onOpenAccessibilitySettings() else onStartScan(state.automatic) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(if (needsService) R.string.scan_open_accessibility else R.string.scan_start))
+        }
     }
 }
 

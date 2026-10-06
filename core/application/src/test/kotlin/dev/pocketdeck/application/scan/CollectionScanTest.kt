@@ -30,11 +30,13 @@ class CollectionScanTest {
         confidence: Double = 0.9,
     ) = TileRecognition(id, copies, Confidence(confidence))
 
+    private fun progressOf(outcome: Outcome<FrameAnalysis, ScanFailure>) = (outcome as Outcome.Success).value.progress
+
     private fun progress(
         frames: Int,
         cards: Int,
         needingReview: Int = 0,
-    ) = Outcome.Success(ScanProgress(frames, cards, needingReview))
+    ) = ScanProgress(frames, cards, needingReview)
 
     private val start = StartCollectionScanService(sessions)
 
@@ -59,8 +61,8 @@ class CollectionScanTest {
             val submitFrame = submit(recognizer)
             start()
 
-            submitFrame(frame) shouldBe progress(1, 1)
-            submitFrame(frame) shouldBe progress(2, 2)
+            progressOf(submitFrame(frame)) shouldBe progress(1, 1)
+            progressOf(submitFrame(frame)) shouldBe progress(2, 2)
             recognizer.framesSeen.size shouldBe 2
         }
 
@@ -136,7 +138,11 @@ class CollectionScanTest {
             val submitFrame = submit(FakeCardRecognizer(listOf(unreadableCount, seen(magmar.id, 1))))
             start()
 
-            submitFrame(frame) shouldBe Outcome.Success(ScanProgress(1, 2, cardsNeedingReview = 1))
+            val analysis = (submitFrame(frame) as Outcome.Success).value
+
+            analysis.progress shouldBe ScanProgress(1, 2, cardsNeedingReview = 1)
+            analysis.tilesRecognized shouldBe 2
+            analysis.countsRead shouldBe 1
         }
 
     @Test

@@ -15,31 +15,31 @@ import android.media.projection.MediaProjectionManager
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.IntentCompat
 import dev.pocketdeck.application.Outcome
+import dev.pocketdeck.application.scan.AutoScanFailure
+import dev.pocketdeck.application.scan.ScreenCapturer
+import dev.pocketdeck.application.scan.ScreenFrame
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * Holds the screen-capture session while a scan runs: grabs the latest screen image a few times a second and
- * feeds it to the scan use cases. All recognition logic lives behind those ports; this class only moves pixels.
+ * Holds the screen-capture session while a scan runs and starts the scan loop (manual or automatic). All scan logic
+ * lives in the application layer; this class only moves pixels, gestures and the floating button.
  */
 class ScanCaptureService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val changes = FrameChangeDetector()
     private var session: CaptureSession? = null
     private var overlay: ScanOverlay? = null
+    private var automatic = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -77,12 +77,13 @@ class ScanCaptureService : Service() {
             stopSelf()
             return
         }
+        automatic = intent.getBooleanExtra(ScanCapture.EXTRA_AUTOMATIC, false)
         val dependencies = (application as CaptureDependenciesProvider).captureDependencies
         session = openSession(resultCode, resultData)
         dependencies.startCollectionScan()
         overlay = ScanOverlay(this, onStop = { finish(openReview = true) }).also(ScanOverlay::show)
-        scope.launch { dependencies.observeScanProgress().collect { overlay?.update(ProgressText.of(it)) } }
-        scope.launch { captureLoop(dependencies) }
+        scope.launch { dependencies.observeScanProgress().collect { overlay?.update(ProgressText.of(it, automatic)) } }
+        scope.launch { runScan(dependencies) }
     }
 
     private fun openSession(
@@ -90,8 +91,8 @@ class ScanCaptureService : Service() {
         resultData: Intent,
     ): CaptureSession {
         val manager = getSystemService(MediaProjectionManager::class.java)
-        val projection =
-            checkNotNull(manager.getMediaProjection(resultCode, resultData)) { "Screen capture was not granted" }
+        val granted = manager.getMediaProjection(resultCode, resultData)
+        val projection = checkNotNull(granted) { "Screen capture was not granted" }
         // Android 14 insists on a callback being registered before a virtual display is created.
         projection.registerCallback(
             object : MediaProjection.Callback() {
@@ -117,31 +118,35 @@ class ScanCaptureService : Service() {
         return CaptureSession(projection, reader, display)
     }
 
-    private suspend fun captureLoop(dependencies: CaptureDependencies) {
-        while (scope.isActive) {
-            try {
-                if (!processLatestFrame(dependencies)) return
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (failure: Exception) {
-                // One unreadable frame must not end the scan or take the app down; the next frame gets its chance.
-                Log.e(TAG, "Skipped a frame", failure)
+    private suspend fun runScan(dependencies: CaptureDependencies) {
+        val capturer = ScreenCapturer { session?.latestFrame() }
+        try {
+            if (automatic) {
+                when (val outcome = dependencies.automaticScan(capturer, AccessibilityGridScroller())()) {
+                    is Outcome.Success -> finish(openReview = true)
+                    is Outcome.Failure -> endAutomaticScan(outcome.reason)
+                }
+            } else {
+                dependencies.manualScan(capturer)()
+                finish(openReview = false)
             }
-            delay(CAPTURE_INTERVAL_MS)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) {
+            Log.e(TAG, "The scan stopped unexpectedly", failure)
+            finish(openReview = true)
         }
     }
 
-    /** Returns false when the scan has ended elsewhere and capturing should stop. */
-    private suspend fun processLatestFrame(dependencies: CaptureDependencies): Boolean {
-        val started = SystemClock.elapsedRealtime()
-        val frame = session?.latestFrame() ?: return true
-        if (!changes.isNew(frame)) return true
-        if (dependencies.submitScanFrame(frame) is Outcome.Failure) {
-            finish(openReview = false)
-            return false
+    private suspend fun endAutomaticScan(reason: AutoScanFailure) {
+        when (reason) {
+            AutoScanFailure.GestureUnavailable -> overlay?.update(getString(R.string.scan_auto_unavailable))
+            AutoScanFailure.TooManyScreens -> overlay?.update(getString(R.string.scan_auto_too_long))
+            AutoScanFailure.ScanNotRunning -> Unit
         }
-        Log.d(TAG, "Frame analysed in ${SystemClock.elapsedRealtime() - started} ms")
-        return true
+        if (reason != AutoScanFailure.ScanNotRunning) delay(FAILURE_NOTICE_MILLIS)
+        // Whatever was found is still worth checking, so the player gets the review in every case.
+        finish(openReview = reason != AutoScanFailure.ScanNotRunning)
     }
 
     private fun finish(openReview: Boolean) {
@@ -150,7 +155,6 @@ class ScanCaptureService : Service() {
         overlay?.remove()
         overlay = null
         current.release()
-        changes.reset()
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         if (openReview) openReviewScreen()
         stopSelf()
@@ -181,11 +185,19 @@ class ScanCaptureService : Service() {
         private val reader: ImageReader,
         private val display: VirtualDisplay,
     ) {
-        fun latestFrame() =
+        private var last: ScreenFrame? = null
+
+        /**
+         * The newest picture. Android only delivers an image when the screen changes, so while the screen rests the
+         * previous picture is the current one.
+         */
+        fun latestFrame(): ScreenFrame? {
             reader.acquireLatestImage()?.use { image ->
                 val plane = image.planes[0]
-                RgbaFrameConverter.toScreenFrame(plane.buffer, image.width, image.height, plane.rowStride)
+                last = RgbaFrameConverter.toScreenFrame(plane.buffer, image.width, image.height, plane.rowStride)
             }
+            return last
+        }
 
         fun release() {
             display.release()
@@ -200,6 +212,6 @@ class ScanCaptureService : Service() {
         const val CHANNEL_ID = "scan"
         const val DISPLAY_NAME = "pocketdeck-scan"
         const val READER_BUFFERS = 2
-        const val CAPTURE_INTERVAL_MS = 350L
+        const val FAILURE_NOTICE_MILLIS = 2500L
     }
 }

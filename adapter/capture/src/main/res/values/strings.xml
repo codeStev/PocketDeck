@@ -4,4 +4,8 @@
     <string name="scan_notification_title">Scanning your collection</string>
     <string name="scan_notification_text">Scroll through My Cards in the game, then tap Stop.</string>
     <string name="scan_stop">Stop</string>
+    <string name="accessibility_label">PocketDeck auto-scroll</string>
+    <string name="accessibility_description">Lets PocketDeck scroll the card list in Pokémon TCG Pocket by itself while it scans your collection. It performs swipe gestures only and does not read anything on the screen.</string>
+    <string name="scan_auto_unavailable">Auto-scroll is off. Switch it on in Accessibility settings.</string>
+    <string name="scan_auto_too_long">Stopped: the list is longer than expected.</string>
 </resources>
