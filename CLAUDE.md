@@ -117,3 +117,11 @@ New way of driving the app => new driving adapter calling inbound ports.
   45% and 53%. Weights (`CardRatings`: 6.0 for lines and trainers) were picked on that measure; going higher gave little.
   Rerun such a measure before changing the rating rules (a throwaway JVM test in `:adapter:carddb` reading the real
   master dataset worked well; it needs live decklists and a copy of the collection).
+- AI advisor (`:adapter:llm`): `AskAiForDeckService` (application) asks a `DeckAdvisor`, never trusts the answer (unknown ids,
+  cards not owned, legality, selectable energy are checked) and sends problems back for up to 3 attempts.
+  `AdvicePromptWriter` (application) writes the prompt once for every provider; `ConfiguredDeckAdvisor` tries the providers
+  the player set up in their order and falls back when one is busy. `AnthropicDeckAdvisor` (Messages API, forced tool call,
+  prompt caching on the collection) and `OpenRouterDeckAdvisor` (chat completions, function call or JSON in text; the
+  free `openrouter/free` router is the default model, models are editable). Keys live in
+  `SharedPreferencesAdvisorSettingsStore` (private storage, no backup). Nothing here was run against the real services
+  yet (no key); only mock-engine tests.

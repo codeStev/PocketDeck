@@ -36,6 +36,10 @@ internal class DecksActions(
     val onOpenBuilder: () -> Unit,
     val onCloseBuilder: () -> Unit,
     val onBuild: (String?) -> Unit,
+    val onAskAi: (String?) -> Unit,
+    val onOpenAiSettings: () -> Unit,
+    val onCloseAiSettings: () -> Unit,
+    val onSaveAiSettings: (AiSettingsForm) -> Unit,
 )
 
 @Composable
@@ -50,6 +54,10 @@ fun DecksScreen(viewModel: DecksViewModel) {
             onOpenBuilder = viewModel::onOpenBuilder,
             onCloseBuilder = viewModel::onCloseBuilder,
             onBuild = viewModel::onBuild,
+            onAskAi = viewModel::onAskAi,
+            onOpenAiSettings = viewModel::onOpenAiSettings,
+            onCloseAiSettings = viewModel::onCloseAiSettings,
+            onSaveAiSettings = viewModel::onSaveAiSettings,
         ),
     )
 }
@@ -60,7 +68,8 @@ internal fun DecksContent(
     actions: DecksActions,
 ) {
     state.code?.let { DeckCodeDialog(it, actions.onCloseCode) }
-    state.centrepieces?.let { BuilderDialog(it, actions.onBuild, actions.onCloseBuilder) }
+    state.centrepieces?.let { BuilderDialog(it, state.aiConfigured, actions) }
+    state.aiSettings?.let { AiSettingsDialog(it, actions.onSaveAiSettings, actions.onCloseAiSettings) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding =
@@ -81,10 +90,17 @@ private fun Header(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.decks_title), style = MaterialTheme.typography.headlineSmall)
         Text(stringResource(R.string.decks_intro), style = MaterialTheme.typography.bodyMedium)
-        state.notice?.let { Text(noticeText(it), color = MaterialTheme.colorScheme.error) }
+        state.notice?.let { Text(noticeText(it, state.noticeDetail), color = MaterialTheme.colorScheme.error) }
         if (state.items.isEmpty() && !state.refreshing) Text(stringResource(R.string.decks_empty))
-        Button(onClick = actions.onOpenBuilder, enabled = !state.building, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(if (state.building) R.string.decks_building else R.string.decks_build))
+        val working = state.building || state.asking
+        Button(onClick = actions.onOpenBuilder, enabled = !working, modifier = Modifier.fillMaxWidth()) {
+            val label =
+                when {
+                    state.asking -> R.string.decks_asking
+                    state.building -> R.string.decks_building
+                    else -> R.string.decks_build
+                }
+            Text(stringResource(label))
         }
         OutlinedButton(onClick = actions.onRefresh, enabled = !state.refreshing, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(if (state.refreshing) R.string.decks_refreshing else R.string.decks_refresh))
@@ -93,14 +109,24 @@ private fun Header(
 }
 
 @Composable
-private fun noticeText(notice: DecksNotice) =
-    stringResource(
-        when (notice) {
-            DecksNotice.NOT_REACHABLE -> R.string.decks_not_reachable
-            DecksNotice.NO_DECKLISTS -> R.string.decks_no_decklists
-            DecksNotice.BUILD_FAILED -> R.string.decks_build_failed
-        },
-    )
+private fun noticeText(
+    notice: DecksNotice,
+    detail: String?,
+): String {
+    val more = detail.orEmpty()
+    return when (notice) {
+        DecksNotice.NOT_REACHABLE -> stringResource(R.string.decks_not_reachable)
+        DecksNotice.NO_DECKLISTS -> stringResource(R.string.decks_no_decklists)
+        DecksNotice.BUILD_FAILED -> stringResource(R.string.decks_build_failed)
+        DecksNotice.AI_NEEDS_KEY -> stringResource(R.string.decks_ai_needs_key)
+        DecksNotice.AI_INVALID_KEY -> stringResource(R.string.decks_ai_invalid_key)
+        DecksNotice.AI_BUSY -> stringResource(R.string.decks_ai_busy, more)
+        DecksNotice.AI_UNREACHABLE -> stringResource(R.string.decks_ai_unreachable, more)
+        DecksNotice.AI_REJECTED -> stringResource(R.string.decks_ai_rejected, more)
+        DecksNotice.AI_UNUSABLE -> stringResource(R.string.decks_ai_unusable, more)
+        DecksNotice.AI_NO_VALID_DECK -> stringResource(R.string.decks_ai_no_valid_deck, more)
+    }
+}
 
 @Composable
 private fun DeckCard(
@@ -118,6 +144,7 @@ private fun DeckCard(
                 }
             Text(title, style = MaterialTheme.typography.titleMedium)
             Text(originText(item.origin), style = MaterialTheme.typography.labelMedium)
+            item.rationale?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             LinearProgressIndicator(progress = { item.ownedPercent / PERCENT_FULL }, modifier = Modifier.fillMaxWidth())
             Text(stringResource(R.string.decks_owned, item.ownedPercent))
             if (item.substitutes.isNotEmpty()) {
@@ -149,6 +176,7 @@ private fun originText(origin: SuggestionOrigin) =
         when (origin) {
             SuggestionOrigin.META -> R.string.decks_origin_meta
             SuggestionOrigin.HEURISTIC -> R.string.decks_origin_heuristic
+            SuggestionOrigin.AI -> R.string.decks_origin_ai
         },
     )
 

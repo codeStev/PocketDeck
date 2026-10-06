@@ -33,6 +33,8 @@ data class DeckItem(
     val totalCopies: Int,
     val cards: List<DeckCardLine>,
     val substitutes: List<SubstituteLine> = emptyList(),
+    /** Why the deck is as it is, when an advisor explained it. */
+    val rationale: String? = null,
 ) {
     val substituteCopies: Int get() = substitutes.sumOf { it.copies }
 }
@@ -71,6 +73,7 @@ object DeckListing {
             missingCopies = suggestion.completeness.missingCopies,
             totalCopies = suggestion.completeness.totalCopies,
             cards = lines,
+            rationale = suggestion.rationale,
             substitutes =
                 suggestion.substitutions.map {
                     SubstituteLine(

@@ -4,6 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dev.pocketdeck.application.Outcome
+import dev.pocketdeck.application.advice.AdvisorFailure
+import dev.pocketdeck.application.advice.AdvisorProvider
+import dev.pocketdeck.application.advice.AdvisorSettings
+import dev.pocketdeck.application.advice.AskAiFailure
 import dev.pocketdeck.application.deckcode.DeckCodeFailure
 import dev.pocketdeck.application.deckcode.ExportDeckCode
 import dev.pocketdeck.application.meta.MetaSourceFailure
@@ -20,7 +24,25 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class DecksNotice { NOT_REACHABLE, NO_DECKLISTS, BUILD_FAILED }
+enum class DecksNotice {
+    NOT_REACHABLE,
+    NO_DECKLISTS,
+    BUILD_FAILED,
+    AI_NEEDS_KEY,
+    AI_INVALID_KEY,
+    AI_BUSY,
+    AI_UNREACHABLE,
+    AI_REJECTED,
+    AI_UNUSABLE,
+    AI_NO_VALID_DECK,
+}
+
+/** What the player edits in the AI settings: the keys and models by provider, and which provider is tried first. */
+data class AiSettingsForm(
+    val order: List<AdvisorProvider>,
+    val keys: Map<AdvisorProvider, String>,
+    val models: Map<AdvisorProvider, String>,
+)
 
 /** A Pokémon the player can build a deck around. */
 data class CentrepieceItem(
@@ -55,6 +77,13 @@ data class DecksUiState(
     /** The Pokémon to choose from while the builder is open; null when it is closed. */
     val centrepieces: List<CentrepieceItem>? = null,
     val building: Boolean = false,
+    /** More about [notice], as the service said it. */
+    val noticeDetail: String? = null,
+    /** Whether a key is set up for at least one AI service. */
+    val aiConfigured: Boolean = false,
+    val asking: Boolean = false,
+    /** The AI settings while the player edits them; null when closed. */
+    val aiSettings: AiSettingsForm? = null,
 )
 
 /** Shows the suggested decks and refreshes the picture of the competitive field. */
@@ -64,6 +93,7 @@ class DecksViewModel(
     private val exportDeckCode: ExportDeckCode,
     private val buildDeck: BuildDeck,
     private val listCentrepieces: ListDeckCentrepieces,
+    private val ai: AiAssistant,
     private val language: Language,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(DecksUiState())
@@ -72,12 +102,19 @@ class DecksViewModel(
     private var builtDecks: List<DeckSuggestion> = emptyList()
     private var shown: List<DeckSuggestion> = emptyList()
     private var centres: Map<String, PokemonCard> = emptyMap()
+    private var advisorSettings = AdvisorSettings()
 
     init {
         viewModelScope.launch {
             suggestDecks().collect { latest ->
                 suggestions = latest
                 publish()
+            }
+        }
+        viewModelScope.launch {
+            ai.observeSettings().collect { settings ->
+                advisorSettings = settings
+                mutableState.update { it.copy(aiConfigured = settings.usable().isNotEmpty()) }
             }
         }
         onRefresh()
@@ -120,6 +157,75 @@ class DecksViewModel(
             mutableState.update { it.copy(centrepieces = items) }
         }
     }
+
+    fun onOpenAiSettings() {
+        val form =
+            AiSettingsForm(
+                order = advisorSettings.order,
+                keys = AdvisorProvider.entries.mapNotNull { p -> advisorSettings.keyOf(p)?.let { p to it } }.toMap(),
+                models =
+                    AdvisorProvider.entries
+                        .mapNotNull { p ->
+                            advisorSettings.chosenModelOf(p)?.let { p to it }
+                        }.toMap(),
+            )
+        mutableState.update { it.copy(aiSettings = form, centrepieces = null) }
+    }
+
+    fun onCloseAiSettings() = mutableState.update { it.copy(aiSettings = null) }
+
+    fun onSaveAiSettings(form: AiSettingsForm) {
+        viewModelScope.launch {
+            val settings =
+                AdvisorProvider.entries.fold(AdvisorSettings().withOrder(form.order)) { acc, provider ->
+                    acc.withKey(provider, form.keys[provider]).withModel(provider, form.models[provider])
+                }
+            ai.saveSettings(settings)
+            mutableState.update { it.copy(aiSettings = null) }
+        }
+    }
+
+    /** Asks the AI for a deck. Without a key there is nothing to ask, so the settings open instead. */
+    fun onAskAi(wish: String?) {
+        if (!state.value.aiConfigured) {
+            mutableState.update { it.copy(notice = DecksNotice.AI_NEEDS_KEY, noticeDetail = null) }
+            onOpenAiSettings()
+            return
+        }
+        viewModelScope.launch {
+            mutableState.update { it.copy(centrepieces = null, asking = true, notice = null, noticeDetail = null) }
+            when (val outcome = ai.ask(wish?.trim()?.takeIf { it.isNotEmpty() })) {
+                is Outcome.Success -> {
+                    builtDecks = (listOf(outcome.value) + builtDecks).take(MAX_BUILT_DECKS)
+                    publish()
+                    mutableState.update { it.copy(asking = false) }
+                }
+
+                is Outcome.Failure -> {
+                    val (notice, detail) = outcome.reason.toNotice()
+                    mutableState.update { it.copy(asking = false, notice = notice, noticeDetail = detail) }
+                }
+            }
+        }
+    }
+
+    private fun AskAiFailure.toNotice(): Pair<DecksNotice, String?> =
+        when (this) {
+            is AskAiFailure.NoValidDeck -> {
+                DecksNotice.AI_NO_VALID_DECK to problems.firstOrNull()
+            }
+
+            is AskAiFailure.AdvisorFailed -> {
+                when (val reason = failure) {
+                    AdvisorFailure.MissingKey -> DecksNotice.AI_NEEDS_KEY to null
+                    AdvisorFailure.InvalidKey -> DecksNotice.AI_INVALID_KEY to null
+                    is AdvisorFailure.Busy -> DecksNotice.AI_BUSY to reason.reason
+                    is AdvisorFailure.NotReachable -> DecksNotice.AI_UNREACHABLE to reason.reason
+                    is AdvisorFailure.Rejected -> DecksNotice.AI_REJECTED to reason.reason
+                    is AdvisorFailure.Unusable -> DecksNotice.AI_UNUSABLE to reason.reason
+                }
+            }
+        }
 
     fun onCloseBuilder() = mutableState.update { it.copy(centrepieces = null) }
 
@@ -166,12 +272,21 @@ class DecksViewModel(
         private val exportDeckCode: ExportDeckCode,
         private val buildDeck: BuildDeck,
         private val listCentrepieces: ListDeckCentrepieces,
+        private val ai: AiAssistant,
         private val language: Language,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(DecksViewModel::class.java)) { "Unknown ViewModel $modelClass" }
-            return DecksViewModel(suggestDecks, refreshMeta, exportDeckCode, buildDeck, listCentrepieces, language) as T
+            return DecksViewModel(
+                suggestDecks,
+                refreshMeta,
+                exportDeckCode,
+                buildDeck,
+                listCentrepieces,
+                ai,
+                language,
+            ) as T
         }
     }
 }

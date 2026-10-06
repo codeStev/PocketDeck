@@ -41,7 +41,7 @@ class HexagonalArchitectureTest {
 
     @Test
     fun `adapters never depend on other adapters`() {
-        val adapters = listOf("ui", "capture", "persistence", "carddb", "limitless", "recognition")
+        val adapters = listOf("ui", "capture", "persistence", "carddb", "limitless", "llm", "recognition")
         adapters.forEach { adapter ->
             val others = adapters - adapter
             Konsist

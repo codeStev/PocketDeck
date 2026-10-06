@@ -124,4 +124,30 @@
     <string name="decks_build_hint">Das Deck besteht nur aus Karten, die du besitzt. Wähle das Pokémon, um das es gebaut werden soll, die stärksten zuerst.</string>
     <string name="decks_build_best">Bestes Deck aus meinen Karten</string>
     <string name="decks_build_failed">Deine Sammlung ist zu klein, um so ein Deck zu bauen.</string>
+    <string name="decks_origin_ai">KI-Vorschlag</string>
+    <string name="decks_asking">KI wird gefragt…</string>
+    <string name="decks_ai_title">Eine KI fragen</string>
+    <string name="decks_ai_wish">Was für ein Deck? (optional)</string>
+    <string name="decks_ai_ask">KI fragen</string>
+    <string name="decks_ai_set_up">KI zuerst einrichten</string>
+    <string name="decks_ai_settings">KI-Einstellungen</string>
+    <string name="decks_ai_settings_title">KI-Einstellungen</string>
+    <string name="decks_ai_settings_hint">Die KI bekommt deine Kartenliste und die Turnier-Decks und braucht dafür einen Schlüssel des gewählten Dienstes. Schlüssel bleiben auf diesem Handy. Die Dienste werden in der gezeigten Reihenfolge gefragt; ist der erste ausgelastet, kommt der nächste dran.</string>
+    <string name="decks_ai_provider_anthropic">Anthropic (Claude)</string>
+    <string name="decks_ai_provider_anthropic_hint">Die stärkste Wahl; kostet Geld pro Anfrage. Schlüssel von console.anthropic.com.</string>
+    <string name="decks_ai_provider_openrouter">OpenRouter</string>
+    <string name="decks_ai_provider_openrouter_hint">Ein Schlüssel für viele Modelle, einige kostenlos (mit niedrigen Limits, oft ausgelastet). Schlüssel von openrouter.ai.</string>
+    <string name="decks_ai_key">API-Schlüssel</string>
+    <string name="decks_ai_model">Modell (leer = Standard)</string>
+    <string name="decks_ai_earlier">Früher fragen</string>
+    <string name="decks_ai_later">Später fragen</string>
+    <string name="decks_ai_save">Speichern</string>
+    <string name="decks_ai_cancel">Abbrechen</string>
+    <string name="decks_ai_needs_key">Füge zuerst einen Schlüssel für einen KI-Dienst hinzu.</string>
+    <string name="decks_ai_invalid_key">Der KI-Dienst hat deinen Schlüssel nicht akzeptiert. Prüfe ihn in den KI-Einstellungen.</string>
+    <string name="decks_ai_busy">Der KI-Dienst ist ausgelastet oder sein Limit ist erreicht: %1$s. Versuche es gleich noch einmal.</string>
+    <string name="decks_ai_unreachable">Der KI-Dienst ist nicht erreichbar: %1$s</string>
+    <string name="decks_ai_rejected">Der KI-Dienst hat die Anfrage abgelehnt: %1$s</string>
+    <string name="decks_ai_unusable">Die KI hat kein Deck geliefert: %1$s</string>
+    <string name="decks_ai_no_valid_deck">Die KI konnte aus deinen Karten kein gültiges Deck bauen. Letztes Problem: %1$s</string>
 </resources>

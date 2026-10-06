@@ -9,8 +9,11 @@ import dagger.hilt.components.SingletonComponent
 import dev.pocketdeck.LogScanDiagnostics
 import dev.pocketdeck.adapter.carddb.MasterCatalogSource
 import dev.pocketdeck.adapter.limitless.LimitlessMetaDecklistSource
+import dev.pocketdeck.adapter.llm.AnthropicDeckAdvisor
+import dev.pocketdeck.adapter.llm.OpenRouterDeckAdvisor
 import dev.pocketdeck.adapter.persistence.PocketDeckDatabases
 import dev.pocketdeck.adapter.persistence.PocketDeckStorage
+import dev.pocketdeck.adapter.persistence.SharedPreferencesAdvisorSettingsStore
 import dev.pocketdeck.adapter.recognition.BadgeDigitReader
 import dev.pocketdeck.adapter.recognition.CardIndex
 import dev.pocketdeck.adapter.recognition.CollectionGridDetector
@@ -18,8 +21,17 @@ import dev.pocketdeck.adapter.recognition.DetectorGridLocator
 import dev.pocketdeck.adapter.recognition.DigitTemplates
 import dev.pocketdeck.adapter.recognition.GridCardRecognizer
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
+import dev.pocketdeck.adapter.ui.decks.AiAssistant
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
+import dev.pocketdeck.application.advice.AdvisorProvider
+import dev.pocketdeck.application.advice.AdvisorSettingsStore
+import dev.pocketdeck.application.advice.AskAiForDeck
+import dev.pocketdeck.application.advice.AskAiForDeckService
+import dev.pocketdeck.application.advice.ConfiguredDeckAdvisor
+import dev.pocketdeck.application.advice.DeckAdvisor
+import dev.pocketdeck.application.advice.ObserveAdvisorSettingsService
+import dev.pocketdeck.application.advice.SaveAdvisorSettingsService
 import dev.pocketdeck.application.catalog.CardCatalogRepository
 import dev.pocketdeck.application.catalog.CardCatalogSource
 import dev.pocketdeck.application.catalog.ObserveCardCatalog
@@ -69,6 +81,7 @@ import dev.pocketdeck.application.suggest.SuggestDecksService
 import dev.pocketdeck.domain.card.Language
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
@@ -188,7 +201,47 @@ object AppModule {
     fun httpClient(): HttpClient =
         HttpClient(OkHttp) {
             install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+            // A large model can think for a minute or more before it answers.
+            install(HttpTimeout) {
+                connectTimeoutMillis = CONNECT_TIMEOUT_MS
+                requestTimeoutMillis = REQUEST_TIMEOUT_MS
+                socketTimeoutMillis = REQUEST_TIMEOUT_MS
+            }
         }
+
+    // --- AI advisors
+    @Provides
+    @Singleton
+    fun advisorSettingsStore(
+        @ApplicationContext context: Context,
+    ): AdvisorSettingsStore = SharedPreferencesAdvisorSettingsStore(context)
+
+    @Provides
+    fun deckAdvisor(
+        settings: AdvisorSettingsStore,
+        client: HttpClient,
+    ): DeckAdvisor =
+        ConfiguredDeckAdvisor(
+            settings,
+            mapOf(
+                AdvisorProvider.ANTHROPIC to AnthropicDeckAdvisor(client),
+                AdvisorProvider.OPENROUTER to OpenRouterDeckAdvisor(client),
+            ),
+        )
+
+    @Provides
+    fun askAiForDeck(
+        catalogs: CardCatalogRepository,
+        collections: CollectionRepository,
+        snapshots: MetaSnapshotRepository,
+        advisor: DeckAdvisor,
+    ): AskAiForDeck = AskAiForDeckService(catalogs, collections, snapshots, advisor)
+
+    @Provides
+    fun aiAssistant(
+        askAiForDeck: AskAiForDeck,
+        settings: AdvisorSettingsStore,
+    ) = AiAssistant(askAiForDeck, ObserveAdvisorSettingsService(settings), SaveAdvisorSettingsService(settings))
 
     @Provides
     fun metaDecklistSource(client: HttpClient): MetaDecklistSource = LimitlessMetaDecklistSource(client)
@@ -224,6 +277,7 @@ object AppModule {
         exportDeckCode: ExportDeckCode,
         buildDeck: BuildDeck,
         listDeckCentrepieces: ListDeckCentrepieces,
+        aiAssistant: AiAssistant,
         language: Language,
     ) = DecksViewModel.Factory(
         suggestDecks,
@@ -231,6 +285,7 @@ object AppModule {
         exportDeckCode,
         buildDeck,
         listDeckCentrepieces,
+        aiAssistant,
         language,
     )
 
@@ -281,6 +336,8 @@ object AppModule {
         language: Language,
     ) = CollectionViewModel.Factory(observeCatalog, observeCollection, adjustOwnedCount, syncCardCatalog, language)
 
+    private const val CONNECT_TIMEOUT_MS = 15_000L
+    private const val REQUEST_TIMEOUT_MS = 180_000L
     private const val MASTER_DATASET_ASSET = "master_cards.json"
     private const val CARD_INDEX_ASSET = "card_index.bin"
 }

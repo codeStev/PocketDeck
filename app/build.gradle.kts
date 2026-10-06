@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":adapter:persistence"))
     implementation(project(":adapter:carddb"))
     implementation(project(":adapter:limitless"))
+    implementation(project(":adapter:llm"))
     implementation(project(":adapter:recognition"))
     implementation(project(":adapter:capture"))
 

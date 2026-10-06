@@ -1,6 +1,14 @@
 package dev.pocketdeck.adapter.ui.decks
 
 import dev.pocketdeck.application.Outcome
+import dev.pocketdeck.application.advice.AdvisorFailure
+import dev.pocketdeck.application.advice.AdvisorProvider
+import dev.pocketdeck.application.advice.AdvisorSettings
+import dev.pocketdeck.application.advice.AdvisorSettingsStore
+import dev.pocketdeck.application.advice.AskAiFailure
+import dev.pocketdeck.application.advice.AskAiForDeck
+import dev.pocketdeck.application.advice.ObserveAdvisorSettingsService
+import dev.pocketdeck.application.advice.SaveAdvisorSettingsService
 import dev.pocketdeck.application.deckcode.DeckCode
 import dev.pocketdeck.application.deckcode.DeckCodeFailure
 import dev.pocketdeck.application.deckcode.ExportDeckCode
@@ -35,6 +43,7 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -71,6 +80,8 @@ class DecksViewModelTest {
         export: ExportDeckCode = ExportDeckCodeService(),
         build: BuildDeck = BuildDeck { Outcome.Failure(BuildDeckFailure.NotEnoughCards) },
         centrepieces: ListDeckCentrepieces = ListDeckCentrepieces { emptyList() },
+        askAi: AskAiForDeck = AskAiForDeck { Outcome.Failure(AskAiFailure.NoValidDeck(emptyList())) },
+        advisor: AdvisorSettingsStore = InMemoryAdvisorSettingsStore(),
     ): DecksViewModel {
         val suggest =
             SuggestDecksService(
@@ -80,8 +91,35 @@ class DecksViewModelTest {
                 listOf(strategy),
                 EmptyCoroutineContext,
             )
-        return DecksViewModel(suggest, refresh, export, build, centrepieces, Language.ENGLISH)
+        return DecksViewModel(
+            suggest,
+            refresh,
+            export,
+            build,
+            centrepieces,
+            aiAssistant(askAi, advisor),
+            Language.ENGLISH,
+        )
     }
+
+    private class InMemoryAdvisorSettingsStore(
+        initial: AdvisorSettings = AdvisorSettings(),
+    ) : AdvisorSettingsStore {
+        private val state = kotlinx.coroutines.flow.MutableStateFlow(initial)
+
+        override fun observe() = state
+
+        override suspend fun current() = state.value
+
+        override suspend fun save(settings: AdvisorSettings) {
+            state.value = settings
+        }
+    }
+
+    private fun aiAssistant(
+        ask: AskAiForDeck,
+        store: AdvisorSettingsStore,
+    ) = AiAssistant(ask, ObserveAdvisorSettingsService(store), SaveAdvisorSettingsService(store))
 
     private val succeeding = RefreshMetaSnapshot { Outcome.Success(MetaSnapshot.EMPTY) }
 
@@ -236,6 +274,10 @@ class DecksViewModelTest {
                     { Outcome.Success(DeckCode("AAAA")) },
                     { Outcome.Failure(BuildDeckFailure.NotEnoughCards) },
                     { emptyList() },
+                    aiAssistant(
+                        AskAiForDeck { Outcome.Failure(AskAiFailure.NoValidDeck(emptyList())) },
+                        InMemoryAdvisorSettingsStore(),
+                    ),
                     Language.ENGLISH,
                 )
             advanceUntilIdle()
@@ -359,5 +401,156 @@ class DecksViewModelTest {
             )
 
             (viewModel.state.value.code as DeckCodeUi.Ready).text shouldBe "AAAA"
+        }
+
+    private val aiSuggestion: DeckSuggestion
+        get() {
+            val deck = validFireDeck()
+            val completeness =
+                CompletenessCalculator().calculate(
+                    deck,
+                    Inventory.of(CardCollection.EMPTY, CardCatalog.EMPTY),
+                )
+            return DeckSuggestion(
+                "Fire Rush",
+                SuggestionOrigin.AI,
+                deck,
+                completeness,
+                1.0,
+                rationale = "Fast attackers.",
+            )
+        }
+
+    private val configured = AdvisorSettings().withKey(AdvisorProvider.OPENROUTER, "sk-or")
+
+    @Test
+    fun `knows whether an AI is set up`() =
+        runTest(dispatcher) {
+            val without = viewModel(succeeding)
+            val with = viewModel(succeeding, advisor = InMemoryAdvisorSettingsStore(configured))
+            advanceUntilIdle()
+
+            without.state.value.aiConfigured shouldBe false
+            with.state.value.aiConfigured shouldBe true
+        }
+
+    @Test
+    fun `shows the deck the AI built first, with its reasons`() =
+        runTest(dispatcher) {
+            var wish: String? = "unset"
+            val viewModel =
+                viewModel(succeeding, askAi = { w ->
+                    wish = w
+                    Outcome.Success(aiSuggestion)
+                }, advisor = InMemoryAdvisorSettingsStore(configured))
+            advanceUntilIdle()
+
+            viewModel.onAskAi("a fast deck")
+            advanceUntilIdle()
+
+            wish shouldBe "a fast deck"
+            viewModel.state.value.items
+                .first()
+                .origin shouldBe SuggestionOrigin.AI
+            viewModel.state.value.items
+                .first()
+                .rationale shouldBe "Fast attackers."
+            viewModel.state.value.asking shouldBe false
+        }
+
+    @Test
+    fun `sends no wish when the player wrote none`() =
+        runTest(dispatcher) {
+            var wish: String? = "unset"
+            val viewModel =
+                viewModel(succeeding, askAi = { w ->
+                    wish = w
+                    Outcome.Success(aiSuggestion)
+                }, advisor = InMemoryAdvisorSettingsStore(configured))
+            advanceUntilIdle()
+
+            viewModel.onAskAi("   ")
+            advanceUntilIdle()
+
+            wish shouldBe null
+        }
+
+    @Test
+    fun `asks for a key instead of asking when none is set up`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(succeeding)
+            advanceUntilIdle()
+
+            viewModel.onAskAi("anything")
+            advanceUntilIdle()
+
+            viewModel.state.value.notice shouldBe DecksNotice.AI_NEEDS_KEY
+            (viewModel.state.value.aiSettings != null) shouldBe true
+        }
+
+    private suspend fun TestScope.noticeFor(failure: AskAiFailure): DecksNotice? {
+        val viewModel =
+            viewModel(
+                succeeding,
+                askAi = { Outcome.Failure(failure) },
+                advisor = InMemoryAdvisorSettingsStore(configured),
+            )
+        advanceUntilIdle()
+        viewModel.onAskAi(null)
+        advanceUntilIdle()
+        return viewModel.state.value.notice
+    }
+
+    @Test
+    fun `tells the player why the AI could not help`() =
+        runTest(dispatcher) {
+            noticeFor(AskAiFailure.AdvisorFailed(AdvisorFailure.InvalidKey)) shouldBe DecksNotice.AI_INVALID_KEY
+            noticeFor(AskAiFailure.AdvisorFailed(AdvisorFailure.Busy("slow"))) shouldBe DecksNotice.AI_BUSY
+            noticeFor(AskAiFailure.AdvisorFailed(AdvisorFailure.NotReachable("offline"))) shouldBe
+                DecksNotice.AI_UNREACHABLE
+            noticeFor(AskAiFailure.AdvisorFailed(AdvisorFailure.Rejected("no such model"))) shouldBe
+                DecksNotice.AI_REJECTED
+            noticeFor(AskAiFailure.NoValidDeck(listOf("x"))) shouldBe DecksNotice.AI_NO_VALID_DECK
+        }
+
+    @Test
+    fun `passes on what the service said`() =
+        runTest(dispatcher) {
+            val viewModel =
+                viewModel(
+                    succeeding,
+                    askAi = { Outcome.Failure(AskAiFailure.AdvisorFailed(AdvisorFailure.Rejected("no such model"))) },
+                    advisor = InMemoryAdvisorSettingsStore(configured),
+                )
+            advanceUntilIdle()
+
+            viewModel.onAskAi(null)
+            advanceUntilIdle()
+
+            viewModel.state.value.noticeDetail shouldBe "no such model"
+        }
+
+    @Test
+    fun `saves the settings the player entered`() =
+        runTest(dispatcher) {
+            val store = InMemoryAdvisorSettingsStore()
+            val viewModel = viewModel(succeeding, advisor = store)
+            advanceUntilIdle()
+            viewModel.onOpenAiSettings()
+            advanceUntilIdle()
+
+            viewModel.onSaveAiSettings(
+                AiSettingsForm(
+                    order = listOf(AdvisorProvider.OPENROUTER, AdvisorProvider.ANTHROPIC),
+                    keys = mapOf(AdvisorProvider.OPENROUTER to " sk-or "),
+                    models = mapOf(AdvisorProvider.OPENROUTER to "google/gemma-4-31b-it:free"),
+                ),
+            )
+            advanceUntilIdle()
+
+            store.current().keyOf(AdvisorProvider.OPENROUTER) shouldBe "sk-or"
+            store.current().modelOf(AdvisorProvider.OPENROUTER) shouldBe "google/gemma-4-31b-it:free"
+            viewModel.state.value.aiSettings shouldBe null
+            viewModel.state.value.aiConfigured shouldBe true
         }
 }
