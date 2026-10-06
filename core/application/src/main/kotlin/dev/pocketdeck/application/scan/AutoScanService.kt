@@ -4,6 +4,7 @@ import dev.pocketdeck.application.Outcome
 import kotlinx.coroutines.delay
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * Scrolls the game's card grid by itself: back to the top first, then one page at a time with a row of overlap,
@@ -28,12 +29,48 @@ class AutoScanService(
         data object ScanEnded : Settled
     }
 
+    /** A swipe that was sent, kept until the page after it has settled so that its real effect can be measured. */
+    private class IssuedScroll(
+        val before: ScreenFrame,
+        val geometry: GridGeometry?,
+        val commanded: Int,
+        val target: Int,
+    )
+
+    /** Learns how far the list really travels per pixel of swipe, as it keeps gliding after the finger lifts. */
+    private class SwipeGain {
+        private var gain = 1.0
+
+        /** Until a swipe has been measured, only a short probe is safe: a long one may skip rows unnoticed. */
+        var calibrated = false
+            private set
+
+        fun distanceFor(target: Int) = max(1, (target / gain).roundToInt())
+
+        fun learn(
+            commanded: Int,
+            travelled: Int,
+        ) {
+            if (commanded > 0 && travelled > 0) {
+                gain = (travelled.toDouble() / commanded).coerceIn(MIN_GAIN, MAX_GAIN)
+                calibrated = true
+            }
+        }
+
+        /** The list moved so far that nothing of the old picture is left to measure with: swipe shorter from now on. */
+        fun assumeFarther() {
+            gain = (gain * UNMEASURABLE_GAIN_STEP).coerceAtMost(MAX_GAIN)
+        }
+    }
+
     override suspend fun invoke(): Outcome<AutoScanSummary, AutoScanFailure> {
         rewindToTop()?.let { return Outcome.Failure(it) }
         var screens = 0
         var pages = 0
         var stalls = 0
         var previous: ScreenFrame? = null
+        var issued: IssuedScroll? = null
+        val gain = SwipeGain()
         while (true) {
             val frame =
                 when (val settled = settle()) {
@@ -45,14 +82,37 @@ class AutoScanService(
             if (previous == null || !frame.looksLike(previous)) screens++
             if (screens > settings.maxScreens) return Outcome.Failure(AutoScanFailure.TooManyScreens)
             previous = frame
-            if (!scroller.perform(
-                    pageDown(frame, attempt = stalls),
-                )
-            ) {
-                return Outcome.Failure(AutoScanFailure.GestureUnavailable)
-            }
+            val overshoot = issued?.let { measureOvershoot(it, frame, gain) }
+            val gesture =
+                if (overshoot != null) {
+                    pageBack(frame, overshoot, gain)
+                } else {
+                    pageDown(frame, stalls, gain)
+                }
+            issued = if (overshoot == null) gesture.second else null
+            if (!scroller.perform(gesture.first)) return Outcome.Failure(AutoScanFailure.GestureUnavailable)
             delay(settings.afterScrollMillis)
         }
+    }
+
+    /**
+     * Learns from the last swipe and returns how far (in pixels) the list went past the planned page, if so far that
+     * rows were skipped; those rows are never seen, so the list has to be brought back.
+     */
+    private fun measureOvershoot(
+        scroll: IssuedScroll,
+        frame: ScreenFrame,
+        gain: SwipeGain,
+    ): Int? {
+        val geometry = scroll.geometry ?: return null
+        val travelled = measureScrollShift(scroll.before, frame, geometry.firstRowTop, geometry.lastRowBottom)
+        if (travelled == null) {
+            gain.assumeFarther()
+            return null
+        }
+        gain.learn(scroll.commanded, travelled)
+        val excess = travelled - scroll.target
+        return excess.takeIf { it > geometry.rowPitch / OVERSHOOT_DIVISOR }
     }
 
     private fun report(
@@ -120,11 +180,26 @@ class AutoScanService(
     private fun pageDown(
         frame: ScreenFrame,
         attempt: Int,
-    ): ScrollGesture {
+        gain: SwipeGain,
+    ): Pair<ScrollGesture, IssuedScroll?> {
         val geometry = locator.locate(frame)
-        val page =
-            geometry?.let { max(it.rowPitch, (it.visibleRows - settings.overlapRows) * it.rowPitch) }
+        val target =
+            geometry?.let { if (gain.calibrated) pageHeight(it) else it.rowPitch }
                 ?: (frame.height / 2)
+        val page = if (attempt == 0) gain.distanceFor(target) else target
+        val gesture = swipeUp(frame, geometry, page, attempt)
+        return gesture to IssuedScroll(frame, geometry, gesture.startY - gesture.endY, target)
+    }
+
+    private fun pageHeight(geometry: GridGeometry) =
+        max(geometry.rowPitch, (geometry.visibleRows - settings.overlapRows) * geometry.rowPitch)
+
+    private fun swipeUp(
+        frame: ScreenFrame,
+        geometry: GridGeometry?,
+        page: Int,
+        attempt: Int,
+    ): ScrollGesture {
         val bottom = geometry?.lastRowBottom ?: (frame.height * FALLBACK_BOTTOM_PERCENT / PERCENT)
         val startY = min(bottom - margin(geometry), frame.height - 1)
         val centre = geometry?.centerX ?: (frame.width / 2)
@@ -153,10 +228,22 @@ class AutoScanService(
         }
     }
 
-    /** Content moves down by a page: the finger drags down, ending at the bottom of the grid. */
-    private fun pageUp(frame: ScreenFrame): ScrollGesture {
+    /** The list went further than planned: content moves back down by the excess. */
+    private fun pageBack(
+        frame: ScreenFrame,
+        excess: Int,
+        gain: SwipeGain,
+    ): Pair<ScrollGesture, IssuedScroll?> = swipeDown(frame, gain.distanceFor(excess)) to null
+
+    private fun pageUp(frame: ScreenFrame) =
+        swipeDown(frame, locator.locate(frame)?.let { it.visibleRows * it.rowPitch } ?: (frame.height / 2))
+
+    /** Content moves down: the finger drags down, ending at the bottom of the grid. */
+    private fun swipeDown(
+        frame: ScreenFrame,
+        distance: Int,
+    ): ScrollGesture {
         val geometry = locator.locate(frame)
-        val distance = geometry?.let { it.visibleRows * it.rowPitch } ?: (frame.height / 2)
         val endY =
             min(
                 (geometry?.lastRowBottom ?: (frame.height * FALLBACK_BOTTOM_PERCENT / PERCENT)) - margin(geometry),
@@ -176,6 +263,10 @@ class AutoScanService(
         const val FALLBACK_BOTTOM_PERCENT = 80
         const val PERCENT = 100
         const val MARGIN_DIVISOR = 10
+        const val OVERSHOOT_DIVISOR = 2
+        const val UNMEASURABLE_GAIN_STEP = 1.5
+        const val MIN_GAIN = 0.3
+        const val MAX_GAIN = 4.0
     }
 }
 

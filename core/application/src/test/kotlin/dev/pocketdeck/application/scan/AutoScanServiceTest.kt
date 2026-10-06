@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import kotlin.random.Random
 
 /** A scrollable list of card rows seen through a small viewport, driven by the same gestures the real scroller sends. */
 private const val BADGE_TINT = 5_000_000
@@ -22,6 +23,8 @@ private class FakeGridWorld(
     private val pollsUntilCountsAppear: Int = 3,
     private val gesturesWork: Boolean = true,
     private val ignoredSwipeMillis: Long? = null,
+    /** How much further than asked the list travels (it keeps gliding after the finger lifts). */
+    private val flingFactor: Double = 1.0,
 ) {
     var offset = startOffset
         private set
@@ -58,7 +61,7 @@ private class FakeGridWorld(
             if (!gesturesWork) return@GridScroller false
             val swallowed = gesture.durationMillis == ignoredSwipeMillis && gesture.startY > gesture.endY
             if (swallowed) return@GridScroller true // reported as done, but the list does not move
-            val moved = (gesture.startY - gesture.endY)
+            val moved = ((gesture.startY - gesture.endY) * flingFactor).toInt()
             offset = (offset + moved).coerceIn(0, maxOffset)
             pollsSinceMove = 0
             true
@@ -81,8 +84,7 @@ private class FakeGridWorld(
         val badges = if (countsVisible) BADGE_TINT else 0
         val pixels =
             IntArray(20 * viewportHeight) {
-                0xFF000000.toInt() or
-                    (((offset + it / 20) * 7919 + badges) % 0xFFFFFF)
+                0xFF000000.toInt() or Random((offset + it / 20) * 7919L + badges).nextInt(0x1000000)
             }
         return ScreenFrame(20, viewportHeight, pixels)
     }
@@ -109,6 +111,26 @@ class AutoScanServiceTest {
         }
 
     @Test
+    fun `sees every row although the list glides further than the swipe asked`() =
+        runTest {
+            val world = FakeGridWorld(contentHeight = 400, flingFactor = 1.8)
+
+            service(world)()
+
+            world.rowsSeen() shouldBe (0 until 40).toSet()
+        }
+
+    @Test
+    fun `sees every row although the list falls short of the swipe`() =
+        runTest {
+            val world = FakeGridWorld(contentHeight = 400, flingFactor = 0.6)
+
+            service(world)()
+
+            world.rowsSeen() shouldBe (0 until 40).toSet()
+        }
+
+    @Test
     fun `each scroll leaves one row of overlap`() =
         runTest {
             val world = FakeGridWorld(contentHeight = 200)
@@ -116,8 +138,10 @@ class AutoScanServiceTest {
             service(world)()
 
             val downwards = world.gestures.filter { it.startY > it.endY }
-            // 4 visible rows of 10 px: moving by 3 rows (30 px) keeps the last visible row in view.
-            downwards.first().let { it.startY - it.endY } shouldBe 30
+            // The first swipe is a one-row probe; then 4 visible rows of 10 px: moving by 3 rows (30 px) keeps the
+            // last visible row in view.
+            downwards.first().let { it.startY - it.endY } shouldBe 10
+            downwards[1].let { it.startY - it.endY } shouldBe 30
         }
 
     @Test
@@ -150,9 +174,9 @@ class AutoScanServiceTest {
 
             service(world)()
 
-            // Two scrolls that move (0 -> 30 -> 60), then the list does not move any more: it is tried
-            // stallLimit more times before the scan is declared finished.
-            world.gestures.count { it.startY > it.endY } shouldBe 2 + settings.stallLimit
+            // The probe and two page scrolls move the list (0 -> 10 -> 40 -> 60), then it does not move any more: it is
+            // tried stallLimit more times before the scan is declared finished.
+            world.gestures.count { it.startY > it.endY } shouldBe 3 + settings.stallLimit
         }
 
     @Test
