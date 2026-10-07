@@ -2,10 +2,14 @@ package dev.pocketdeck.adapter.ui.decks
 
 import dev.pocketdeck.domain.deck.SuggestionOrigin
 
-/** The two kinds of deck the screen keeps apart: what tournament players played, and what was made for the player. */
+/**
+ * The kinds of deck the screen keeps apart: what tournament players played, what was made for the player, and what the
+ * player chose to keep.
+ */
 enum class DeckKind {
     TOURNAMENT,
     GENERATED,
+    SAVED,
     ;
 
     companion object {

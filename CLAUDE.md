@@ -161,4 +161,10 @@ New way of driving the app => new driving adapter calling inbound ports.
   existing data goes to profile 1 "Main"; `CreateFirstProfile` seeds new databases). `MigrationPathTest` counts hand-written
   `Migration(from, to)` as well as `AutoMigration`. The switcher (`ProfileSwitcher`) is the Scaffold's top bar on every tab, so
   the account a scan will write to is always visible. Deleting a profile deletes its collection; the last one cannot be deleted.
+- Saved decks: the Decks tab has a third tab "Saved" (`DeckKind.SAVED`). A generated deck is kept with `SaveDeck` as a snapshot
+  (`SavedDeckContent`: title, origin, print ids + copies, energy, rationale, time from a `java.time.Clock`); ownership is never
+  stored, `ObserveSavedDecks` rebuilds the `DeckSuggestion` against the catalog and the current collection (cards the catalog no
+  longer knows are left out). Saving the same cards twice keeps one entry. `SavedDeckRepository` follows the active profile
+  (`RoomSavedDeckRepository`, table `saved_deck`, schema 7, cards as `SavedDeckCodec` strings) and a profile's decks are deleted
+  with it. Only generated decks have a Save button; saved decks can be renamed, deleted (with confirmation) and exported as code.
 - Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).

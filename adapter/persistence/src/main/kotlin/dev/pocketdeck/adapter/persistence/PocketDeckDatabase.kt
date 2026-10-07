@@ -13,13 +13,15 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
         OwnedCardEntity::class,
         BackupOwnedCardEntity::class,
         ProfileEntity::class,
+        SavedDeckEntity::class,
     ],
-    version = 6,
+    version = 7,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 6, to = 7),
     ],
 )
 internal abstract class PocketDeckDatabase : RoomDatabase() {
@@ -30,6 +32,8 @@ internal abstract class PocketDeckDatabase : RoomDatabase() {
     abstract fun backupDao(): BackupOwnedCardDao
 
     abstract fun profileDao(): ProfileDao
+
+    abstract fun savedDeckDao(): SavedDeckDao
 }
 
 /** Entry point for the composition root: builds the database without leaking Room types. */
@@ -63,6 +67,7 @@ object PocketDeckDatabases {
             collections = RoomCollectionRepository(database.ownedCardDao(), profiles.activeId),
             backup = RoomCollectionBackup(database.backupDao(), profiles.activeId),
             profiles = profiles,
+            savedDecks = RoomSavedDeckRepository(database.savedDeckDao(), profiles.activeId),
         )
     }
 }

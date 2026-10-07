@@ -187,4 +187,14 @@
     <string name="profile_name_taken">Ein anderes Konto hat diesen Namen schon.</string>
     <string name="profile_save">Speichern</string>
     <string name="profile_cancel">Abbrechen</string>
+
+    <string name="decks_tab_saved">Gespeichert</string>
+    <string name="decks_intro_saved">Decks, die du für dieses Konto behalten hast. Sie werden mit deiner aktuellen Sammlung verglichen.</string>
+    <string name="decks_empty_saved">Noch nichts gespeichert. Tippe bei einem generierten Deck auf Speichern, um es zu behalten.</string>
+    <string name="decks_save">Speichern</string>
+    <string name="decks_rename">Umbenennen</string>
+    <string name="decks_rename_save">Speichern</string>
+    <string name="decks_delete">Löschen</string>
+    <string name="decks_delete_title">\"%1$s\" löschen?</string>
+    <string name="decks_cancel">Abbrechen</string>
 </resources>

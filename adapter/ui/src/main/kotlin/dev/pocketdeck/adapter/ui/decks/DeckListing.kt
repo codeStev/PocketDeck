@@ -1,5 +1,6 @@
 package dev.pocketdeck.adapter.ui.decks
 
+import dev.pocketdeck.application.savedeck.KeptDeck
 import dev.pocketdeck.domain.card.EffectTag
 import dev.pocketdeck.domain.card.GameplayKey
 import dev.pocketdeck.domain.card.Language
@@ -35,6 +36,8 @@ data class DeckItem(
     val substitutes: List<SubstituteLine> = emptyList(),
     /** Why the deck is as it is, when an advisor explained it. */
     val rationale: String? = null,
+    /** Set for a kept deck: the id it is renamed and deleted by. */
+    val savedId: Long? = null,
 ) {
     val substituteCopies: Int get() = substitutes.sumOf { it.copies }
 }
@@ -44,6 +47,14 @@ object DeckListing {
         suggestions: List<DeckSuggestion>,
         language: Language,
     ): List<DeckItem> = suggestions.mapIndexed { index, suggestion -> item(index, suggestion, language) }
+
+    fun buildSaved(
+        kept: List<KeptDeck>,
+        language: Language,
+    ): List<DeckItem> =
+        kept.mapIndexed { index, deck ->
+            item(index, deck.suggestion, language).copy(key = "saved-${deck.id.value}", savedId = deck.id.value)
+        }
 
     private fun item(
         index: Int,

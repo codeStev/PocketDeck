@@ -14,10 +14,15 @@ import dev.pocketdeck.application.deckcode.ExportDeckCode
 import dev.pocketdeck.application.deckcode.ExportDeckCodeService
 import dev.pocketdeck.application.fakes.InMemoryCardCatalogRepository
 import dev.pocketdeck.application.fakes.InMemoryCollectionRepository
+import dev.pocketdeck.application.fakes.InMemorySavedDeckRepository
 import dev.pocketdeck.application.meta.InMemoryMetaSnapshotRepository
 import dev.pocketdeck.application.meta.MetaSourceFailure
 import dev.pocketdeck.application.meta.RefreshMetaSnapshot
 import dev.pocketdeck.application.meta.RefreshMetaSnapshotService
+import dev.pocketdeck.application.savedeck.DeleteSavedDeckService
+import dev.pocketdeck.application.savedeck.ObserveSavedDecksService
+import dev.pocketdeck.application.savedeck.RenameSavedDeckService
+import dev.pocketdeck.application.savedeck.SaveDeckService
 import dev.pocketdeck.application.suggest.BuildDeck
 import dev.pocketdeck.application.suggest.BuildDeckFailure
 import dev.pocketdeck.application.suggest.DeckSuggestionStrategy
@@ -50,6 +55,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.Clock
 import kotlin.coroutines.EmptyCoroutineContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -62,6 +68,19 @@ class DecksViewModelTest {
 
     @AfterEach
     fun removeMainDispatcher() = Dispatchers.resetMain()
+
+    private val savedRepository = InMemorySavedDeckRepository()
+    private val savedDecks =
+        SavedDecks(
+            ObserveSavedDecksService(
+                savedRepository,
+                InMemoryCardCatalogRepository(CardCatalog(validFireDeck().entries.map { it.card })),
+                InMemoryCollectionRepository(),
+            ),
+            SaveDeckService(savedRepository, Clock.systemUTC()),
+            RenameSavedDeckService(savedRepository),
+            DeleteSavedDeckService(savedRepository),
+        )
 
     private val strategy =
         DeckSuggestionStrategy {
@@ -97,6 +116,7 @@ class DecksViewModelTest {
             build,
             centrepieces,
             aiAssistant(askAi, advisor),
+            savedDecks,
             Language.ENGLISH,
         )
     }
@@ -277,6 +297,7 @@ class DecksViewModelTest {
                         AskAiForDeck { Outcome.Failure(AskAiFailure.NoValidDeck(emptyList())) },
                         InMemoryAdvisorSettingsStore(),
                     ),
+                    savedDecks,
                     Language.ENGLISH,
                 )
             advanceUntilIdle()
@@ -527,5 +548,76 @@ class DecksViewModelTest {
             advanceUntilIdle()
 
             viewModel.state.value.noticeDetail shouldBe "no such model"
+        }
+
+    @Test
+    fun `a saved deck shows up in the saved list with its own key`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(succeeding)
+            advanceUntilIdle()
+
+            viewModel.onSave(
+                viewModel.state.value.items
+                    .single()
+                    .key,
+            )
+            advanceUntilIdle()
+
+            val saved =
+                viewModel.state.value.saved
+                    .single()
+            saved.title shouldBe "Charizard"
+            saved.savedId shouldBe 1L
+            saved.key shouldBe "saved-1"
+        }
+
+    @Test
+    fun `renaming and deleting a saved deck asks first and then changes the list`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(succeeding)
+            advanceUntilIdle()
+            viewModel.onSave(
+                viewModel.state.value.items
+                    .single()
+                    .key,
+            )
+            advanceUntilIdle()
+
+            viewModel.onRenameSavedRequested(
+                viewModel.state.value.saved
+                    .single(),
+            )
+            viewModel.onSavedRenamed("My deck")
+            advanceUntilIdle()
+            viewModel.state.value.saved
+                .single()
+                .title shouldBe "My deck"
+            viewModel.state.value.savedDialog shouldBe null
+
+            viewModel.onDeleteSavedRequested(
+                viewModel.state.value.saved
+                    .single(),
+            )
+            viewModel.state.value.savedDialog shouldBe SavedDeckDialog.ConfirmDelete(1L, "My deck")
+            viewModel.onSavedDeleteConfirmed()
+            advanceUntilIdle()
+            viewModel.state.value.saved shouldBe emptyList()
+        }
+
+    @Test
+    fun `the code of a saved deck can be shown`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(succeeding, export = { Outcome.Success(DeckCode("AAAA")) })
+            advanceUntilIdle()
+            viewModel.onSave(
+                viewModel.state.value.items
+                    .single()
+                    .key,
+            )
+            advanceUntilIdle()
+
+            viewModel.onShowCode("saved-1")
+
+            (viewModel.state.value.code as DeckCodeUi.Ready).text shouldBe "AAAA"
         }
 }

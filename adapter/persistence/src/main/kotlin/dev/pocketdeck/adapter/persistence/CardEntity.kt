@@ -50,3 +50,16 @@ internal data class BackupOwnedCardEntity(
     val cardId: String,
     val copies: Int,
 )
+
+/** A deck the player kept. The cards are one string, see [SavedDeckCodec]; ownership is never stored. */
+@Entity(tableName = "saved_deck")
+internal data class SavedDeckEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val profileId: Long,
+    val title: String,
+    val origin: String,
+    val cards: String,
+    val energyTypes: String,
+    val rationale: String?,
+    val savedAtEpochMillis: Long,
+)

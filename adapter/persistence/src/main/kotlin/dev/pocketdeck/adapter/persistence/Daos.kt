@@ -98,11 +98,37 @@ internal abstract class ProfileDao {
     @Query("DELETE FROM owned_card_backup WHERE profileId = :id")
     protected abstract suspend fun deleteBackup(id: Long)
 
+    @Query("DELETE FROM saved_deck WHERE profileId = :id")
+    protected abstract suspend fun deleteSavedDecks(id: Long)
+
     /** One transaction, so a profile never outlives or loses part of its data. */
     @Transaction
     open suspend fun deleteWithCollection(id: Long) {
         deleteOwnedCards(id)
         deleteBackup(id)
+        deleteSavedDecks(id)
         deleteProfile(id)
     }
+}
+
+@Dao
+internal abstract class SavedDeckDao {
+    @Query("SELECT * FROM saved_deck WHERE profileId = :profileId ORDER BY savedAtEpochMillis DESC, id DESC")
+    abstract fun observeAll(profileId: Long): Flow<List<SavedDeckEntity>>
+
+    @Insert
+    abstract suspend fun insert(deck: SavedDeckEntity): Long
+
+    @Query("UPDATE saved_deck SET title = :title WHERE id = :id AND profileId = :profileId")
+    abstract suspend fun rename(
+        profileId: Long,
+        id: Long,
+        title: String,
+    )
+
+    @Query("DELETE FROM saved_deck WHERE id = :id AND profileId = :profileId")
+    abstract suspend fun delete(
+        profileId: Long,
+        id: Long,
+    )
 }

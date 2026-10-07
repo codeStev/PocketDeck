@@ -10,15 +10,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +45,12 @@ internal class DecksActions(
     val onBuild: (String?) -> Unit,
     val onAskAi: (String?) -> Unit,
     val onOpenSettings: () -> Unit,
+    val onSave: (String) -> Unit,
+    val onRenameSaved: (DeckItem) -> Unit,
+    val onDeleteSaved: (DeckItem) -> Unit,
+    val onRenamed: (String) -> Unit,
+    val onDeleteConfirmed: () -> Unit,
+    val onSavedDialogDismissed: () -> Unit,
 )
 
 @Composable
@@ -60,6 +69,12 @@ fun DecksScreen(
             onCloseBuilder = viewModel::onCloseBuilder,
             onBuild = viewModel::onBuild,
             onAskAi = viewModel::onAskAi,
+            onSave = viewModel::onSave,
+            onRenameSaved = viewModel::onRenameSavedRequested,
+            onDeleteSaved = viewModel::onDeleteSavedRequested,
+            onRenamed = viewModel::onSavedRenamed,
+            onDeleteConfirmed = viewModel::onSavedDeleteConfirmed,
+            onSavedDialogDismissed = viewModel::onSavedDialogDismissed,
             onOpenSettings = {
                 viewModel.onCloseBuilder()
                 onOpenSettings()
@@ -76,6 +91,7 @@ internal fun DecksContent(
     var kind by rememberSaveable { mutableStateOf(DeckKind.TOURNAMENT) }
     state.code?.let { DeckCodeDialog(it, actions.onCloseCode) }
     state.centrepieces?.let { BuilderDialog(it, state.aiConfigured, actions) }
+    state.savedDialog?.let { SavedDeckDialogs(it, actions) }
     Column(Modifier.fillMaxSize()) {
         PrimaryTabRow(selectedTabIndex = kind.ordinal) {
             DeckKind.entries.forEach { entry ->
@@ -86,14 +102,14 @@ internal fun DecksContent(
                 )
             }
         }
-        val items = state.items.ofKind(kind)
+        val items = if (kind == DeckKind.SAVED) state.saved else state.items.ofKind(kind)
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item { Header(kind, state, items.isEmpty(), actions) }
-            items(items, key = { it.key }) { item -> DeckCard(item, actions.onShowCode) }
+            items(items, key = { it.key }) { item -> DeckCard(item, kind, actions) }
         }
     }
 }
@@ -102,6 +118,7 @@ private fun DeckKind.tabLabel() =
     when (this) {
         DeckKind.TOURNAMENT -> R.string.decks_tab_tournament
         DeckKind.GENERATED -> R.string.decks_tab_generated
+        DeckKind.SAVED -> R.string.decks_tab_saved
     }
 
 @Composable
@@ -115,6 +132,7 @@ private fun Header(
         when (kind) {
             DeckKind.TOURNAMENT -> TournamentHeader(state, empty, actions)
             DeckKind.GENERATED -> GeneratedHeader(state, empty, actions)
+            DeckKind.SAVED -> SavedHeader(empty)
         }
         state.notice?.takeIf { DeckKind.of(it) == kind }?.let {
             Text(noticeText(it, state.noticeDetail), color = MaterialTheme.colorScheme.error)
@@ -133,6 +151,12 @@ private fun TournamentHeader(
     OutlinedButton(onClick = actions.onRefresh, enabled = !state.refreshing, modifier = Modifier.fillMaxWidth()) {
         Text(stringResource(if (state.refreshing) R.string.decks_refreshing else R.string.decks_refresh))
     }
+}
+
+@Composable
+private fun SavedHeader(empty: Boolean) {
+    Text(stringResource(R.string.decks_intro_saved), style = MaterialTheme.typography.bodyMedium)
+    if (empty) Text(stringResource(R.string.decks_empty_saved))
 }
 
 @Composable
@@ -181,7 +205,8 @@ private fun noticeText(
 @Composable
 private fun DeckCard(
     item: DeckItem,
-    onShowCode: (String) -> Unit,
+    kind: DeckKind,
+    actions: DecksActions,
 ) {
     var expanded by rememberSaveable(item.key) { mutableStateOf(false) }
     Card(
@@ -218,7 +243,22 @@ private fun DeckCard(
             if (expanded) item.cards.forEach { CardLine(it) }
             val showCode =
                 if (item.substitutes.isEmpty()) R.string.decks_code_show else R.string.decks_code_show_substituted
-            OutlinedButton(onClick = { onShowCode(item.key) }) { Text(stringResource(showCode)) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { actions.onShowCode(item.key) }) { Text(stringResource(showCode)) }
+                if (kind == DeckKind.GENERATED) {
+                    OutlinedButton(onClick = { actions.onSave(item.key) }) { Text(stringResource(R.string.decks_save)) }
+                }
+            }
+            if (kind == DeckKind.SAVED) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = { actions.onRenameSaved(item) },
+                    ) { Text(stringResource(R.string.decks_rename)) }
+                    OutlinedButton(
+                        onClick = { actions.onDeleteSaved(item) },
+                    ) { Text(stringResource(R.string.decks_delete)) }
+                }
+            }
         }
     }
 }
@@ -274,3 +314,43 @@ private fun CardLine(line: DeckCardLine) {
 }
 
 private const val PERCENT_FULL = 100f
+
+@Composable
+private fun SavedDeckDialogs(
+    dialog: SavedDeckDialog,
+    actions: DecksActions,
+) {
+    when (dialog) {
+        is SavedDeckDialog.Rename -> {
+            var title by rememberSaveable(dialog.id) { mutableStateOf(dialog.title) }
+            AlertDialog(
+                onDismissRequest = actions.onSavedDialogDismissed,
+                title = { Text(stringResource(R.string.decks_rename)) },
+                text = { OutlinedTextField(value = title, onValueChange = { title = it }, singleLine = true) },
+                confirmButton = {
+                    TextButton(
+                        onClick = { actions.onRenamed(title) },
+                    ) { Text(stringResource(R.string.decks_rename_save)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = actions.onSavedDialogDismissed) { Text(stringResource(R.string.decks_cancel)) }
+                },
+            )
+        }
+
+        is SavedDeckDialog.ConfirmDelete -> {
+            AlertDialog(
+                onDismissRequest = actions.onSavedDialogDismissed,
+                title = { Text(stringResource(R.string.decks_delete_title, dialog.title)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = actions.onDeleteConfirmed,
+                    ) { Text(stringResource(R.string.decks_delete)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = actions.onSavedDialogDismissed) { Text(stringResource(R.string.decks_cancel)) }
+                },
+            )
+        }
+    }
+}

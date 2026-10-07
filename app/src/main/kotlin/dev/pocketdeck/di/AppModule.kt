@@ -26,6 +26,7 @@ import dev.pocketdeck.adapter.recognition.GridCardRecognizer
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.AiAssistant
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
+import dev.pocketdeck.adapter.ui.decks.SavedDecks
 import dev.pocketdeck.adapter.ui.profile.ProfilesViewModel
 import dev.pocketdeck.adapter.ui.scan.ConsentAccess
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
@@ -74,6 +75,11 @@ import dev.pocketdeck.application.profile.ObserveProfilesService
 import dev.pocketdeck.application.profile.ProfileRepository
 import dev.pocketdeck.application.profile.RenameProfileService
 import dev.pocketdeck.application.profile.SwitchProfileService
+import dev.pocketdeck.application.savedeck.DeleteSavedDeckService
+import dev.pocketdeck.application.savedeck.ObserveSavedDecksService
+import dev.pocketdeck.application.savedeck.RenameSavedDeckService
+import dev.pocketdeck.application.savedeck.SaveDeckService
+import dev.pocketdeck.application.savedeck.SavedDeckRepository
 import dev.pocketdeck.application.scan.CardRecognizer
 import dev.pocketdeck.application.scan.ConfirmScanResults
 import dev.pocketdeck.application.scan.ConfirmScanResultsService
@@ -104,6 +110,7 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import java.time.Clock
 import java.util.Locale
 import javax.inject.Singleton
 
@@ -132,6 +139,21 @@ object AppModule {
 
     @Provides
     fun profileRepository(storage: PocketDeckStorage): ProfileRepository = storage.profiles
+
+    @Provides
+    fun savedDeckRepository(storage: PocketDeckStorage): SavedDeckRepository = storage.savedDecks
+
+    @Provides
+    fun savedDecks(
+        saved: SavedDeckRepository,
+        catalogs: CardCatalogRepository,
+        collections: CollectionRepository,
+    ) = SavedDecks(
+        ObserveSavedDecksService(saved, catalogs, collections),
+        SaveDeckService(saved, Clock.systemUTC()),
+        RenameSavedDeckService(saved),
+        DeleteSavedDeckService(saved),
+    )
 
     @Provides
     fun profilesViewModelFactory(profiles: ProfileRepository) =
@@ -333,6 +355,7 @@ object AppModule {
         buildDeck: BuildDeck,
         listDeckCentrepieces: ListDeckCentrepieces,
         aiAssistant: AiAssistant,
+        savedDecks: SavedDecks,
         language: Language,
     ) = DecksViewModel.Factory(
         suggestDecks,
@@ -341,6 +364,7 @@ object AppModule {
         buildDeck,
         listDeckCentrepieces,
         aiAssistant,
+        savedDecks,
         language,
     )
 

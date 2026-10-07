@@ -12,6 +12,7 @@ import dev.pocketdeck.application.deckcode.DeckCodeFailure
 import dev.pocketdeck.application.deckcode.ExportDeckCode
 import dev.pocketdeck.application.meta.MetaSourceFailure
 import dev.pocketdeck.application.meta.RefreshMetaSnapshot
+import dev.pocketdeck.application.savedeck.KeptDeck
 import dev.pocketdeck.application.suggest.BuildDeck
 import dev.pocketdeck.application.suggest.ListDeckCentrepieces
 import dev.pocketdeck.application.suggest.SuggestDecks
@@ -19,6 +20,7 @@ import dev.pocketdeck.domain.builder.DeckFocus
 import dev.pocketdeck.domain.card.Language
 import dev.pocketdeck.domain.card.PokemonCard
 import dev.pocketdeck.domain.deck.DeckSuggestion
+import dev.pocketdeck.domain.deck.SavedDeckId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -75,6 +77,9 @@ data class DecksUiState(
     /** Whether a key is set up for at least one AI service. */
     val aiConfigured: Boolean = false,
     val asking: Boolean = false,
+    /** The kept decks of the active account, newest first. */
+    val saved: List<DeckItem> = emptyList(),
+    val savedDialog: SavedDeckDialog? = null,
 )
 
 /** Shows the suggested decks and refreshes the picture of the competitive field. */
@@ -85,6 +90,7 @@ class DecksViewModel(
     private val buildDeck: BuildDeck,
     private val listCentrepieces: ListDeckCentrepieces,
     private val ai: AiAssistant,
+    private val savedDecks: SavedDecks,
     private val language: Language,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(DecksUiState())
@@ -92,6 +98,7 @@ class DecksViewModel(
     private var suggestions: List<DeckSuggestion> = emptyList()
     private var builtDecks: List<DeckSuggestion> = emptyList()
     private var shown: List<DeckSuggestion> = emptyList()
+    private var kept: List<KeptDeck> = emptyList()
     private var centres: Map<String, PokemonCard> = emptyMap()
     private var advisorSettings = AdvisorSettings()
 
@@ -100,6 +107,12 @@ class DecksViewModel(
             suggestDecks().collect { latest ->
                 suggestions = latest
                 publish()
+            }
+        }
+        viewModelScope.launch {
+            savedDecks.observe().collect { latest ->
+                kept = latest
+                mutableState.update { it.copy(saved = DeckListing.buildSaved(latest, language)) }
             }
         }
         viewModelScope.launch {
@@ -124,14 +137,59 @@ class DecksViewModel(
     }
 
     fun onShowCode(key: String) {
-        val item = state.value.items.firstOrNull { it.key == key } ?: return
-        val suggestion = shown.getOrNull(state.value.items.indexOf(item)) ?: return
+        val item = (state.value.items + state.value.saved).firstOrNull { it.key == key } ?: return
+        val suggestion = suggestionOf(item) ?: return
         val code =
             when (val outcome = exportDeckCode(suggestion.deck)) {
                 is Outcome.Success -> DeckCodeUi.Ready(item.title, outcome.value.text, item.substitutes)
                 is Outcome.Failure -> DeckCodeUi.Unavailable(item.title, outcome.reason.unknownCards())
             }
         mutableState.update { it.copy(code = code) }
+    }
+
+    private fun suggestionOf(item: DeckItem): DeckSuggestion? =
+        if (item.savedId != null) {
+            kept.firstOrNull { it.id.value == item.savedId }?.suggestion
+        } else {
+            shown.getOrNull(state.value.items.indexOf(item))
+        }
+
+    /** Keeps a generated deck. Keeping the same cards twice leaves one entry, so there is nothing to explain. */
+    fun onSave(key: String) {
+        val item = state.value.items.firstOrNull { it.key == key } ?: return
+        val suggestion = suggestionOf(item) ?: return
+        viewModelScope.launch { savedDecks.save(suggestion) }
+    }
+
+    fun onRenameSavedRequested(item: DeckItem) = askAboutSaved(item) { id -> SavedDeckDialog.Rename(id, item.title) }
+
+    fun onDeleteSavedRequested(item: DeckItem) =
+        askAboutSaved(item) { id -> SavedDeckDialog.ConfirmDelete(id, item.title) }
+
+    private fun askAboutSaved(
+        item: DeckItem,
+        dialog: (Long) -> SavedDeckDialog,
+    ) {
+        val id = item.savedId ?: return
+        mutableState.update { it.copy(savedDialog = dialog(id)) }
+    }
+
+    fun onSavedDialogDismissed() = mutableState.update { it.copy(savedDialog = null) }
+
+    fun onSavedRenamed(title: String) {
+        val dialog = state.value.savedDialog as? SavedDeckDialog.Rename ?: return
+        viewModelScope.launch {
+            savedDecks.rename(SavedDeckId(dialog.id), title)
+            onSavedDialogDismissed()
+        }
+    }
+
+    fun onSavedDeleteConfirmed() {
+        val dialog = state.value.savedDialog as? SavedDeckDialog.ConfirmDelete ?: return
+        viewModelScope.launch {
+            savedDecks.delete(SavedDeckId(dialog.id))
+            onSavedDialogDismissed()
+        }
     }
 
     /** Decks the player asked for come first; they stay until the app closes. */
@@ -236,6 +294,7 @@ class DecksViewModel(
         private val buildDeck: BuildDeck,
         private val listCentrepieces: ListDeckCentrepieces,
         private val ai: AiAssistant,
+        private val savedDecks: SavedDecks,
         private val language: Language,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -248,6 +307,7 @@ class DecksViewModel(
                 buildDeck,
                 listCentrepieces,
                 ai,
+                savedDecks,
                 language,
             ) as T
         }

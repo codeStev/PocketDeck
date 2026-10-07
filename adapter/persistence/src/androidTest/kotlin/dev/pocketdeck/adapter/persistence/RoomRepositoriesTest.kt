@@ -5,8 +5,14 @@ import androidx.test.core.app.ApplicationProvider
 import dev.pocketdeck.application.collection.CollectionBackup
 import dev.pocketdeck.application.collection.CollectionRepository
 import dev.pocketdeck.application.profile.ProfileRepository
+import dev.pocketdeck.application.savedeck.SavedDeckRepository
+import dev.pocketdeck.domain.card.CardId
+import dev.pocketdeck.domain.card.EnergyType
 import dev.pocketdeck.domain.charmander
 import dev.pocketdeck.domain.collection.CardCollection
+import dev.pocketdeck.domain.deck.SavedCard
+import dev.pocketdeck.domain.deck.SavedDeckContent
+import dev.pocketdeck.domain.deck.SuggestionOrigin
 import dev.pocketdeck.domain.magmar
 import dev.pocketdeck.domain.pokeBall
 import dev.pocketdeck.domain.profile.ProfileName
@@ -16,6 +22,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.time.Instant
 
 /** Runs against real SQLite on a device, which is what the DAOs' SQL is meant for. */
 class RoomRepositoriesTest {
@@ -24,6 +31,7 @@ class RoomRepositoriesTest {
     private lateinit var collections: CollectionRepository
     private lateinit var backup: CollectionBackup
     private lateinit var profiles: ProfileRepository
+    private lateinit var savedDecks: SavedDeckRepository
 
     @Before
     fun openInMemoryDatabase() {
@@ -34,6 +42,7 @@ class RoomRepositoriesTest {
         collections = storage.collections
         backup = storage.backup
         profiles = storage.profiles
+        savedDecks = storage.savedDecks
     }
 
     @After
@@ -189,5 +198,74 @@ class RoomRepositoriesTest {
             val only = profiles.observe().first().active
 
             runCatching { profiles.remove(only.id) }.isFailure shouldBe true
+        }
+
+    private fun savedDeck(title: String) =
+        SavedDeckContent(
+            title = title,
+            origin = SuggestionOrigin.AI,
+            cards = listOf(SavedCard(CardId("a1-036"), 2), SavedCard(CardId("a1-037"), 1)),
+            energyTypes = setOf(EnergyType.FIRE, EnergyType.WATER),
+            rationale = "why",
+            savedAt = Instant.ofEpochMilli(1_000),
+        )
+
+    @Test
+    fun aSavedDeckRoundTrips() =
+        runTest {
+            val content = savedDeck("Fire rush")
+
+            val id = savedDecks.add(content)
+
+            savedDecks.observe().first().single().let {
+                it.id shouldBe id
+                it.content shouldBe content
+            }
+        }
+
+    @Test
+    fun savedDecksBelongToTheActiveProfile() =
+        runTest {
+            savedDecks.add(savedDeck("Main deck"))
+            val alt = profiles.add(ProfileName("Alt"))
+
+            profiles.activate(alt.id)
+
+            savedDecks.observe().first() shouldBe emptyList()
+            savedDecks.add(savedDeck("Alt deck"))
+            savedDecks.observe().first().map { it.content.title } shouldBe listOf("Alt deck")
+        }
+
+    @Test
+    fun renameAndDeleteOnlyTouchTheActiveProfile() =
+        runTest {
+            val mainId = savedDecks.add(savedDeck("Main deck"))
+            val alt = profiles.add(ProfileName("Alt"))
+            profiles.activate(alt.id)
+
+            savedDecks.rename(mainId, "Hacked")
+            savedDecks.delete(mainId)
+
+            profiles.activate(
+                profiles
+                    .observe()
+                    .first()
+                    .all
+                    .first()
+                    .id,
+            )
+            savedDecks.observe().first().map { it.content.title } shouldBe listOf("Main deck")
+        }
+
+    @Test
+    fun removingAProfileRemovesItsSavedDecks() =
+        runTest {
+            val alt = profiles.add(ProfileName("Alt"))
+            profiles.activate(alt.id)
+            savedDecks.add(savedDeck("Alt deck"))
+
+            profiles.remove(alt.id)
+
+            database.savedDeckDao().observeAll(alt.id.value).first() shouldBe emptyList()
         }
 }
