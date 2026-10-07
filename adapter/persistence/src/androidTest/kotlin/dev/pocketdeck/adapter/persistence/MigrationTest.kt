@@ -6,6 +6,7 @@ import androidx.sqlite.execSQL
 import androidx.test.core.app.ApplicationProvider
 import dev.pocketdeck.domain.card.CardId
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.After
@@ -56,13 +57,18 @@ class MigrationTest {
     }
 
     @Test
-    fun migratingToVersionTwoKeepsTheCollectionAndTheCatalog() =
+    fun migratingToTheCurrentVersionKeepsTheCollectionAndTheCatalogInTheMainProfile() =
         runTest {
             val database = PocketDeckDatabases.openFile(context, fileName)
             try {
-                val collection = RoomCollectionRepository(database.ownedCardDao()).current()
+                val storage = PocketDeckDatabases.storageOf(database)
+                val collection = storage.collections.current()
                 val catalog = RoomCardCatalogRepository(database.cardDao()).current()
 
+                storage.profiles
+                    .observe()
+                    .first()
+                    .active.name.value shouldBe "Main"
                 collection.copiesOf(CardId("a1-036")) shouldBe 3
                 catalog.size shouldBe 1
                 catalog.cards

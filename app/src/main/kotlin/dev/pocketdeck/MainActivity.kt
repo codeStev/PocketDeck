@@ -26,6 +26,7 @@ import dev.pocketdeck.adapter.ui.AppTab
 import dev.pocketdeck.adapter.ui.PocketDeckApp
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
+import dev.pocketdeck.adapter.ui.profile.ProfilesViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
 import dev.pocketdeck.adapter.ui.settings.SettingsViewModel
 import dev.pocketdeck.adapter.ui.theme.PocketDeckTheme
@@ -49,6 +50,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var settingsViewModelFactory: SettingsViewModel.Factory
 
+    @Inject
+    lateinit var profilesViewModelFactory: ProfilesViewModel.Factory
+
     private var selectedTab by mutableStateOf(AppTab.COLLECTION)
     private var reviewRequests by mutableIntStateOf(0)
     private var reviewIsComplete = false
@@ -71,6 +75,7 @@ class MainActivity : ComponentActivity() {
                 val scanViewModel =
                     viewModel<ScanViewModel>(key = "scan-${language.name}", factory = scanViewModelFactory)
                 val settingsViewModel = viewModel<SettingsViewModel>(factory = settingsViewModelFactory)
+                val profilesViewModel = viewModel<ProfilesViewModel>(factory = profilesViewModelFactory)
                 LaunchedEffect(reviewRequests) {
                     if (reviewRequests >
                         0
@@ -99,6 +104,7 @@ class MainActivity : ComponentActivity() {
                     decksViewModel = decksViewModel,
                     scanViewModel = scanViewModel,
                     settingsViewModel = settingsViewModel,
+                    profilesViewModel = profilesViewModel,
                     selectedTab = selectedTab,
                     onTabSelected = { selectedTab = it },
                     autoScrollEnabled = autoScrollEnabled,

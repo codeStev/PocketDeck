@@ -26,6 +26,7 @@ import dev.pocketdeck.adapter.recognition.GridCardRecognizer
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.AiAssistant
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
+import dev.pocketdeck.adapter.ui.profile.ProfilesViewModel
 import dev.pocketdeck.adapter.ui.scan.ConsentAccess
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
 import dev.pocketdeck.adapter.ui.settings.SettingsViewModel
@@ -67,6 +68,12 @@ import dev.pocketdeck.application.meta.MetaDecklistSource
 import dev.pocketdeck.application.meta.MetaSnapshotRepository
 import dev.pocketdeck.application.meta.RefreshMetaSnapshot
 import dev.pocketdeck.application.meta.RefreshMetaSnapshotService
+import dev.pocketdeck.application.profile.CreateProfileService
+import dev.pocketdeck.application.profile.DeleteProfileService
+import dev.pocketdeck.application.profile.ObserveProfilesService
+import dev.pocketdeck.application.profile.ProfileRepository
+import dev.pocketdeck.application.profile.RenameProfileService
+import dev.pocketdeck.application.profile.SwitchProfileService
 import dev.pocketdeck.application.scan.CardRecognizer
 import dev.pocketdeck.application.scan.ConfirmScanResults
 import dev.pocketdeck.application.scan.ConfirmScanResultsService
@@ -122,6 +129,19 @@ object AppModule {
 
     @Provides
     fun collectionBackup(storage: PocketDeckStorage): CollectionBackup = storage.backup
+
+    @Provides
+    fun profileRepository(storage: PocketDeckStorage): ProfileRepository = storage.profiles
+
+    @Provides
+    fun profilesViewModelFactory(profiles: ProfileRepository) =
+        ProfilesViewModel.Factory(
+            ObserveProfilesService(profiles),
+            CreateProfileService(profiles),
+            RenameProfileService(profiles),
+            SwitchProfileService(profiles),
+            DeleteProfileService(profiles),
+        )
 
     @Provides
     fun observeBackupAvailable(backup: CollectionBackup): ObserveBackupAvailable = ObserveBackupAvailableService(backup)

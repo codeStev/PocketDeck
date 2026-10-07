@@ -153,4 +153,12 @@ New way of driving the app => new driving adapter calling inbound ports.
   language (`LocaleManager`, declared in `res/xml/locales_config.xml`). View models that take a `Language` are keyed by it in
   `MainActivity`, so card names switch with the language. Add a language: new `values-xx/` for both modules, a line in
   `locales_config.xml`, an `AppLanguageChoice` entry.
+- Accounts (profiles): the player can run several game instances, each is a `Profile` (domain) kept by the `ProfileRepository`
+  port (`RoomProfileRepository`; the active profile id lives in SharedPreferences `profiles`). `CollectionRepository` and
+  `CollectionBackup` keep their signatures but the Room adapters follow the active profile (`flatMapLatest`), so use cases,
+  scans and suggestions need no profile parameter and re-emit when the player switches. Schema 6 added `profile` and
+  `profileId` to `owned_card`/`owned_card_backup` (hand-written `AddProfilesMigration`, since the primary key changed;
+  existing data goes to profile 1 "Main"; `CreateFirstProfile` seeds new databases). `MigrationPathTest` counts hand-written
+  `Migration(from, to)` as well as `AutoMigration`. The switcher (`ProfileSwitcher`) is the Scaffold's top bar on every tab, so
+  the account a scan will write to is always visible. Deleting a profile deletes its collection; the last one cannot be deleted.
 - Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).

@@ -29,15 +29,24 @@ internal data class CardEntity(
     val effectText: String? = null,
 )
 
-@Entity(tableName = "owned_card")
+/** One game account. The first one (id 1) is created with the database and holds what existed before profiles. */
+@Entity(tableName = "profile")
+internal data class ProfileEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+)
+
+@Entity(tableName = "owned_card", primaryKeys = ["profileId", "cardId"])
 internal data class OwnedCardEntity(
-    @PrimaryKey val cardId: String,
+    val profileId: Long,
+    val cardId: String,
     val copies: Int,
 )
 
 /** The collection as it was before the last scan was saved. */
-@Entity(tableName = "owned_card_backup")
+@Entity(tableName = "owned_card_backup", primaryKeys = ["profileId", "cardId"])
 internal data class BackupOwnedCardEntity(
-    @PrimaryKey val cardId: String,
+    val profileId: Long,
+    val cardId: String,
     val copies: Int,
 )

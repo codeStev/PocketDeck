@@ -8,8 +8,13 @@ import androidx.room3.RoomDatabase
 import androidx.sqlite.driver.AndroidSQLiteDriver
 
 @Database(
-    entities = [CardEntity::class, OwnedCardEntity::class, BackupOwnedCardEntity::class],
-    version = 5,
+    entities = [
+        CardEntity::class,
+        OwnedCardEntity::class,
+        BackupOwnedCardEntity::class,
+        ProfileEntity::class,
+    ],
+    version = 6,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -23,29 +28,41 @@ internal abstract class PocketDeckDatabase : RoomDatabase() {
     abstract fun ownedCardDao(): OwnedCardDao
 
     abstract fun backupDao(): BackupOwnedCardDao
+
+    abstract fun profileDao(): ProfileDao
 }
 
 /** Entry point for the composition root: builds the database without leaking Room types. */
 object PocketDeckDatabases {
     private const val FILE_NAME = "pocketdeck.db"
 
-    fun create(context: Context): PocketDeckStorage = storageOf(openFile(context, FILE_NAME))
+    fun create(context: Context): PocketDeckStorage =
+        storageOf(openFile(context, FILE_NAME), SharedPreferencesActiveProfileMemory(context))
 
     internal fun inMemory(context: Context): PocketDeckDatabase =
-        Room.inMemoryDatabaseBuilder<PocketDeckDatabase>(context).setDriver(AndroidSQLiteDriver()).build()
+        builder(Room.inMemoryDatabaseBuilder<PocketDeckDatabase>(context)).build()
 
     internal fun openFile(
         context: Context,
         fileName: String,
-    ): PocketDeckDatabase {
-        val builder = Room.databaseBuilder<PocketDeckDatabase>(context, fileName)
-        return builder.setDriver(AndroidSQLiteDriver()).build()
-    }
+    ): PocketDeckDatabase = builder(Room.databaseBuilder<PocketDeckDatabase>(context, fileName)).build()
 
-    private fun storageOf(database: PocketDeckDatabase) =
-        PocketDeckStorage(
+    private fun builder(builder: RoomDatabase.Builder<PocketDeckDatabase>) =
+        builder
+            .setDriver(AndroidSQLiteDriver())
+            .addMigrations(AddProfilesMigration)
+            .addCallback(CreateFirstProfile)
+
+    internal fun storageOf(
+        database: PocketDeckDatabase,
+        memory: ActiveProfileMemory = InMemoryActiveProfileMemory(),
+    ): PocketDeckStorage {
+        val profiles = RoomProfileRepository(database.profileDao(), memory)
+        return PocketDeckStorage(
             catalogs = RoomCardCatalogRepository(database.cardDao()),
-            collections = RoomCollectionRepository(database.ownedCardDao()),
-            backup = RoomCollectionBackup(database.backupDao()),
+            collections = RoomCollectionRepository(database.ownedCardDao(), profiles.activeId),
+            backup = RoomCollectionBackup(database.backupDao(), profiles.activeId),
+            profiles = profiles,
         )
+    }
 }

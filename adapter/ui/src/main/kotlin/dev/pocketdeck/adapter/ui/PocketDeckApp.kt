@@ -13,6 +13,8 @@ import dev.pocketdeck.adapter.ui.collection.CollectionScreen
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.DecksScreen
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
+import dev.pocketdeck.adapter.ui.profile.ProfileSwitcher
+import dev.pocketdeck.adapter.ui.profile.ProfilesViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanScreen
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
 import dev.pocketdeck.adapter.ui.settings.SettingsScreen
@@ -27,6 +29,7 @@ fun PocketDeckApp(
     decksViewModel: DecksViewModel,
     scanViewModel: ScanViewModel,
     settingsViewModel: SettingsViewModel,
+    profilesViewModel: ProfilesViewModel,
     selectedTab: AppTab,
     onTabSelected: (AppTab) -> Unit,
     autoScrollEnabled: Boolean,
@@ -34,6 +37,7 @@ fun PocketDeckApp(
     onStartScan: (automatic: Boolean) -> Unit,
 ) {
     Scaffold(
+        topBar = { ProfileSwitcher(profilesViewModel) },
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(

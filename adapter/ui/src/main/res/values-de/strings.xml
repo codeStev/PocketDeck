@@ -175,4 +175,16 @@
     <string name="settings_language_system">Sprache des Handys</string>
     <string name="settings_language_english">English</string>
     <string name="settings_language_german">Deutsch</string>
+
+    <string name="profile_account">Konto</string>
+    <string name="profile_add">Konto hinzufügen</string>
+    <string name="profile_rename">Dieses Konto umbenennen</string>
+    <string name="profile_delete">Dieses Konto löschen</string>
+    <string name="profile_delete_title">\"%1$s\" löschen?</string>
+    <string name="profile_delete_hint">Die Sammlung und die Scan-Sicherung dieses Kontos werden mitgelöscht. Die anderen Konten bleiben unberührt.</string>
+    <string name="profile_name">Name</string>
+    <string name="profile_name_blank">Bitte einen Namen eingeben.</string>
+    <string name="profile_name_taken">Ein anderes Konto hat diesen Namen schon.</string>
+    <string name="profile_save">Speichern</string>
+    <string name="profile_cancel">Abbrechen</string>
 </resources>

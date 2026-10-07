@@ -175,4 +175,16 @@
     <string name="settings_language_system">Phone\'s language</string>
     <string name="settings_language_english">English</string>
     <string name="settings_language_german">Deutsch</string>
+
+    <string name="profile_account">Account</string>
+    <string name="profile_add">Add account</string>
+    <string name="profile_rename">Rename this account</string>
+    <string name="profile_delete">Delete this account</string>
+    <string name="profile_delete_title">Delete \"%1$s\"?</string>
+    <string name="profile_delete_hint">Its collection and scan backup are deleted too. The other accounts are not touched.</string>
+    <string name="profile_name">Name</string>
+    <string name="profile_name_blank">Please enter a name.</string>
+    <string name="profile_name_taken">Another account already has this name.</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_cancel">Cancel</string>
 </resources>

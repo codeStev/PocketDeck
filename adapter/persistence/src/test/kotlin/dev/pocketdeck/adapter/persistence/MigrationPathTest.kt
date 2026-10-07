@@ -16,11 +16,24 @@ class MigrationPathTest {
             .map { it.nameWithoutExtension.toInt() }
             .sorted()
 
-    private val declaredSteps =
+    private val sources = File("src/main/kotlin/dev/pocketdeck/adapter/persistence")
+
+    private val automaticSteps =
         Regex("""AutoMigration\(\s*from\s*=\s*(\d+),\s*to\s*=\s*(\d+)\s*,?\s*\)""")
-            .findAll(File("src/main/kotlin/dev/pocketdeck/adapter/persistence/PocketDeckDatabase.kt").readText())
+            .findAll(File(sources, "PocketDeckDatabase.kt").readText())
             .map { it.groupValues[1].toInt() to it.groupValues[2].toInt() }
             .toList()
+
+    /** Steps Room cannot derive (such as a changed primary key) are written by hand as `Migration(from, to)`. */
+    private val handWrittenSteps =
+        sources
+            .listFiles { file -> file.extension == "kt" }
+            .orEmpty()
+            .map { it.readText() }
+            .flatMap { text -> Regex("""\bMigration\((\d+),\s*(\d+)\)""").findAll(text).toList() }
+            .map { it.groupValues[1].toInt() to it.groupValues[2].toInt() }
+
+    private val declaredSteps = (automaticSteps + handWrittenSteps).sortedBy { it.first }
 
     @Test
     fun `every schema version can be reached from the one before`() {

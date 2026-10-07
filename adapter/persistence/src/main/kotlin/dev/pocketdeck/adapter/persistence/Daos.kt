@@ -29,42 +29,80 @@ internal abstract class CardDao {
 
 @Dao
 internal abstract class OwnedCardDao {
-    @Query("SELECT * FROM owned_card")
-    abstract fun observeAll(): Flow<List<OwnedCardEntity>>
+    @Query("SELECT * FROM owned_card WHERE profileId = :profileId")
+    abstract fun observeAll(profileId: Long): Flow<List<OwnedCardEntity>>
 
-    @Query("SELECT * FROM owned_card")
-    abstract suspend fun getAll(): List<OwnedCardEntity>
+    @Query("SELECT * FROM owned_card WHERE profileId = :profileId")
+    abstract suspend fun getAll(profileId: Long): List<OwnedCardEntity>
 
-    @Query("DELETE FROM owned_card")
-    protected abstract suspend fun deleteAll()
+    @Query("DELETE FROM owned_card WHERE profileId = :profileId")
+    protected abstract suspend fun deleteAll(profileId: Long)
 
     @Insert
     protected abstract suspend fun insertAll(owned: List<OwnedCardEntity>)
 
     @Transaction
-    open suspend fun replaceAll(owned: List<OwnedCardEntity>) {
-        deleteAll()
+    open suspend fun replaceAll(
+        profileId: Long,
+        owned: List<OwnedCardEntity>,
+    ) {
+        deleteAll(profileId)
         insertAll(owned)
     }
 }
 
 @Dao
 internal abstract class BackupOwnedCardDao {
-    @Query("SELECT * FROM owned_card_backup")
-    abstract suspend fun getAll(): List<BackupOwnedCardEntity>
+    @Query("SELECT * FROM owned_card_backup WHERE profileId = :profileId")
+    abstract suspend fun getAll(profileId: Long): List<BackupOwnedCardEntity>
 
-    @Query("SELECT COUNT(*) FROM owned_card_backup")
-    abstract fun observeCount(): Flow<Int>
+    @Query("SELECT COUNT(*) FROM owned_card_backup WHERE profileId = :profileId")
+    abstract fun observeCount(profileId: Long): Flow<Int>
 
-    @Query("DELETE FROM owned_card_backup")
-    protected abstract suspend fun deleteAll()
+    @Query("DELETE FROM owned_card_backup WHERE profileId = :profileId")
+    protected abstract suspend fun deleteAll(profileId: Long)
 
     @Insert
     protected abstract suspend fun insertAll(rows: List<BackupOwnedCardEntity>)
 
     @Transaction
-    open suspend fun replaceAll(rows: List<BackupOwnedCardEntity>) {
-        deleteAll()
+    open suspend fun replaceAll(
+        profileId: Long,
+        rows: List<BackupOwnedCardEntity>,
+    ) {
+        deleteAll(profileId)
         insertAll(rows)
+    }
+}
+
+@Dao
+internal abstract class ProfileDao {
+    @Query("SELECT * FROM profile ORDER BY id")
+    abstract fun observeAll(): Flow<List<ProfileEntity>>
+
+    @Insert
+    abstract suspend fun insert(profile: ProfileEntity): Long
+
+    @Query("UPDATE profile SET name = :name WHERE id = :id")
+    abstract suspend fun rename(
+        id: Long,
+        name: String,
+    )
+
+    @Query("DELETE FROM profile WHERE id = :id")
+    protected abstract suspend fun deleteProfile(id: Long)
+
+    @Query("DELETE FROM owned_card WHERE profileId = :id")
+    protected abstract suspend fun deleteOwnedCards(id: Long)
+
+    @Query("DELETE FROM owned_card_backup WHERE profileId = :id")
+    protected abstract suspend fun deleteBackup(id: Long)
+
+    /** One transaction, so a profile never outlives or loses part of its data. */
+    @Transaction
+    open suspend fun deleteWithCollection(id: Long) {
+        deleteOwnedCards(id)
+        deleteBackup(id)
+        deleteProfile(id)
     }
 }
