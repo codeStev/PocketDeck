@@ -55,11 +55,8 @@
     <string name="scan_restore_previous">Restore the collection from before the last scan</string>
     <string name="scan_restored">The previous collection is back. Tapping the button again undoes this.</string>
     <string name="scan_nothing_to_restore">There is no earlier collection to restore.</string>
-    <string name="decks_title">Deck suggestions</string>
-    <string name="decks_intro">Decks that did well in recent tournaments, ordered by how well you can build them.</string>
     <string name="decks_refresh">Refresh tournament decks</string>
     <string name="decks_refreshing">Loading tournament decks…</string>
-    <string name="decks_empty">No suggestions yet. Scan your collection and refresh the tournament decks.</string>
     <string name="decks_not_reachable">Could not load tournament decks. Check your connection.</string>
     <string name="decks_no_decklists">No tournament decks found right now.</string>
     <string name="decks_origin_meta">Tournament deck</string>
@@ -164,4 +161,10 @@
     <string name="settings_ai_thinking_must">always thinks first</string>
     <string name="settings_ai_context">%1$dk context</string>
     <string name="settings_ai_expires">until %1$s</string>
+    <string name="decks_tab_tournament">Tournament</string>
+    <string name="decks_tab_generated">Generated</string>
+    <string name="decks_intro_tournament">Decks that did well in recent tournaments, ordered by how well you can build them.</string>
+    <string name="decks_intro_generated">Decks made from your own cards, by the builder or an AI. They are only ever made of cards you own.</string>
+    <string name="decks_empty_tournament">No tournament decks yet. Scan your collection and refresh the tournament decks.</string>
+    <string name="decks_empty_generated">Nothing generated yet. Tap the button to build a deck from your cards.</string>
 </resources>

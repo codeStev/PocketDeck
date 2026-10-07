@@ -3,6 +3,7 @@ package dev.pocketdeck.adapter.ui.decks
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,9 +12,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -69,43 +73,88 @@ internal fun DecksContent(
     state: DecksUiState,
     actions: DecksActions,
 ) {
+    var kind by rememberSaveable { mutableStateOf(DeckKind.TOURNAMENT) }
     state.code?.let { DeckCodeDialog(it, actions.onCloseCode) }
     state.centrepieces?.let { BuilderDialog(it, state.aiConfigured, actions) }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding =
-            androidx.compose.foundation.layout
-                .PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item { Header(state, actions) }
-        items(state.items, key = { it.key }) { item -> DeckCard(item, actions.onShowCode) }
+    Column(Modifier.fillMaxSize()) {
+        PrimaryTabRow(selectedTabIndex = kind.ordinal) {
+            DeckKind.entries.forEach { entry ->
+                Tab(
+                    selected = kind == entry,
+                    onClick = { kind = entry },
+                    text = { Text(stringResource(entry.tabLabel())) },
+                )
+            }
+        }
+        val items = state.items.ofKind(kind)
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item { Header(kind, state, items.isEmpty(), actions) }
+            items(items, key = { it.key }) { item -> DeckCard(item, actions.onShowCode) }
+        }
+    }
+}
+
+private fun DeckKind.tabLabel() =
+    when (this) {
+        DeckKind.TOURNAMENT -> R.string.decks_tab_tournament
+        DeckKind.GENERATED -> R.string.decks_tab_generated
+    }
+
+@Composable
+private fun Header(
+    kind: DeckKind,
+    state: DecksUiState,
+    empty: Boolean,
+    actions: DecksActions,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        when (kind) {
+            DeckKind.TOURNAMENT -> TournamentHeader(state, empty, actions)
+            DeckKind.GENERATED -> GeneratedHeader(state, empty, actions)
+        }
+        state.notice?.takeIf { DeckKind.of(it) == kind }?.let {
+            Text(noticeText(it, state.noticeDetail), color = MaterialTheme.colorScheme.error)
+        }
     }
 }
 
 @Composable
-private fun Header(
+private fun TournamentHeader(
     state: DecksUiState,
+    empty: Boolean,
     actions: DecksActions,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.decks_title), style = MaterialTheme.typography.headlineSmall)
-        Text(stringResource(R.string.decks_intro), style = MaterialTheme.typography.bodyMedium)
-        state.notice?.let { Text(noticeText(it, state.noticeDetail), color = MaterialTheme.colorScheme.error) }
-        if (state.items.isEmpty() && !state.refreshing) Text(stringResource(R.string.decks_empty))
-        val working = state.building || state.asking
-        Button(onClick = actions.onOpenBuilder, enabled = !working, modifier = Modifier.fillMaxWidth()) {
-            val label =
-                when {
-                    state.asking -> R.string.decks_asking
-                    state.building -> R.string.decks_building
-                    else -> R.string.decks_build
-                }
-            Text(stringResource(label))
-        }
-        OutlinedButton(onClick = actions.onRefresh, enabled = !state.refreshing, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(if (state.refreshing) R.string.decks_refreshing else R.string.decks_refresh))
-        }
+    Text(stringResource(R.string.decks_intro_tournament), style = MaterialTheme.typography.bodyMedium)
+    if (empty && !state.refreshing) Text(stringResource(R.string.decks_empty_tournament))
+    OutlinedButton(onClick = actions.onRefresh, enabled = !state.refreshing, modifier = Modifier.fillMaxWidth()) {
+        Text(stringResource(if (state.refreshing) R.string.decks_refreshing else R.string.decks_refresh))
+    }
+}
+
+@Composable
+private fun GeneratedHeader(
+    state: DecksUiState,
+    empty: Boolean,
+    actions: DecksActions,
+) {
+    Text(stringResource(R.string.decks_intro_generated), style = MaterialTheme.typography.bodyMedium)
+    if (empty && !state.building && !state.asking) Text(stringResource(R.string.decks_empty_generated))
+    Button(
+        onClick = actions.onOpenBuilder,
+        enabled = !(state.building || state.asking),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        val label =
+            when {
+                state.asking -> R.string.decks_asking
+                state.building -> R.string.decks_building
+                else -> R.string.decks_build
+            }
+        Text(stringResource(label))
     }
 }
 
@@ -135,7 +184,10 @@ private fun DeckCard(
     onShowCode: (String) -> Unit,
 ) {
     var expanded by rememberSaveable(item.key) { mutableStateOf(false) }
-    Card(Modifier.fillMaxWidth().clickable { expanded = !expanded }) {
+    Card(
+        Modifier.fillMaxWidth().clickable { expanded = !expanded },
+        colors = CardDefaults.cardColors(containerColor = containerColor(item.origin)),
+    ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             val title =
                 if (item.substitutes.isEmpty()) {
@@ -170,6 +222,15 @@ private fun DeckCard(
         }
     }
 }
+
+/** Tournament decks keep the plain card; what the builder or an AI made is tinted, so the two are never mixed up. */
+@Composable
+private fun containerColor(origin: SuggestionOrigin) =
+    when (origin) {
+        SuggestionOrigin.META -> MaterialTheme.colorScheme.surfaceVariant
+        SuggestionOrigin.HEURISTIC -> MaterialTheme.colorScheme.tertiaryContainer
+        SuggestionOrigin.AI -> MaterialTheme.colorScheme.secondaryContainer
+    }
 
 @Composable
 private fun originText(origin: SuggestionOrigin) =

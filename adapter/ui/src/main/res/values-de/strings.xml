@@ -55,11 +55,8 @@
     <string name="scan_restore_previous">Sammlung von vor dem letzten Scan wiederherstellen</string>
     <string name="scan_restored">Die vorherige Sammlung ist zurück. Erneutes Tippen macht das rückgängig.</string>
     <string name="scan_nothing_to_restore">Es gibt keine frühere Sammlung zum Wiederherstellen.</string>
-    <string name="decks_title">Deck-Vorschläge</string>
-    <string name="decks_intro">Decks, die in aktuellen Turnieren erfolgreich waren, sortiert danach, wie gut du sie bauen kannst.</string>
     <string name="decks_refresh">Turnier-Decks aktualisieren</string>
     <string name="decks_refreshing">Turnier-Decks werden geladen…</string>
-    <string name="decks_empty">Noch keine Vorschläge. Scanne deine Sammlung und aktualisiere die Turnier-Decks.</string>
     <string name="decks_not_reachable">Turnier-Decks konnten nicht geladen werden. Prüfe deine Verbindung.</string>
     <string name="decks_no_decklists">Aktuell wurden keine Turnier-Decks gefunden.</string>
     <string name="decks_origin_meta">Turnier-Deck</string>
@@ -164,4 +161,10 @@
     <string name="settings_ai_thinking_must">denkt immer zuerst nach</string>
     <string name="settings_ai_context">%1$dk Kontext</string>
     <string name="settings_ai_expires">bis %1$s</string>
+    <string name="decks_tab_tournament">Turnier</string>
+    <string name="decks_tab_generated">Generiert</string>
+    <string name="decks_intro_tournament">Decks, die in aktuellen Turnieren erfolgreich waren, sortiert danach, wie gut du sie bauen kannst.</string>
+    <string name="decks_intro_generated">Decks aus deinen eigenen Karten, gebaut vom Deckbauer oder einer KI. Sie bestehen nur aus Karten, die du besitzt.</string>
+    <string name="decks_empty_tournament">Noch keine Turnier-Decks. Scanne deine Sammlung und aktualisiere die Turnier-Decks.</string>
+    <string name="decks_empty_generated">Noch nichts generiert. Tippe auf den Knopf, um ein Deck aus deinen Karten zu bauen.</string>
 </resources>

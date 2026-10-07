@@ -145,3 +145,6 @@ New way of driving the app => new driving adapter calling inbound ports.
   has no `default_enabled` counts as thinking first (cohere north-mini-code and nemotron-lightning reported nothing and still
   thought for minutes); only an explicit `default_enabled: false` or no reasoning support counts as direct. Tapping models
   writes them, in order, into the comma-separated model field.
+- The Decks tab has two tabs: Tournament (`SuggestionOrigin.META`, with the refresh button) and Generated (builder and AI decks,
+  with the build button); `DeckKind` decides which tab a deck or a notice belongs to. Generated decks are tinted
+  (tertiary for the builder, secondary for the AI) so they cannot be mistaken for tournament decks.
