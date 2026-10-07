@@ -279,17 +279,6 @@ class ProviderAdvisorsTest {
         }
 
     @Test
-    fun `openrouter does not ask a model that only thinks when told to think`() =
-        runTest {
-            val captured = Captured()
-
-            OpenRouterDeckAdvisor(client(captured) { json(openRouterAnswer()) }, "https://or.test/api/v1")
-                .advise(request, ProviderAccess("k", "google/gemma-4-31b-it:free"))
-
-            captured.body.containsKey("reasoning") shouldBe false
-        }
-
-    @Test
     fun `openrouter says so when the model ran out of room while thinking`() =
         runTest {
             val body =

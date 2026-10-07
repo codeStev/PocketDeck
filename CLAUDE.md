@@ -135,7 +135,7 @@ New way of driving the app => new driving adapter calling inbound ports.
   prompt. Checked on the real data: it flags 0.75% of the trainer copies in 1,171 live tournament decks, mostly lists that
   have no energy recorded; meta suggestions are not filtered (strong players chose them).
 - OpenRouter models: `openrouter/free` is avoided because it routes to any free model, including ones that think for minutes and
-  never answer (seen: nemotron, cohere north-mini-code, finish reason `length`). Defaults (`AdvisorProvider.OPENROUTER.defaultModels`),
-  picked from OpenRouter's public `/api/v1/models` (free + tools + 262k context + reasoning optional): Gemma 4 31B, Gemma 4 26B
-  A4B, then Nemotron Super 120B (low effort). They are tried in order until one gives a deck; a model the player types in is the only
-  one asked. Gemma gets no `reasoning` parameter (any effort would switch thinking on). Free models change often: recheck the list.
+  never answer (seen: nemotron, cohere north-mini-code, finish reason `length`). Default (`AdvisorProvider.OPENROUTER.defaultModels`): Nemotron Super 120B (free, tools, 262k context; it thinks, so the request asks
+  for low effort). Gemma 4 was tried first and dropped: its free capacity answered HTTP 429 every time. The player may type several
+  models separated by commas; they are tried in order until one gives a deck. Free models change often: recheck OpenRouter's
+  public `/api/v1/models` (free + tools + long context).

@@ -11,17 +11,12 @@ enum class AdvisorProvider(
     ANTHROPIC(listOf("claude-opus-5-5")),
 
     /**
-     * Many models behind one key. The defaults are free models that take tools and a very long prompt: Gemma 4 does
-     * not think unless asked, and Nemotron Super is the fallback that does think (kept short). The `openrouter/free`
-     * router is avoided on purpose: it hands the request to any free model, including ones that think for minutes.
+     * Many models behind one key. The default is a free model that takes tools and a very long prompt and answered in
+     * practice (Nemotron Super; it thinks, so the request keeps that short). The `openrouter/free` router is avoided on
+     * purpose: it hands the request to any free model, including ones that think for minutes. Gemma 4 was tried and
+     * dropped: its free capacity answered with HTTP 429 every time.
      */
-    OPENROUTER(
-        listOf(
-            "google/gemma-4-31b-it:free",
-            "google/gemma-4-26b-a4b-it:free",
-            "nvidia/nemotron-3-super-120b-a12b:free",
-        ),
-    ),
+    OPENROUTER(listOf("nvidia/nemotron-3-super-120b-a12b:free")),
     ;
 
     val defaultModel: String get() = defaultModels.first()
@@ -35,12 +30,19 @@ data class AdvisorSettings(
 ) {
     fun keyOf(provider: AdvisorProvider): String? = keys[provider]?.takeIf { it.isNotBlank() }
 
-    fun modelOf(provider: AdvisorProvider): String =
-        models[provider]?.takeIf { it.isNotBlank() } ?: provider.defaultModel
+    fun modelOf(provider: AdvisorProvider): String = modelsToTry(provider).first()
 
-    /** The models to ask, in order: the one the player chose, or else the provider's defaults. */
+    /**
+     * The models to ask, in order: those the player wrote (several may be separated by commas), or else the provider's
+     * defaults.
+     */
     fun modelsToTry(provider: AdvisorProvider): List<String> =
-        chosenModelOf(provider)?.let { listOf(it) } ?: provider.defaultModels
+        chosenModelOf(provider)
+            ?.split(',')
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.takeIf { it.isNotEmpty() }
+            ?: provider.defaultModels
 
     /** The model the player typed in, if any (the default does not count). */
     fun chosenModelOf(provider: AdvisorProvider): String? = models[provider]?.takeIf { it.isNotBlank() }
