@@ -123,8 +123,8 @@ New way of driving the app => new driving adapter calling inbound ports.
   the player set up in their order and falls back when one is busy. `AnthropicDeckAdvisor` (Messages API, forced tool call,
   prompt caching on the collection) and `OpenRouterDeckAdvisor` (chat completions, function call or JSON in text; the
   free `openrouter/free` router is the default model, models are editable). Keys live in
-  `SharedPreferencesAdvisorSettingsStore` (private storage, no backup). Nothing here was run against the real services
-  yet (no key); only mock-engine tests.
+  `SharedPreferencesAdvisorSettingsStore` (private storage, no backup). The user has tested the advisor against the
+  real services on their phone (as of 2026-10-08); the automated tests still use mock engines only.
 - Settings live in their own tab (`adapter/ui/settings`: `SettingsViewModel` + `SettingsScreen`); "AI" is the first section
   (keys, models, provider order; explicit Save). A new section is another composable in `SettingsContent`. The Decks tab only
   asks the AI and points to Settings when no key is set up.
