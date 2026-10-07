@@ -190,11 +190,12 @@
 
     <string name="decks_tab_saved">Gespeichert</string>
     <string name="decks_intro_saved">Decks, die du für dieses Konto behalten hast. Sie werden mit deiner aktuellen Sammlung verglichen.</string>
-    <string name="decks_empty_saved">Noch nichts gespeichert. Tippe bei einem generierten Deck auf Speichern, um es zu behalten.</string>
+    <string name="decks_empty_saved">Noch nichts gespeichert. Tippe bei einem Deck auf Speichern, um es zu behalten.</string>
     <string name="decks_save">Speichern</string>
     <string name="decks_rename">Umbenennen</string>
     <string name="decks_rename_save">Speichern</string>
     <string name="decks_delete">Löschen</string>
     <string name="decks_delete_title">\"%1$s\" löschen?</string>
     <string name="decks_cancel">Abbrechen</string>
+    <string name="scan_account">Scan für Konto: %1$s</string>
 </resources>

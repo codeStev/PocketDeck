@@ -41,6 +41,7 @@ import dev.pocketdeck.domain.scan.ReviewReason
 @Composable
 fun ScanScreen(
     viewModel: ScanViewModel,
+    accountName: String?,
     autoScrollEnabled: Boolean,
     onOpenAccessibilitySettings: () -> Unit,
     onStartScan: (automatic: Boolean) -> Unit,
@@ -48,6 +49,7 @@ fun ScanScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     ScanContent(
         state = state,
+        accountName = accountName,
         autoScrollEnabled = autoScrollEnabled,
         onAutomaticChanged = viewModel::onAutomaticChanged,
         onOpenAccessibilitySettings = onOpenAccessibilitySettings,
@@ -67,6 +69,7 @@ fun ScanScreen(
 @Composable
 internal fun ScanContent(
     state: ScanUiState,
+    accountName: String?,
     autoScrollEnabled: Boolean,
     onAutomaticChanged: (Boolean) -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
@@ -85,6 +88,7 @@ internal fun ScanContent(
         ScanPhase.IDLE, ScanPhase.SCANNING -> {
             Instructions(
                 state,
+                accountName,
                 autoScrollEnabled,
                 onAutomaticChanged,
                 onOpenAccessibilitySettings,
@@ -95,7 +99,7 @@ internal fun ScanContent(
         }
 
         ScanPhase.REVIEW -> {
-            Review(state, onAdjust, onAccept, onRemove, onReplaceChanged, onConfirm, onDiscard)
+            Review(state, accountName, onAdjust, onAccept, onRemove, onReplaceChanged, onConfirm, onDiscard)
         }
 
         ScanPhase.SAVED -> {
@@ -107,6 +111,7 @@ internal fun ScanContent(
 @Composable
 private fun Instructions(
     state: ScanUiState,
+    accountName: String?,
     autoScrollEnabled: Boolean,
     onAutomaticChanged: (Boolean) -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
@@ -129,6 +134,7 @@ private fun Instructions(
     }
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(stringResource(R.string.scan_title), style = MaterialTheme.typography.headlineSmall)
+        AccountNotice(accountName)
         Text(stringResource(R.string.scan_intro))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Switch(checked = state.automatic, onCheckedChange = onAutomaticChanged)
@@ -184,6 +190,7 @@ private fun noticeText(notice: ScanNotice) =
 @Composable
 private fun Review(
     state: ScanUiState,
+    accountName: String?,
     onAdjust: (CardId, Int) -> Unit,
     onAccept: (CardId) -> Unit,
     onRemove: (CardId) -> Unit,
@@ -194,6 +201,7 @@ private fun Review(
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.review_title), style = MaterialTheme.typography.headlineSmall)
+            AccountNotice(accountName)
             Text(stringResource(R.string.review_summary, state.review.size, state.review.count { it.needsReview }))
             if (state.review.any { it.needsReview }) {
                 Text(stringResource(R.string.review_check_hint), style = MaterialTheme.typography.bodySmall)
@@ -301,5 +309,17 @@ private fun Saved(
         Text(stringResource(R.string.saved_title), style = MaterialTheme.typography.headlineSmall)
         Text(pluralStringResource(R.plurals.saved_summary, cards, cards))
         Button(onClick = onDone) { Text(stringResource(R.string.saved_done)) }
+    }
+}
+
+/** Says which account the scan is for: both game instances look alike on screen, so a mix-up would go unnoticed. */
+@Composable
+private fun AccountNotice(accountName: String?) {
+    accountName?.let {
+        Text(
+            stringResource(R.string.scan_account, it),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
     }
 }

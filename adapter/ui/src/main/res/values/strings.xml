@@ -190,11 +190,12 @@
 
     <string name="decks_tab_saved">Saved</string>
     <string name="decks_intro_saved">Decks you kept for this account. They are compared with your collection as it is now.</string>
-    <string name="decks_empty_saved">Nothing saved yet. Tap Save on a generated deck to keep it.</string>
+    <string name="decks_empty_saved">Nothing saved yet. Tap Save on a deck to keep it.</string>
     <string name="decks_save">Save</string>
     <string name="decks_rename">Rename</string>
     <string name="decks_rename_save">Save</string>
     <string name="decks_delete">Delete</string>
     <string name="decks_delete_title">Delete \"%1$s\"?</string>
     <string name="decks_cancel">Cancel</string>
+    <string name="scan_account">Scan for account: %1$s</string>
 </resources>

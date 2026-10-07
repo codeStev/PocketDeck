@@ -7,8 +7,10 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pocketdeck.adapter.ui.collection.CollectionScreen
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.DecksScreen
@@ -69,11 +71,45 @@ fun PocketDeckApp(
     ) { padding ->
         Box(Modifier.padding(padding)) {
             when (selectedTab) {
-                AppTab.COLLECTION -> CollectionScreen(collectionViewModel)
-                AppTab.DECKS -> DecksScreen(decksViewModel) { onTabSelected(AppTab.SETTINGS) }
-                AppTab.SCAN -> ScanScreen(scanViewModel, autoScrollEnabled, onOpenAccessibilitySettings, onStartScan)
-                AppTab.SETTINGS -> SettingsScreen(settingsViewModel)
+                AppTab.COLLECTION -> {
+                    CollectionScreen(collectionViewModel)
+                }
+
+                AppTab.DECKS -> {
+                    DecksScreen(decksViewModel) { onTabSelected(AppTab.SETTINGS) }
+                }
+
+                AppTab.SCAN -> {
+                    ScanTab(
+                        scanViewModel,
+                        profilesViewModel,
+                        autoScrollEnabled,
+                        onOpenAccessibilitySettings,
+                        onStartScan,
+                    )
+                }
+
+                AppTab.SETTINGS -> {
+                    SettingsScreen(settingsViewModel)
+                }
             }
         }
     }
+}
+
+@Composable
+private fun ScanTab(
+    scanViewModel: ScanViewModel,
+    profilesViewModel: ProfilesViewModel,
+    autoScrollEnabled: Boolean,
+    onOpenAccessibilitySettings: () -> Unit,
+    onStartScan: (automatic: Boolean) -> Unit,
+) {
+    val profiles by profilesViewModel.state.collectAsStateWithLifecycle()
+    val accountName =
+        profiles.profiles
+            ?.active
+            ?.name
+            ?.value
+    ScanScreen(scanViewModel, accountName, autoScrollEnabled, onOpenAccessibilitySettings, onStartScan)
 }

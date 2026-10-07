@@ -245,7 +245,7 @@ private fun DeckCard(
                 if (item.substitutes.isEmpty()) R.string.decks_code_show else R.string.decks_code_show_substituted
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { actions.onShowCode(item.key) }) { Text(stringResource(showCode)) }
-                if (kind == DeckKind.GENERATED) {
+                if (kind != DeckKind.SAVED) {
                     OutlinedButton(onClick = { actions.onSave(item.key) }) { Text(stringResource(R.string.decks_save)) }
                 }
             }
