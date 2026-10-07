@@ -139,3 +139,9 @@ New way of driving the app => new driving adapter calling inbound ports.
   for low effort). Gemma 4 was tried first and dropped: its free capacity answered HTTP 429 every time. The player may type several
   models separated by commas; they are tried in order until one gives a deck. Free models change often: recheck OpenRouter's
   public `/api/v1/models` (free + tools + long context).
+- Model picker (Settings > AI > OpenRouter > "Browse free models"): `OpenRouterModelCatalog` (adapter) reads the public
+  `/api/v1/models`; `ListSuitableModelsService` (application) keeps free models with tools and >= 100k context, drops the
+  `openrouter/` router, and sorts models that answer directly before ones that think first. A model whose `reasoning` metadata
+  has no `default_enabled` counts as thinking first (cohere north-mini-code and nemotron-lightning reported nothing and still
+  thought for minutes); only an explicit `default_enabled: false` or no reasoning support counts as direct. Tapping models
+  writes them, in order, into the comma-separated model field.

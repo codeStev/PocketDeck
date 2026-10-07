@@ -29,7 +29,15 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     SettingsContent(
         state,
-        SettingsActions(viewModel::onKeyChanged, viewModel::onModelChanged, viewModel::onMove, viewModel::onSave),
+        SettingsActions(
+            viewModel::onKeyChanged,
+            viewModel::onModelChanged,
+            viewModel::onMove,
+            viewModel::onSave,
+            viewModel::onOpenModelPicker,
+            viewModel::onToggleModel,
+            viewModel::onCloseModelPicker,
+        ),
     )
 }
 
@@ -39,6 +47,9 @@ internal class SettingsActions(
     val onModelChanged: (AdvisorProvider, String) -> Unit,
     val onMove: (AdvisorProvider, Int) -> Unit,
     val onSave: () -> Unit,
+    val onOpenModelPicker: (AdvisorProvider) -> Unit,
+    val onToggleModel: (AdvisorProvider, String) -> Unit,
+    val onCloseModelPicker: () -> Unit,
 )
 
 /** The settings, in sections; "AI" is the first. A new section is another composable in this column. */
@@ -47,6 +58,7 @@ internal fun SettingsContent(
     state: SettingsUiState,
     actions: SettingsActions,
 ) {
+    state.modelPicker?.let { ModelPickerDialog(it, state.form, actions) }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -99,6 +111,11 @@ private fun ProviderCard(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (provider == AdvisorProvider.OPENROUTER) {
+                TextButton(onClick = { actions.onOpenModelPicker(provider) }) {
+                    Text(stringResource(R.string.settings_ai_browse_models))
+                }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = { actions.onMove(provider, -1) }, enabled = index > 0) {
                     Text(stringResource(R.string.settings_ai_earlier))

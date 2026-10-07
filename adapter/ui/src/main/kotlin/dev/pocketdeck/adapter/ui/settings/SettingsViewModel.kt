@@ -3,8 +3,12 @@ package dev.pocketdeck.adapter.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import dev.pocketdeck.application.Outcome
+import dev.pocketdeck.application.advice.AdvisorFailure
 import dev.pocketdeck.application.advice.AdvisorProvider
 import dev.pocketdeck.application.advice.AdvisorSettings
+import dev.pocketdeck.application.advice.ListSuitableModels
+import dev.pocketdeck.application.advice.ListedModel
 import dev.pocketdeck.application.advice.ObserveAdvisorSettings
 import dev.pocketdeck.application.advice.SaveAdvisorSettings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,18 +23,39 @@ data class AiSettingsForm(
     val models: Map<AdvisorProvider, String>,
 )
 
+/** What the model picker shows while it is open. */
+sealed interface ModelPickerContent {
+    data object Loading : ModelPickerContent
+
+    data class Loaded(
+        val models: List<ListedModel>,
+    ) : ModelPickerContent
+
+    data class Failed(
+        val message: String?,
+    ) : ModelPickerContent
+}
+
+data class ModelPicker(
+    val provider: AdvisorProvider,
+    val content: ModelPickerContent,
+)
+
 data class SettingsUiState(
     val form: AiSettingsForm = AiSettingsForm(AdvisorProvider.entries, emptyMap(), emptyMap()),
     /** Whether the form differs from what is saved. */
     val changed: Boolean = false,
     /** Whether the player has just saved, so the screen can say so until they edit again. */
     val justSaved: Boolean = false,
+    /** The model picker while it is open; null when closed. */
+    val modelPicker: ModelPicker? = null,
 )
 
 /** Drives the settings screen: edits are kept in a form and written only when the player saves. */
 class SettingsViewModel(
     observeSettings: ObserveAdvisorSettings,
     private val saveSettings: SaveAdvisorSettings,
+    private val listModels: ListSuitableModels,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = mutableState
@@ -68,6 +93,55 @@ class SettingsViewModel(
         }
     }
 
+    fun onOpenModelPicker(provider: AdvisorProvider) {
+        mutableState.update { it.copy(modelPicker = ModelPicker(provider, ModelPickerContent.Loading)) }
+        viewModelScope.launch {
+            val content =
+                when (val outcome = listModels(provider)) {
+                    is Outcome.Success -> ModelPickerContent.Loaded(outcome.value)
+                    is Outcome.Failure -> ModelPickerContent.Failed(outcome.reason.message())
+                }
+            mutableState.update { state ->
+                state.modelPicker?.let { state.copy(modelPicker = it.copy(content = content)) }
+                    ?: state
+            }
+        }
+    }
+
+    fun onCloseModelPicker() = mutableState.update { it.copy(modelPicker = null) }
+
+    /** Takes the model in or out of the list written in the model field; the order is the order they are tried in. */
+    fun onToggleModel(
+        provider: AdvisorProvider,
+        id: String,
+    ) = edit { form ->
+        val chosen =
+            form.models[provider]
+                .orEmpty()
+                .split(',')
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+        val updated = if (id in chosen) chosen - id else chosen + id
+        form.copy(
+            models =
+                if (updated.isEmpty()) {
+                    form.models - provider
+                } else {
+                    form.models +
+                        (provider to updated.joinToString(", "))
+                },
+        )
+    }
+
+    private fun AdvisorFailure.message(): String? =
+        when (this) {
+            is AdvisorFailure.NotReachable -> reason
+            is AdvisorFailure.Rejected -> reason
+            is AdvisorFailure.Unusable -> reason
+            is AdvisorFailure.Busy -> reason
+            AdvisorFailure.MissingKey, AdvisorFailure.InvalidKey -> null
+        }
+
     fun onSave() {
         val form = mutableState.value.form
         viewModelScope.launch {
@@ -93,11 +167,12 @@ class SettingsViewModel(
     class Factory(
         private val observeSettings: ObserveAdvisorSettings,
         private val saveSettings: SaveAdvisorSettings,
+        private val listModels: ListSuitableModels,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(SettingsViewModel::class.java)) { "Unknown ViewModel $modelClass" }
-            return SettingsViewModel(observeSettings, saveSettings) as T
+            return SettingsViewModel(observeSettings, saveSettings, listModels) as T
         }
     }
 }

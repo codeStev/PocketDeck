@@ -12,6 +12,7 @@ import dev.pocketdeck.adapter.carddb.MasterCatalogSource
 import dev.pocketdeck.adapter.limitless.LimitlessMetaDecklistSource
 import dev.pocketdeck.adapter.llm.AnthropicDeckAdvisor
 import dev.pocketdeck.adapter.llm.OpenRouterDeckAdvisor
+import dev.pocketdeck.adapter.llm.OpenRouterModelCatalog
 import dev.pocketdeck.adapter.persistence.PocketDeckDatabases
 import dev.pocketdeck.adapter.persistence.PocketDeckStorage
 import dev.pocketdeck.adapter.persistence.SharedPreferencesAdvisorSettingsStore
@@ -27,12 +28,15 @@ import dev.pocketdeck.adapter.ui.decks.DecksViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
 import dev.pocketdeck.adapter.ui.settings.SettingsViewModel
 import dev.pocketdeck.application.advice.AdvisorDiagnostics
+import dev.pocketdeck.application.advice.AdvisorModelCatalog
 import dev.pocketdeck.application.advice.AdvisorProvider
 import dev.pocketdeck.application.advice.AdvisorSettingsStore
 import dev.pocketdeck.application.advice.AskAiForDeck
 import dev.pocketdeck.application.advice.AskAiForDeckService
 import dev.pocketdeck.application.advice.ConfiguredDeckAdvisor
 import dev.pocketdeck.application.advice.DeckAdvisor
+import dev.pocketdeck.application.advice.ListSuitableModels
+import dev.pocketdeck.application.advice.ListSuitableModelsService
 import dev.pocketdeck.application.advice.ObserveAdvisorSettingsService
 import dev.pocketdeck.application.advice.SaveAdvisorSettingsService
 import dev.pocketdeck.application.catalog.CardCatalogRepository
@@ -254,8 +258,20 @@ object AppModule {
     ) = AiAssistant(askAiForDeck, ObserveAdvisorSettingsService(settings))
 
     @Provides
-    fun settingsViewModelFactory(settings: AdvisorSettingsStore) =
-        SettingsViewModel.Factory(ObserveAdvisorSettingsService(settings), SaveAdvisorSettingsService(settings))
+    fun advisorModelCatalog(client: HttpClient): AdvisorModelCatalog = OpenRouterModelCatalog(client)
+
+    @Provides
+    fun listSuitableModels(catalog: AdvisorModelCatalog): ListSuitableModels = ListSuitableModelsService(catalog)
+
+    @Provides
+    fun settingsViewModelFactory(
+        settings: AdvisorSettingsStore,
+        listModels: ListSuitableModels,
+    ) = SettingsViewModel.Factory(
+        ObserveAdvisorSettingsService(settings),
+        SaveAdvisorSettingsService(settings),
+        listModels,
+    )
 
     @Provides
     fun metaDecklistSource(client: HttpClient): MetaDecklistSource = LimitlessMetaDecklistSource(client)

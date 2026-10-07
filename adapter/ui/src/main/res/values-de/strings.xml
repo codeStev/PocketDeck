@@ -151,4 +151,17 @@
     <string name="tab_settings">Einstellungen</string>
     <string name="settings_title">Einstellungen</string>
     <string name="settings_saved">Gespeichert.</string>
+    <string name="settings_ai_browse_models">Kostenlose Modelle durchsuchen</string>
+    <string name="settings_ai_models_title">Kostenlose Modelle</string>
+    <string name="settings_ai_models_hint">Gezeigt werden nur kostenlose Modelle, die Werkzeuge und einen langen Prompt verstehen. Tippe zum Auswählen; die Modelle werden in der Reihenfolge versucht, in der du sie wählst. Kostenlose Modelle sind oft ausgelastet, wähle daher zwei oder drei.</string>
+    <string name="settings_ai_models_loading">Modellliste wird geladen…</string>
+    <string name="settings_ai_models_failed">Die Modellliste konnte nicht geladen werden: %1$s</string>
+    <string name="settings_ai_models_retry">Erneut versuchen</string>
+    <string name="settings_ai_models_none">Gerade keine passenden kostenlosen Modelle.</string>
+    <string name="settings_ai_models_done">Fertig</string>
+    <string name="settings_ai_thinking_direct">antwortet direkt</string>
+    <string name="settings_ai_thinking_default">denkt zuerst nach</string>
+    <string name="settings_ai_thinking_must">denkt immer zuerst nach</string>
+    <string name="settings_ai_context">%1$dk Kontext</string>
+    <string name="settings_ai_expires">bis %1$s</string>
 </resources>

@@ -151,4 +151,17 @@
     <string name="tab_settings">Settings</string>
     <string name="settings_title">Settings</string>
     <string name="settings_saved">Saved.</string>
+    <string name="settings_ai_browse_models">Browse free models</string>
+    <string name="settings_ai_models_title">Free models</string>
+    <string name="settings_ai_models_hint">Only free models that take tools and a long prompt are listed. Tap to choose; the models are tried in the order you choose them. Free models are often busy, so choose two or three.</string>
+    <string name="settings_ai_models_loading">Loading the model list…</string>
+    <string name="settings_ai_models_failed">Could not load the model list: %1$s</string>
+    <string name="settings_ai_models_retry">Try again</string>
+    <string name="settings_ai_models_none">No suitable free models right now.</string>
+    <string name="settings_ai_models_done">Done</string>
+    <string name="settings_ai_thinking_direct">answers directly</string>
+    <string name="settings_ai_thinking_default">thinks first</string>
+    <string name="settings_ai_thinking_must">always thinks first</string>
+    <string name="settings_ai_context">%1$dk context</string>
+    <string name="settings_ai_expires">until %1$s</string>
 </resources>

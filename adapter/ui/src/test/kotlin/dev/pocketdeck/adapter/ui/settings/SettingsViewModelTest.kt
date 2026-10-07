@@ -1,10 +1,15 @@
 package dev.pocketdeck.adapter.ui.settings
 
+import dev.pocketdeck.application.Outcome
+import dev.pocketdeck.application.advice.AdvisorFailure
 import dev.pocketdeck.application.advice.AdvisorProvider
 import dev.pocketdeck.application.advice.AdvisorSettings
 import dev.pocketdeck.application.advice.AdvisorSettingsStore
+import dev.pocketdeck.application.advice.ListSuitableModels
+import dev.pocketdeck.application.advice.ListedModel
 import dev.pocketdeck.application.advice.ObserveAdvisorSettingsService
 import dev.pocketdeck.application.advice.SaveAdvisorSettingsService
+import dev.pocketdeck.application.advice.Thinking
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,8 +48,13 @@ class SettingsViewModelTest {
         }
     }
 
-    private fun viewModel(store: FakeStore = FakeStore()) =
-        SettingsViewModel(ObserveAdvisorSettingsService(store), SaveAdvisorSettingsService(store))
+    private fun model(id: String) = ListedModel(id, "Name of $id", 262_144, true, true, Thinking.ANSWERS_DIRECTLY, null)
+
+    private fun viewModel(
+        store: FakeStore = FakeStore(),
+        models: ListSuitableModels =
+            ListSuitableModels { Outcome.Success(listOf(model("a/one:free"), model("b/two:free"))) },
+    ) = SettingsViewModel(ObserveAdvisorSettingsService(store), SaveAdvisorSettingsService(store), models)
 
     @Test
     fun `shows what is saved`() =
@@ -139,5 +149,87 @@ class SettingsViewModelTest {
             viewModel.onModelChanged(AdvisorProvider.OPENROUTER, "x")
 
             viewModel.state.value.justSaved shouldBe false
+        }
+
+    @Test
+    fun `lists the suitable models when the picker opens`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            advanceUntilIdle()
+
+            viewModel.onOpenModelPicker(AdvisorProvider.OPENROUTER)
+            advanceUntilIdle()
+
+            val picker = viewModel.state.value.modelPicker!!
+            picker.provider shouldBe AdvisorProvider.OPENROUTER
+            (picker.content as ModelPickerContent.Loaded).models.map { it.id } shouldBe
+                listOf("a/one:free", "b/two:free")
+        }
+
+    @Test
+    fun `says so when the list cannot be loaded`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(models = { Outcome.Failure(AdvisorFailure.NotReachable("offline")) })
+            advanceUntilIdle()
+
+            viewModel.onOpenModelPicker(AdvisorProvider.OPENROUTER)
+            advanceUntilIdle()
+
+            viewModel.state.value.modelPicker!!
+                .content shouldBe ModelPickerContent.Failed("offline")
+        }
+
+    @Test
+    fun `choosing models writes them in the order chosen and marks the settings as changed`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            advanceUntilIdle()
+
+            viewModel.onToggleModel(AdvisorProvider.OPENROUTER, "b/two:free")
+            viewModel.onToggleModel(AdvisorProvider.OPENROUTER, "a/one:free")
+
+            viewModel.state.value.form.models[AdvisorProvider.OPENROUTER] shouldBe "b/two:free, a/one:free"
+            viewModel.state.value.changed shouldBe true
+        }
+
+    @Test
+    fun `choosing a model again takes it out`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            advanceUntilIdle()
+            viewModel.onToggleModel(AdvisorProvider.OPENROUTER, "a/one:free")
+            viewModel.onToggleModel(AdvisorProvider.OPENROUTER, "b/two:free")
+
+            viewModel.onToggleModel(AdvisorProvider.OPENROUTER, "a/one:free")
+
+            viewModel.state.value.form.models[AdvisorProvider.OPENROUTER] shouldBe "b/two:free"
+            viewModel.onToggleModel(AdvisorProvider.OPENROUTER, "b/two:free")
+            viewModel.state.value.form.models
+                .containsKey(AdvisorProvider.OPENROUTER) shouldBe false
+        }
+
+    @Test
+    fun `adds to the models the player already wrote`() =
+        runTest(dispatcher) {
+            val saved = AdvisorSettings().withModel(AdvisorProvider.OPENROUTER, "my/model")
+            val viewModel = viewModel(FakeStore(saved))
+            advanceUntilIdle()
+
+            viewModel.onToggleModel(AdvisorProvider.OPENROUTER, "a/one:free")
+
+            viewModel.state.value.form.models[AdvisorProvider.OPENROUTER] shouldBe "my/model, a/one:free"
+        }
+
+    @Test
+    fun `closing the picker hides it`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            advanceUntilIdle()
+            viewModel.onOpenModelPicker(AdvisorProvider.OPENROUTER)
+            advanceUntilIdle()
+
+            viewModel.onCloseModelPicker()
+
+            viewModel.state.value.modelPicker shouldBe null
         }
 }
