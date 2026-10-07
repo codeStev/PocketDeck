@@ -29,10 +29,14 @@ import dev.pocketdeck.adapter.ui.decks.DecksViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
 import dev.pocketdeck.adapter.ui.settings.SettingsViewModel
 import dev.pocketdeck.adapter.ui.theme.PocketDeckTheme
+import dev.pocketdeck.domain.card.Language
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var language: Language
+
     @Inject
     lateinit var collectionViewModelFactory: CollectionViewModel.Factory
 
@@ -57,9 +61,15 @@ class MainActivity : ComponentActivity() {
         handle(intent)
         setContent {
             PocketDeckTheme {
-                val collectionViewModel = viewModel<CollectionViewModel>(factory = collectionViewModelFactory)
-                val decksViewModel = viewModel<DecksViewModel>(factory = decksViewModelFactory)
-                val scanViewModel = viewModel<ScanViewModel>(factory = scanViewModelFactory)
+                val collectionViewModel =
+                    viewModel<CollectionViewModel>(
+                        key = "collection-${language.name}",
+                        factory = collectionViewModelFactory,
+                    )
+                val decksViewModel =
+                    viewModel<DecksViewModel>(key = "decks-${language.name}", factory = decksViewModelFactory)
+                val scanViewModel =
+                    viewModel<ScanViewModel>(key = "scan-${language.name}", factory = scanViewModelFactory)
                 val settingsViewModel = viewModel<SettingsViewModel>(factory = settingsViewModelFactory)
                 LaunchedEffect(reviewRequests) {
                     if (reviewRequests >

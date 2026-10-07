@@ -171,4 +171,8 @@
     <string name="consent_autoscroll_text">Auto-scroll uses Android\'s Accessibility service for one purpose only: to swipe the card list in Pokémon TCG Pocket while PocketDeck scans your collection.\n\nIt does not read anything on the screen, it does not collect or send any data, and it only acts while a scan is running. You can switch it off at any time in the system\'s Accessibility settings.\n\nAutomating input in a game may go against that game\'s terms of service. You use this feature at your own risk. If you would rather not, decline and scroll the list yourself.</string>
     <string name="consent_agree">I understand, allow</string>
     <string name="consent_decline">No, I will scroll myself</string>
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_system">Phone\'s language</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_german">Deutsch</string>
 </resources>

@@ -148,3 +148,9 @@ New way of driving the app => new driving adapter calling inbound ports.
 - The Decks tab has two tabs: Tournament (`SuggestionOrigin.META`, with the refresh button) and Generated (builder and AI decks,
   with the build button); `DeckKind` decides which tab a deck or a notice belongs to. Generated decks are tinted
   (tertiary for the builder, secondary for the AI) so they cannot be mistaken for tournament decks.
+- Languages: English is the default resource set (`values/`), German is `values-de/`; both must stay complete (lint's
+  MissingTranslation checks it). The app follows the phone's language; Settings > Language (Android 13+) sets Android's per-app
+  language (`LocaleManager`, declared in `res/xml/locales_config.xml`). View models that take a `Language` are keyed by it in
+  `MainActivity`, so card names switch with the language. Add a language: new `values-xx/` for both modules, a line in
+  `locales_config.xml`, an `AppLanguageChoice` entry.
+- Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).

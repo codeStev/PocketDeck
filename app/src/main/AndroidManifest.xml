@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Card artwork is loaded from the network (the card data itself is bundled). -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -15,6 +17,8 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@drawable/ic_launcher"
+        android:localeConfig="@xml/locales_config"
+        tools:targetApi="33"
         android:label="${appLabel}"
         android:theme="@android:style/Theme.DeviceDefault.DayNight">
         <activity

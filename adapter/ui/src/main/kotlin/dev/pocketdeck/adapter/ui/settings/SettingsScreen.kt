@@ -64,6 +64,7 @@ internal fun SettingsContent(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineSmall)
+        LanguageSection()
         AiSection(state, actions)
     }
 }

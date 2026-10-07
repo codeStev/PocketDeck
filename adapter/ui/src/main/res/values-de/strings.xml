@@ -171,4 +171,8 @@
     <string name="consent_autoscroll_text">Auto-Scroll nutzt den Bedienungshilfen-Dienst von Android für genau einen Zweck: Die Kartenliste in Pokémon TCG Pocket zu wischen, während PocketDeck deine Sammlung scannt.\n\nEr liest nichts vom Bildschirm, sammelt und sendet keine Daten und handelt nur, solange ein Scan läuft. Du kannst ihn jederzeit in den Bedienungshilfen des Systems ausschalten.\n\nEingaben in einem Spiel zu automatisieren kann gegen dessen Nutzungsbedingungen verstoßen. Du nutzt diese Funktion auf eigenes Risiko. Wenn du das nicht möchtest, lehne ab und scrolle die Liste selbst.</string>
     <string name="consent_agree">Verstanden, erlauben</string>
     <string name="consent_decline">Nein, ich scrolle selbst</string>
+    <string name="settings_language_title">Sprache</string>
+    <string name="settings_language_system">Sprache des Handys</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_german">Deutsch</string>
 </resources>
