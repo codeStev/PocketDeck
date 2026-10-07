@@ -23,7 +23,8 @@ class AdvisorSettingsStoreTest {
             .commit()
     }
 
-    private fun store() = SharedPreferencesAdvisorSettingsStore(context, fileName)
+    private fun store() =
+        SharedPreferencesAdvisorSettingsStore(context, fileName, KeystoreSecretBox("pocketdeck_test_secrets"))
 
     @Test
     fun startsWithoutKeys() =

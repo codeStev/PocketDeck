@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.ApplicationExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     id("com.android.application")
@@ -22,6 +23,34 @@ extensions.configure<ApplicationExtension> {
         isCoreLibraryDesugaringEnabled = true
     }
     lint.warningsAsErrors = true
+
+    // The release key lives outside the repository: ~/.pocketdeck/signing.properties (see docs/RELEASE.md). Without it the
+    // release build is simply unsigned. `-Ppocketdeck.signWithDebugKey=true` signs a test build with the debug key instead.
+    val signingFile = file("${System.getProperty("user.home")}/.pocketdeck/signing.properties")
+    val signing = if (signingFile.isFile) Properties().apply { signingFile.inputStream().use(::load) } else null
+    signingConfigs {
+        if (signing != null) {
+            create("release") {
+                storeFile = file(signing.getProperty("storeFile"))
+                storePassword = signing.getProperty("storePassword")
+                keyAlias = signing.getProperty("keyAlias")
+                keyPassword = signing.getProperty("keyPassword")
+            }
+        }
+    }
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig =
+                when {
+                    providers.gradleProperty("pocketdeck.signWithDebugKey").orNull == "true" -> signingConfigs.getByName("debug")
+                    signing != null -> signingConfigs.getByName("release")
+                    else -> null
+                }
+        }
+    }
 }
 
 kotlin {

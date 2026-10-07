@@ -167,4 +167,8 @@
     <string name="decks_intro_generated">Decks made from your own cards, by the builder or an AI. They are only ever made of cards you own.</string>
     <string name="decks_empty_tournament">No tournament decks yet. Scan your collection and refresh the tournament decks.</string>
     <string name="decks_empty_generated">Nothing generated yet. Tap the button to build a deck from your cards.</string>
+    <string name="consent_autoscroll_title">Allow auto-scroll?</string>
+    <string name="consent_autoscroll_text">Auto-scroll uses Android\'s Accessibility service for one purpose only: to swipe the card list in Pokémon TCG Pocket while PocketDeck scans your collection.\n\nIt does not read anything on the screen, it does not collect or send any data, and it only acts while a scan is running. You can switch it off at any time in the system\'s Accessibility settings.\n\nAutomating input in a game may go against that game\'s terms of service. You use this feature at your own risk. If you would rather not, decline and scroll the list yourself.</string>
+    <string name="consent_agree">I understand, allow</string>
+    <string name="consent_decline">No, I will scroll myself</string>
 </resources>

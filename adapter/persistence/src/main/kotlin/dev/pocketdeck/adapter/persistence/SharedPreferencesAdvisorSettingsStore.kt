@@ -11,19 +11,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 
 /**
- * Keeps the advisor settings in the app's private storage. The keys sit there in plain text, which only the app (and
- * someone with root access to the phone) can read; the app is excluded from every backup.
+ * Keeps the advisor settings in the app's private storage. The keys are encrypted with a key from the Android Keystore
+ * (see [KeystoreSecretBox]); the app is excluded from every backup.
  */
-class SharedPreferencesAdvisorSettingsStore(
+class SharedPreferencesAdvisorSettingsStore internal constructor(
     context: Context,
-    fileName: String = DEFAULT_FILE,
+    fileName: String,
+    private val secrets: SecretBox,
 ) : AdvisorSettingsStore {
+    constructor(context: Context) : this(context, DEFAULT_FILE, KeystoreSecretBox())
+
     private val preferences: SharedPreferences =
         context.applicationContext.getSharedPreferences(
             fileName,
             Context.MODE_PRIVATE,
         )
     private val state = MutableStateFlow(read())
+
+    init {
+        upgradePlainKeys()
+    }
 
     override fun observe(): Flow<AdvisorSettings> = state
 
@@ -33,7 +40,7 @@ class SharedPreferencesAdvisorSettingsStore(
         withContext(Dispatchers.IO) {
             val editor = preferences.edit().clear().putString(ORDER, settings.order.joinToString(SEPARATOR) { it.name })
             AdvisorProvider.entries.forEach { provider ->
-                settings.keyOf(provider)?.let { editor.putString(KEY_PREFIX + provider.name, it) }
+                settings.keyOf(provider)?.let { editor.putString(KEY_PREFIX + provider.name, secrets.seal(it)) }
                 settings.chosenModelOf(provider)?.let { editor.putString(MODEL_PREFIX + provider.name, it) }
             }
             editor.commit()
@@ -51,9 +58,23 @@ class SharedPreferencesAdvisorSettingsStore(
             }
         return AdvisorProvider.entries.fold(AdvisorSettings().withOrder(order.orEmpty())) { settings, provider ->
             settings
-                .withKey(provider, preferences.getString(KEY_PREFIX + provider.name, null))
+                .withKey(provider, preferences.getString(KEY_PREFIX + provider.name, null)?.let(secrets::open))
                 .withModel(provider, preferences.getString(MODEL_PREFIX + provider.name, null))
         }
+    }
+
+    /** Keys stored by an earlier version as plain text are sealed the first time the settings are read. */
+    private fun upgradePlainKeys() {
+        val editor = preferences.edit()
+        var upgraded = false
+        AdvisorProvider.entries.forEach { provider ->
+            val stored = preferences.getString(KEY_PREFIX + provider.name, null) ?: return@forEach
+            if (!secrets.isSealed(stored)) {
+                editor.putString(KEY_PREFIX + provider.name, secrets.seal(stored))
+                upgraded = true
+            }
+        }
+        if (upgraded) editor.apply()
     }
 
     private companion object {

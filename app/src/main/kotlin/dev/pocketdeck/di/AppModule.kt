@@ -16,6 +16,7 @@ import dev.pocketdeck.adapter.llm.OpenRouterModelCatalog
 import dev.pocketdeck.adapter.persistence.PocketDeckDatabases
 import dev.pocketdeck.adapter.persistence.PocketDeckStorage
 import dev.pocketdeck.adapter.persistence.SharedPreferencesAdvisorSettingsStore
+import dev.pocketdeck.adapter.persistence.SharedPreferencesConsentStore
 import dev.pocketdeck.adapter.recognition.BadgeDigitReader
 import dev.pocketdeck.adapter.recognition.CardIndex
 import dev.pocketdeck.adapter.recognition.CollectionGridDetector
@@ -25,6 +26,7 @@ import dev.pocketdeck.adapter.recognition.GridCardRecognizer
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.AiAssistant
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
+import dev.pocketdeck.adapter.ui.scan.ConsentAccess
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
 import dev.pocketdeck.adapter.ui.settings.SettingsViewModel
 import dev.pocketdeck.application.advice.AdvisorDiagnostics
@@ -55,6 +57,9 @@ import dev.pocketdeck.application.collection.ObserveCollection
 import dev.pocketdeck.application.collection.ObserveCollectionService
 import dev.pocketdeck.application.collection.RestorePreviousCollection
 import dev.pocketdeck.application.collection.RestorePreviousCollectionService
+import dev.pocketdeck.application.consent.ConsentStore
+import dev.pocketdeck.application.consent.GrantConsentService
+import dev.pocketdeck.application.consent.ObserveConsentService
 import dev.pocketdeck.application.deckcode.ExportDeckCode
 import dev.pocketdeck.application.deckcode.ExportDeckCodeService
 import dev.pocketdeck.application.meta.InMemoryMetaSnapshotRepository
@@ -346,6 +351,7 @@ object AppModule {
         observeBackup: ObserveBackupAvailable,
         restorePrevious: RestorePreviousCollection,
         language: Language,
+        consent: ConsentStore,
     ) = ScanViewModel.Factory(
         observeProgress,
         finishScan,
@@ -355,7 +361,14 @@ object AppModule {
         observeBackup,
         restorePrevious,
         language,
+        ConsentAccess(ObserveConsentService(consent), GrantConsentService(consent)),
     )
+
+    @Provides
+    @Singleton
+    fun consentStore(
+        @ApplicationContext context: Context,
+    ): ConsentStore = SharedPreferencesConsentStore(context)
 
     @Provides
     fun collectionViewModelFactory(

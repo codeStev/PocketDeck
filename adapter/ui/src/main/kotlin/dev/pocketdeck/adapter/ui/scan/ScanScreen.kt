@@ -21,6 +21,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -49,6 +52,7 @@ fun ScanScreen(
         onAutomaticChanged = viewModel::onAutomaticChanged,
         onOpenAccessibilitySettings = onOpenAccessibilitySettings,
         onStartScan = onStartScan,
+        onAutoScrollConsent = viewModel::onAutoScrollConsent,
         onAdjust = viewModel::onAdjust,
         onAccept = viewModel::onAccept,
         onRemove = viewModel::onRemove,
@@ -67,6 +71,7 @@ internal fun ScanContent(
     onAutomaticChanged: (Boolean) -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
     onStartScan: (Boolean) -> Unit,
+    onAutoScrollConsent: () -> Unit,
     onAdjust: (CardId, Int) -> Unit,
     onAccept: (CardId) -> Unit,
     onRemove: (CardId) -> Unit,
@@ -84,6 +89,7 @@ internal fun ScanContent(
                 onAutomaticChanged,
                 onOpenAccessibilitySettings,
                 onStartScan,
+                onAutoScrollConsent,
                 onRestorePrevious,
             )
         }
@@ -105,9 +111,22 @@ private fun Instructions(
     onAutomaticChanged: (Boolean) -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
     onStartScan: (Boolean) -> Unit,
+    onAutoScrollConsent: () -> Unit,
     onRestorePrevious: () -> Unit,
 ) {
     val needsService = state.automatic && !autoScrollEnabled
+    var asking by rememberSaveable { mutableStateOf(false) }
+    val proceed = { if (needsService) onOpenAccessibilitySettings() else onStartScan(state.automatic) }
+    if (asking) {
+        AutoScrollConsentDialog(
+            onAgree = {
+                asking = false
+                onAutoScrollConsent()
+                proceed()
+            },
+            onDecline = { asking = false },
+        )
+    }
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(stringResource(R.string.scan_title), style = MaterialTheme.typography.headlineSmall)
         Text(stringResource(R.string.scan_intro))
@@ -140,7 +159,7 @@ private fun Instructions(
         }
         state.notice?.let { Text(noticeText(it), color = MaterialTheme.colorScheme.error) }
         Button(
-            onClick = { if (needsService) onOpenAccessibilitySettings() else onStartScan(state.automatic) },
+            onClick = { if (state.automatic && !state.autoScrollConsented) asking = true else proceed() },
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(stringResource(if (needsService) R.string.scan_open_accessibility else R.string.scan_start))

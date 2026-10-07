@@ -5,10 +5,14 @@ import dev.pocketdeck.application.catalog.ObserveCardCatalogService
 import dev.pocketdeck.application.collection.ObserveBackupAvailableService
 import dev.pocketdeck.application.collection.ObserveCollectionService
 import dev.pocketdeck.application.collection.RestorePreviousCollectionService
+import dev.pocketdeck.application.consent.Consent
+import dev.pocketdeck.application.consent.GrantConsentService
+import dev.pocketdeck.application.consent.ObserveConsentService
 import dev.pocketdeck.application.fakes.FakeCardRecognizer
 import dev.pocketdeck.application.fakes.InMemoryCardCatalogRepository
 import dev.pocketdeck.application.fakes.InMemoryCollectionBackup
 import dev.pocketdeck.application.fakes.InMemoryCollectionRepository
+import dev.pocketdeck.application.fakes.InMemoryConsentStore
 import dev.pocketdeck.application.scan.ConfirmScanResultsService
 import dev.pocketdeck.application.scan.FinishCollectionScanService
 import dev.pocketdeck.application.scan.InMemoryScanSessionStore
@@ -50,7 +54,9 @@ class ScanViewModelTest {
     @AfterEach
     fun removeMainDispatcher() = Dispatchers.resetMain()
 
-    private fun viewModel() =
+    private val consents = InMemoryConsentStore()
+
+    private fun viewModel(consent: InMemoryConsentStore = consents) =
         ScanViewModel(
             observeProgress = ObserveScanProgressService(sessions),
             finishScan = FinishCollectionScanService(sessions),
@@ -60,6 +66,7 @@ class ScanViewModelTest {
             observeBackup = ObserveBackupAvailableService(backup),
             restorePrevious = RestorePreviousCollectionService(collections, backup),
             language = Language.ENGLISH,
+            consent = ConsentAccess(ObserveConsentService(consent), GrantConsentService(consent)),
         )
 
     private fun tile(
@@ -448,5 +455,28 @@ class ScanViewModelTest {
             advanceUntilIdle()
 
             viewModel.state.value.notice shouldBe ScanNotice.NOTHING_TO_RESTORE
+        }
+
+    @Test
+    fun `auto-scroll needs the player's consent until they give it`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            advanceUntilIdle()
+            viewModel.state.value.autoScrollConsented shouldBe false
+
+            viewModel.onAutoScrollConsent()
+            advanceUntilIdle()
+
+            viewModel.state.value.autoScrollConsented shouldBe true
+        }
+
+    @Test
+    fun `remembers a consent that was given before`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(InMemoryConsentStore(setOf(Consent.AUTO_SCROLL)))
+
+            advanceUntilIdle()
+
+            viewModel.state.value.autoScrollConsented shouldBe true
         }
 }

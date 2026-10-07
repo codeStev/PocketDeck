@@ -167,4 +167,8 @@
     <string name="decks_intro_generated">Decks aus deinen eigenen Karten, gebaut vom Deckbauer oder einer KI. Sie bestehen nur aus Karten, die du besitzt.</string>
     <string name="decks_empty_tournament">Noch keine Turnier-Decks. Scanne deine Sammlung und aktualisiere die Turnier-Decks.</string>
     <string name="decks_empty_generated">Noch nichts generiert. Tippe auf den Knopf, um ein Deck aus deinen Karten zu bauen.</string>
+    <string name="consent_autoscroll_title">Auto-Scroll erlauben?</string>
+    <string name="consent_autoscroll_text">Auto-Scroll nutzt den Bedienungshilfen-Dienst von Android für genau einen Zweck: Die Kartenliste in Pokémon TCG Pocket zu wischen, während PocketDeck deine Sammlung scannt.\n\nEr liest nichts vom Bildschirm, sammelt und sendet keine Daten und handelt nur, solange ein Scan läuft. Du kannst ihn jederzeit in den Bedienungshilfen des Systems ausschalten.\n\nEingaben in einem Spiel zu automatisieren kann gegen dessen Nutzungsbedingungen verstoßen. Du nutzt diese Funktion auf eigenes Risiko. Wenn du das nicht möchtest, lehne ab und scrolle die Liste selbst.</string>
+    <string name="consent_agree">Verstanden, erlauben</string>
+    <string name="consent_decline">Nein, ich scrolle selbst</string>
 </resources>

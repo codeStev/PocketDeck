@@ -8,6 +8,9 @@ import dev.pocketdeck.application.catalog.ObserveCardCatalog
 import dev.pocketdeck.application.collection.ObserveBackupAvailable
 import dev.pocketdeck.application.collection.ObserveCollection
 import dev.pocketdeck.application.collection.RestorePreviousCollection
+import dev.pocketdeck.application.consent.Consent
+import dev.pocketdeck.application.consent.GrantConsent
+import dev.pocketdeck.application.consent.ObserveConsent
 import dev.pocketdeck.application.scan.ConfirmScanResults
 import dev.pocketdeck.application.scan.FinishCollectionScan
 import dev.pocketdeck.application.scan.ObserveScanProgress
@@ -42,6 +45,14 @@ data class ScanUiState(
     val ownedBefore: Int = 0,
     /** Whether the collection from before the last saved scan can be restored. */
     val backupAvailable: Boolean = false,
+    /** Whether the player has agreed to the auto-scroll service swiping the game for them. */
+    val autoScrollConsented: Boolean = false,
+)
+
+/** The inbound ports behind the player's consent to the things the app does in the game for them. */
+class ConsentAccess(
+    val observe: ObserveConsent,
+    val grant: GrantConsent,
 )
 
 /** Drives the scan and review screens through the application's inbound ports only. */
@@ -54,11 +65,17 @@ class ScanViewModel(
     observeBackup: ObserveBackupAvailable,
     private val restorePrevious: RestorePreviousCollection,
     private val language: Language,
+    private val consent: ConsentAccess,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(ScanUiState())
     val state: StateFlow<ScanUiState> = mutableState
 
     init {
+        viewModelScope.launch {
+            consent.observe(Consent.AUTO_SCROLL).collect { given ->
+                mutableState.update { it.copy(autoScrollConsented = given) }
+            }
+        }
         viewModelScope.launch {
             observeBackup().collect { available ->
                 mutableState.update { it.copy(backupAvailable = available) }
@@ -176,6 +193,11 @@ class ScanViewModel(
 
     fun onDiscard() = mutableState.update { it.copy(phase = ScanPhase.IDLE, review = emptyList(), notice = null) }
 
+    /** The player read the disclosure and agreed to the auto-scroll service. */
+    fun onAutoScrollConsent() {
+        viewModelScope.launch { consent.grant(Consent.AUTO_SCROLL) }
+    }
+
     fun onAutomaticChanged(automatic: Boolean) = mutableState.update { it.copy(automatic = automatic) }
 
     fun onRestorePrevious() {
@@ -207,6 +229,7 @@ class ScanViewModel(
         private val observeBackup: ObserveBackupAvailable,
         private val restorePrevious: RestorePreviousCollection,
         private val language: Language,
+        private val consent: ConsentAccess,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -220,6 +243,7 @@ class ScanViewModel(
                 observeBackup,
                 restorePrevious,
                 language,
+                consent,
             ) as T
         }
     }

@@ -6,8 +6,14 @@ android {
     namespace = "dev.pocketdeck"
     defaultConfig {
         applicationId = "dev.pocketdeck"
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
+        // A test copy of a release build can sit next to the real app: -Ppocketdeck.idSuffix=.rc
+        providers.gradleProperty("pocketdeck.idSuffix").orNull?.let {
+            applicationIdSuffix = it
+            manifestPlaceholders["appLabel"] = "PocketDeck RC"
+        }
+        if (!manifestPlaceholders.containsKey("appLabel")) manifestPlaceholders["appLabel"] = "PocketDeck"
     }
 }
 
