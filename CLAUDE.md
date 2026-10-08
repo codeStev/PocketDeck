@@ -216,6 +216,9 @@ New way of driving the app => new driving adapter calling inbound ports.
   panel (pure black QR), an accent footer with the repository link; the key cards are loaded through Coil, and a card that cannot
   be loaded is left out; written to `cache/shared/deck.png` and handed over through the library's own `FileProvider`,
   authority `<applicationId>.files`). `DecksViewModel.onShare` hands a `ShareRequest` to the screen, which opens the share sheet.
+- Branches and versions (`docs/BRANCHING.md`): `main` = released, `develop` = next release, features branch off `develop` and are
+  squash-merged back by pull request; `develop` -> `main` is a merge commit and starts `.github/workflows/release.yml` (tag `v<version>`,
+  signed APK, GitHub release). SemVer lives only in `version.properties`; `versionCode` is derived in `app/build.gradle.kts`.
 - Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).
 
 ## Design system (`:designsystem`, package `dev.codestev.pocketdesign`)

@@ -1,13 +1,29 @@
+import java.util.Properties
+
 plugins {
     id("pocketdeck.android.application")
 }
+
+// SemVer from version.properties; versionCode is derived so that it always rises with the version:
+// major*1_000_000 + minor*10_000 + patch*100 + (pre-release number, or 99 for a final release).
+// So 1.0.0-rc.1 < 1.0.0-rc.2 < 1.0.0, and a patch can ship up to 98 pre-releases.
+val semver = Regex("""(\d+)\.(\d+)\.(\d+)(?:-[A-Za-z]+\.(\d+))?""")
+val appVersion =
+    Properties().apply { rootProject.file("version.properties").inputStream().use(::load) }.getProperty("version")
+val versionParts =
+    checkNotNull(semver.matchEntire(appVersion)) { "version.properties: '$appVersion' is not MAJOR.MINOR.PATCH[-pre.N]" }
+        .destructured
+val appVersionCode =
+    versionParts.let { (major, minor, patch, pre) ->
+        major.toInt() * 1_000_000 + minor.toInt() * 10_000 + patch.toInt() * 100 + (pre.toIntOrNull() ?: 99)
+    }
 
 android {
     namespace = "dev.pocketdeck"
     defaultConfig {
         applicationId = "dev.pocketdeck"
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = appVersionCode
+        versionName = appVersion
         // A test copy of a release build can sit next to the real app: -Ppocketdeck.idSuffix=.rc
         providers.gradleProperty("pocketdeck.idSuffix").orNull?.let {
             applicationIdSuffix = it
