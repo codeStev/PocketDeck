@@ -16,7 +16,8 @@ fi
 mkdir -p "$dir"
 chmod 700 "$dir"
 
-# Asked here, not by keytool: a pasted password with a trailing space or newline made keytool's own "re-enter" prompt fail.
+# The certificate name is fixed on purpose: it is readable by anyone who inspects the APK, so it is the public handle, not a real name.
+# The password is asked here, not by keytool: a pasted password with a trailing space or newline made keytool's own "re-enter" prompt fail.
 # Stray whitespace is stripped and the password is handed over through the environment, so it never shows in the process list.
 read -r -s -p "Choose the key password (used for the store and the key; paste is fine): " password; echo
 read -r -s -p "Again: " again; echo
@@ -29,6 +30,7 @@ fi
 
 export POCKETDECK_KEY_PASSWORD="$password"
 keytool -genkeypair -v -keystore "$keystore" -alias "$alias_name" -keyalg RSA -keysize 4096 -validity 10000 \
+  -dname "CN=codeStev, O=codeStev" \
   -storepass:env POCKETDECK_KEY_PASSWORD -keypass:env POCKETDECK_KEY_PASSWORD
 
 umask 077

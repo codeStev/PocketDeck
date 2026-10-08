@@ -9,5 +9,20 @@ if [ -e "$keystore" ]; then
   exit 1
 fi
 mkdir -p "$(dirname "$keystore")"
-keytool -genkeypair -v -keystore "$keystore" -alias pocketdeck-repo -keyalg RSA -keysize 4096 -validity 10000
-echo "Use one password for store and key. Secrets: FDROID_KEYSTORE_BASE64=$(base64 -w0 "$keystore" | cut -c1-12)... (run: base64 -w0 $keystore)"
+
+# Same handling as create-release-key.sh: one password for store and key, asked once, stray whitespace removed.
+read -r -s -p "Choose the key password (used for the store and the key; paste is fine): " password; echo
+read -r -s -p "Again: " again; echo
+password="$(printf '%s' "$password" | tr -d '[:space:]')"
+again="$(printf '%s' "$again" | tr -d '[:space:]')"
+if [ "$password" != "$again" ] || [ "${#password}" -lt 6 ]; then
+  echo "The two entries differ, or the password has fewer than 6 characters. Nothing was created." >&2
+  exit 1
+fi
+
+export POCKETDECK_KEY_PASSWORD="$password"
+# The certificate name is public (anyone can read it from the index), so it is the handle, not a real name.
+keytool -genkeypair -v -keystore "$keystore" -alias pocketdeck-repo -keyalg RSA -keysize 4096 -validity 10000 \
+  -dname "CN=codeStev, O=codeStev" \
+  -storepass:env POCKETDECK_KEY_PASSWORD -keypass:env POCKETDECK_KEY_PASSWORD
+echo "Created $keystore (alias pocketdeck-repo). Back it up with its password, off this machine."
