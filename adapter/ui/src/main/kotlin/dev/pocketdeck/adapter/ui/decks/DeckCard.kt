@@ -11,10 +11,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -32,9 +35,11 @@ import dev.codestev.pocketdesign.components.PdCardFan
 import dev.codestev.pocketdesign.components.PdCardFanPlaceholder
 import dev.codestev.pocketdesign.components.PdChip
 import dev.codestev.pocketdesign.components.PdChipKind
+import dev.codestev.pocketdesign.components.PdIconButton
 import dev.codestev.pocketdesign.components.PdProgressMeter
 import dev.codestev.pocketdesign.components.PdTextLink
 import dev.codestev.pocketdesign.components.PdTintedCard
+import dev.codestev.pocketdesign.icons.PdIcons
 import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PdTint
 import dev.codestev.pocketdesign.theme.PocketDesign
@@ -162,7 +167,11 @@ private fun QuietActions(
     actions: DecksActions,
     onToggleOdds: () -> Unit,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(PdSpacing.space2), modifier = Modifier.fillMaxWidth()) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(PdSpacing.space2),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
         PdButton(
             stringResource(if (showOdds) R.string.decks_opening_hide else R.string.decks_opening_show),
             {
@@ -183,6 +192,7 @@ private fun QuietActions(
                 enabled = !card.kept,
             )
         }
+        ShareMenu(item, actions)
     }
     if (kind == DeckKind.SAVED) {
         Row(horizontalArrangement = Arrangement.spacedBy(PdSpacing.space2), modifier = Modifier.fillMaxWidth()) {
@@ -199,6 +209,34 @@ private fun QuietActions(
                 Modifier.weight(1f),
                 style = PdButtonStyle.Danger,
                 size = PdButtonSize.Small,
+            )
+        }
+    }
+}
+
+/** The share icon opens a small menu: the deck as text, or as a picture with the import QR. */
+@Composable
+private fun ShareMenu(
+    item: DeckItem,
+    actions: DecksActions,
+) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        PdIconButton(PdIcons.Share, stringResource(R.string.share_deck), { open = true })
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.share_as_text)) },
+                onClick = {
+                    open = false
+                    actions.onShare(item.key, false)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.share_as_image)) },
+                onClick = {
+                    open = false
+                    actions.onShare(item.key, true)
+                },
             )
         }
     }

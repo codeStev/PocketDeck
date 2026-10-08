@@ -18,6 +18,8 @@ data class DeckCardLine(
     val artworkUrl: String?,
     val copies: Int,
     val missingCopies: Int,
+    /** Pokémon or trainer, for grouping the list when a deck is shared. */
+    val isPokemon: Boolean = false,
 )
 
 /** [copies] of the card [original] are played as [replacement], which the player owns. */
@@ -55,6 +57,8 @@ data class DeckItem(
     val deckId: Int = 0,
     /** The deck's key Pokémon, most important first (at most [MAX_HEROES]): their art is the deck's picture. */
     val heroes: List<DeckHero> = emptyList(),
+    /** The energy the deck's Energy Zone makes, for the shared list. */
+    val energyTypes: List<EnergyType> = emptyList(),
 ) {
     val substituteCopies: Int get() = substitutes.sumOf { it.copies }
 }
@@ -100,6 +104,7 @@ object DeckListing {
                         artworkUrl = card.artwork?.value,
                         copies = entries.sumOf { it.copies },
                         missingCopies = missing[key] ?: 0,
+                        isPokemon = card is PokemonCard,
                     )
                 }.sortedByDescending { it.missingCopies > 0 }
         val heroes = heroesOf(suggestion)
@@ -114,6 +119,7 @@ object DeckListing {
             rationale = suggestion.rationale,
             deckId = deckIdOf(suggestion.deck),
             heroes = heroes,
+            energyTypes = suggestion.deck.energyTypes.sortedBy { it.ordinal },
             substitutes =
                 suggestion.substitutions.map {
                     SubstituteLine(

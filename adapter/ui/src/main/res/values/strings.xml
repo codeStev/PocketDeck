@@ -338,4 +338,13 @@
     <string name="files_newer_version">This file is from a newer version of PocketDeck. Update the app to read it.</string>
     <string name="files_nothing_recognised">None of the cards in this file is known to this version, so nothing was changed.</string>
     <string name="files_dismiss">OK</string>
+    <string name="share_deck">Share deck</string>
+    <string name="share_as_text">Share as text</string>
+    <string name="share_as_image">Share as image</string>
+    <string name="share_pokemon">Pokémon</string>
+    <string name="share_trainers">Trainers</string>
+    <string name="share_energy">Energy</string>
+    <string name="share_import_code">Import code:</string>
+    <string name="share_no_code">No import code: the game does not know every card of this deck.</string>
+    <string name="share_footer">Made with PocketDeck, an unofficial fan tool</string>
 </resources>

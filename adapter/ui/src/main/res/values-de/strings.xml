@@ -338,4 +338,13 @@
     <string name="files_newer_version">Diese Datei stammt aus einer neueren PocketDeck-Version. Aktualisiere die App, um sie zu lesen.</string>
     <string name="files_nothing_recognised">Keine Karte dieser Datei ist dieser Version bekannt, daher wurde nichts geändert.</string>
     <string name="files_dismiss">OK</string>
+    <string name="share_deck">Deck teilen</string>
+    <string name="share_as_text">Als Text teilen</string>
+    <string name="share_as_image">Als Bild teilen</string>
+    <string name="share_pokemon">Pokémon</string>
+    <string name="share_trainers">Trainer</string>
+    <string name="share_energy">Energie</string>
+    <string name="share_import_code">Import-Code:</string>
+    <string name="share_no_code">Kein Import-Code: Das Spiel kennt nicht alle Karten dieses Decks.</string>
+    <string name="share_footer">Erstellt mit PocketDeck, einem inoffiziellen Fan-Werkzeug</string>
 </resources>

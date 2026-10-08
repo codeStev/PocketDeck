@@ -267,6 +267,44 @@ class DecksViewModelTest {
         }
 
     @Test
+    fun `asking to share a deck hands it over with its import code and how to send it`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(succeeding, { Outcome.Success(DeckCode("AAAA")) })
+            advanceUntilIdle()
+            val key =
+                viewModel.state.value.items
+                    .single()
+                    .key
+
+            viewModel.onShare(key, asImage = true)
+
+            val share = viewModel.state.value.share!!
+            share.code shouldBe "AAAA"
+            share.asImage shouldBe true
+            share.item.key shouldBe key
+            viewModel.onShareHandled()
+            viewModel.state.value.share shouldBe null
+        }
+
+    @Test
+    fun `a deck the game cannot import is still shared, without a code`() =
+        runTest(dispatcher) {
+            val viewModel =
+                viewModel(succeeding, { Outcome.Failure(DeckCodeFailure.UnknownToGame(listOf(CardName("Mystery")))) })
+            advanceUntilIdle()
+
+            viewModel.onShare(
+                viewModel.state.value.items
+                    .single()
+                    .key,
+                asImage = false,
+            )
+
+            viewModel.state.value.share!!
+                .code shouldBe null
+        }
+
+    @Test
     fun `closing the code hides it`() =
         runTest(dispatcher) {
             val viewModel = viewModel(succeeding, { Outcome.Success(DeckCode("AAAA")) })

@@ -58,6 +58,14 @@ object PdIcons {
         )
     }
 
+    /** Three connected nodes: send this to someone. */
+    val Share by lazy {
+        icon(
+            "Share",
+            "M17 8.5a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5zM7 14.5a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5zM17 20.5a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5zM9.2 13.2l5.6 3.1M14.8 7.7L9.2 10.8",
+        )
+    }
+
     /** Two sliders. */
     val Settings by lazy {
         icon(
@@ -83,6 +91,7 @@ object PdIcons {
             Info,
             Alert,
             Target,
+            Share,
             Collection,
             Decks,
             Scan,

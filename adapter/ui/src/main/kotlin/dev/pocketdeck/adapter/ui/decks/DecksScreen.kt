@@ -54,6 +54,8 @@ internal class DecksActions(
     val onRenamed: (String) -> Unit,
     val onDeleteConfirmed: () -> Unit,
     val onSavedDialogDismissed: () -> Unit,
+    val onShare: (String, Boolean) -> Unit,
+    val onShareHandled: () -> Unit,
 )
 
 @Composable
@@ -82,6 +84,8 @@ fun DecksScreen(
             onRenamed = viewModel::onSavedRenamed,
             onDeleteConfirmed = viewModel::onSavedDeleteConfirmed,
             onSavedDialogDismissed = viewModel::onSavedDialogDismissed,
+            onShare = viewModel::onShare,
+            onShareHandled = viewModel::onShareHandled,
             onOpenChase = { chasing = true },
             onOpenSettings = {
                 viewModel.onCloseBuilder()
@@ -100,6 +104,7 @@ internal fun DecksContent(
     state.code?.let { DeckCodeDialog(it, actions.onCloseCode) }
     state.centrepieces?.let { BuilderDialog(it, state.aiConfigured, actions) }
     state.savedDialog?.let { SavedDeckDialogs(it, actions) }
+    state.share?.let { ShareLauncher(it, actions.onShareHandled) }
     val labels = DeckKind.entries.map { stringResource(it.tabLabel()) }
     Column(Modifier.fillMaxSize()) {
         PdSegmentedTabs(

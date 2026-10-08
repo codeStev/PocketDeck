@@ -96,6 +96,8 @@ data class DecksUiState(
     val loaded: Boolean = false,
     /** Set when a build or an AI answer has just put a deck at the top of the Generated list. */
     val newDeck: NewDeck? = null,
+    /** A deck the player asked to share; the screen opens the share sheet for it and then says it is handled. */
+    val share: ShareRequest? = null,
 )
 
 /** Shows the suggested decks and refreshes the picture of the competitive field. */
@@ -165,6 +167,19 @@ class DecksViewModel(
             }
         mutableState.update { it.copy(code = code) }
     }
+
+    /** Hands a deck to the screen for sharing, with the game's import code when the game can take it. */
+    fun onShare(
+        key: String,
+        asImage: Boolean,
+    ) {
+        val item = (state.value.items + state.value.saved).firstOrNull { it.key == key } ?: return
+        val suggestion = suggestionOf(item) ?: return
+        val code = (exportDeckCode(suggestion.deck) as? Outcome.Success)?.value?.text
+        mutableState.update { it.copy(share = ShareRequest(item, code, asImage)) }
+    }
+
+    fun onShareHandled() = mutableState.update { it.copy(share = null) }
 
     /** Works out, once per deck, how likely its Pokémon are to be attacking in the first turns. */
     fun onShowOpening(deckId: Int) {

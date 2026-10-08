@@ -203,6 +203,10 @@ New way of driving the app => new driving adapter calling inbound ports.
   is read with a comma or a semicolon, only `id` and `copies` are needed). Import first shows a preview (cards now, in the file, unknown
   ids skipped) and only replaces after confirmation; it saves the old collection as the scan backup, so "Restore the collection from
   before the last scan" undoes it. The system file picker (`CreateDocument`, `OpenDocument`) is driven from `CollectionFilesSection`.
+- Sharing a deck (`decks/DeckShare.kt`, `DeckShareLauncher.kt`): the share icon on every deck card opens a menu, "as text" (title, Pokémon,
+  trainers, energy, the import code if the game can take the deck, a footer with the repository link) or "as image" (the same list and
+  the import QR on white, pure black QR; written to `cache/shared/deck.png` and handed over through the library's own `FileProvider`,
+  authority `<applicationId>.files`). `DecksViewModel.onShare` hands a `ShareRequest` to the screen, which opens the share sheet.
 - Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).
 
 ## Design system (`:designsystem`, package `dev.codestev.pocketdesign`)

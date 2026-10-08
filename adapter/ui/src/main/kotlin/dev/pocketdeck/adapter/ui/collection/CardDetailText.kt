@@ -24,7 +24,7 @@ internal fun detailText(detail: CardDetail): String =
         }
     }
 
-private fun EnergyType.label() =
+internal fun EnergyType.label() =
     when (this) {
         EnergyType.GRASS -> R.string.energy_grass
         EnergyType.FIRE -> R.string.energy_fire
