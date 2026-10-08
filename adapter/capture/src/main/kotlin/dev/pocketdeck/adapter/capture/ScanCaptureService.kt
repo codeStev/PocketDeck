@@ -189,6 +189,7 @@ class ScanCaptureService : Service() {
             .setSmallIcon(R.drawable.ic_scan)
             .setContentTitle(getString(R.string.scan_notification_title))
             .setContentText(getString(R.string.scan_notification_text))
+            .setColor(ACCENT_COLOR)
             .setOngoing(true)
             .build()
     }
@@ -222,6 +223,9 @@ class ScanCaptureService : Service() {
     private companion object {
         const val TAG = "PocketDeckScan"
         const val NOTIFICATION_ID = 1
+
+        /** The app's accent (Signal brand); this adapter may not depend on the design system. */
+        const val ACCENT_COLOR = 0xFFCC3518.toInt()
         const val CHANNEL_ID = "scan"
         const val DISPLAY_NAME = "pocketdeck-scan"
         const val READER_BUFFERS = 2

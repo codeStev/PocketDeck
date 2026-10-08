@@ -3,6 +3,7 @@ package dev.pocketdeck.adapter.capture
 import android.content.Context
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
@@ -54,25 +55,51 @@ class ScanOverlay(
         val density = context.resources.displayMetrics.density
 
         fun dp(value: Int) = (value * density).toInt()
-        status.setTextColor(Color.WHITE)
+        status.setTextColor(INK_ON_PILL)
         status.textSize = STATUS_TEXT_SP
+        status.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        val dot =
+            View(context).apply {
+                background =
+                    GradientDrawable().apply {
+                        shape = GradientDrawable.OVAL
+                        setColor(ACCENT_ON_PILL)
+                    }
+            }
         val stop =
             Button(context).apply {
                 text = context.getString(R.string.scan_stop)
                 isAllCaps = false
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                setTextColor(ON_ACCENT)
+                stateListAnimator = null
+                minHeight = 0
+                minimumHeight = 0
+                setPadding(dp(18), 0, dp(18), 0)
+                background =
+                    GradientDrawable().apply {
+                        setColor(ACCENT_ON_PILL)
+                        cornerRadius = dp(CORNER_DP).toFloat()
+                    }
                 setOnClickListener { onStop() }
             }
         return LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(14), dp(4), dp(6), dp(4))
+            setPadding(dp(16), dp(6), dp(6), dp(6))
             background =
                 GradientDrawable().apply {
                     setColor(PILL_COLOR)
                     cornerRadius = dp(CORNER_DP).toFloat()
                 }
+            addView(dot, LinearLayout.LayoutParams(dp(DOT_DP), dp(DOT_DP)).apply { marginEnd = dp(10) })
             addView(status)
-            addView(stop, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(BUTTON_HEIGHT_DP)))
+            addView(
+                stop,
+                LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(BUTTON_HEIGHT_DP)).apply {
+                    marginStart = dp(12)
+                },
+            )
             setOnTouchListener(dragListener())
         }
     }
@@ -131,9 +158,15 @@ class ScanOverlay(
 
     private companion object {
         const val STATUS_TEXT_SP = 13f
-        const val PILL_COLOR = 0xE6202833.toInt()
-        const val CORNER_DP = 24
-        const val BUTTON_HEIGHT_DP = 40
+
+        // The Signal brand's dark-theme values: the pill floats over a game, so it is always dark.
+        const val PILL_COLOR = 0xF2171B22.toInt()
+        const val INK_ON_PILL = 0xFFF1F4F9.toInt()
+        const val ACCENT_ON_PILL = 0xFFFF7455.toInt()
+        const val ON_ACCENT = 0xFF1A0B07.toInt()
+        const val DOT_DP = 10
+        const val CORNER_DP = 28
+        const val BUTTON_HEIGHT_DP = 36
         const val DRAG_SLOP_PX = 12
         const val INITIAL_X = 24
         const val INITIAL_Y = 140
