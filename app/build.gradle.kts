@@ -4,12 +4,14 @@ plugins {
     id("pocketdeck.android.application")
 }
 
-// SemVer from version.properties; versionCode is derived so that it always rises with the version:
+// SemVer from version.properties (the next release, e.g. 1.0.0). A build from develop passes -Ppocketdeck.rc=N and becomes
+// the release candidate 1.0.0-rc.N; without it the build is the release itself. versionCode is derived so that it always rises:
 // major*1_000_000 + minor*10_000 + patch*100 + (pre-release number, or 99 for a final release).
 // So 1.0.0-rc.1 < 1.0.0-rc.2 < 1.0.0, and a patch can ship up to 98 pre-releases.
 val semver = Regex("""(\d+)\.(\d+)\.(\d+)(?:-[A-Za-z]+\.(\d+))?""")
-val appVersion =
+val baseVersion =
     Properties().apply { rootProject.file("version.properties").inputStream().use(::load) }.getProperty("version")
+val appVersion = providers.gradleProperty("pocketdeck.rc").orNull?.let { "$baseVersion-rc.$it" } ?: baseVersion
 val versionParts =
     checkNotNull(
         semver.matchEntire(appVersion),

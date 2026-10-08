@@ -5,5 +5,5 @@ All notable changes, newest first. Format: [Keep a Changelog](https://keepachang
 
 ## [Unreleased]
 
-## [1.0.0-rc.1]
-First public release candidate.
+## [1.0.0]
+First public release.

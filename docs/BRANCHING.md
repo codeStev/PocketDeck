@@ -11,19 +11,23 @@
 A pull request into `develop` or `main` must pass the CI workflow (`./gradlew check` and a release build).
 
 ## Versions (SemVer 2.0.0)
-`MAJOR.MINOR.PATCH`, optionally `-rc.N` for release candidates (`1.0.0-rc.1`, `1.0.0-rc.2`, `1.0.0`).
+`MAJOR.MINOR.PATCH`; builds from `develop` are release candidates `MAJOR.MINOR.PATCH-rc.N`.
 - MAJOR: something the player must act on (a stored format that cannot be read any more, a removed feature).
 - MINOR: a new feature or visible improvement. PATCH: a fix only.
-- The version lives in `version.properties` only. `versionName` is that string; `versionCode` is derived
-  (`major*1,000,000 + minor*10,000 + patch*100 + N` for `-rc.N`, `+99` for a final release), so it always rises with the version.
-- Tags are `v<version>`, created by hand on `main`.
+- `version.properties` holds the **next release** (`1.0.0`), never an `-rc`. It is bumped once per release cycle, on the first change
+  that decides the size of the bump.
+- Every push to `develop` is a release candidate: the CI builds a signed `X.Y.Z-rc.N` APK (artifact, 30 days), N = commits on `develop`
+  since `main`, so each merged feature is a new candidate. Local builds without `-Ppocketdeck.rc=N` are the release version itself.
+- `versionCode` is derived (`major*1,000,000 + minor*10,000 + patch*100 + N` for `-rc.N`, `+99` for the final release), so
+  `1.0.0-rc.1 < 1.0.0-rc.2 < 1.0.0` and a candidate updates over the previous one.
+- Tags are `v<version>` (final versions only), created by hand on `main`.
 
 ## Releasing
-1. On `develop` (via a pull request from a `release/<version>` branch or a feature branch), set `version.properties` and move the
-   "Unreleased" part of `CHANGELOG.md` under the new version.
+1. Test the latest release candidate from `develop`. When it is good, move the
+   "Unreleased" part of `CHANGELOG.md` under the version (by pull request into `develop`).
 2. Open a pull request `develop` -> `main` and **merge it with a merge commit** (not squash, or the two branches diverge).
 3. Tag the merge commit on `main` by hand: `git tag -a v<version> -m "PocketDeck <version>" && git push origin v<version>`.
-4. On GitHub, create the release for that tag by hand (notes from `CHANGELOG.md`; tick "pre-release" for a `-rc.N` version) and publish it.
+4. On GitHub, create the release for that tag by hand (notes from `CHANGELOG.md`) and publish it.
 5. Publishing starts the release workflow: it checks that the tag matches `version.properties`, runs `./gradlew check`, signs the APK from
    the repository secrets and attaches the APK and its SHA-256 to the release.
 
