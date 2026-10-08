@@ -26,6 +26,7 @@ import dev.pocketdeck.adapter.recognition.CollectionGridDetector
 import dev.pocketdeck.adapter.recognition.DetectorGridLocator
 import dev.pocketdeck.adapter.recognition.DigitTemplates
 import dev.pocketdeck.adapter.recognition.GridCardRecognizer
+import dev.pocketdeck.adapter.ui.about.DiagnosticsLog
 import dev.pocketdeck.adapter.ui.chase.ChaseViewModel
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.AiAssistant
@@ -245,7 +246,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun scanDiagnostics(): ScanDiagnostics = LogScanDiagnostics()
+    fun scanDiagnostics(diagnostics: DiagnosticsLog): ScanDiagnostics = LogScanDiagnostics(diagnostics)
 
     @Provides
     fun finishCollectionScan(
@@ -286,7 +287,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun advisorDiagnostics(): AdvisorDiagnostics = LogAdvisorDiagnostics()
+    fun advisorDiagnostics(diagnostics: DiagnosticsLog): AdvisorDiagnostics = LogAdvisorDiagnostics(diagnostics)
+
+    @Provides
+    @Singleton
+    fun diagnosticsLog(): DiagnosticsLog = DiagnosticsLog()
 
     @Provides
     fun deckAdvisor(

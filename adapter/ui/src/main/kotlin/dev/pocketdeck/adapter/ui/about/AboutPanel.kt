@@ -12,27 +12,35 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.sp
+import dev.codestev.pocketdesign.components.PdBanner
+import dev.codestev.pocketdesign.components.PdBannerKind
 import dev.codestev.pocketdesign.components.PdButton
 import dev.codestev.pocketdesign.components.PdButtonStyle
 import dev.codestev.pocketdesign.components.PdCard
+import dev.codestev.pocketdesign.components.PdDialog
 import dev.codestev.pocketdesign.components.PdFullScreenPanel
 import dev.codestev.pocketdesign.components.PdSectionHeader
 import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
+import kotlinx.coroutines.launch
 
 /** What the app is, who it is not from, under which licence it is open, where its data comes from, and what it sends. */
 @Composable
 fun AboutPanel(
     versionName: String,
+    diagnostics: () -> String,
     onOpenAccessibilitySettings: () -> Unit,
     onShowWelcome: () -> Unit,
     onClose: () -> Unit,
@@ -79,6 +87,7 @@ fun AboutPanel(
                     style = PdButtonStyle.Secondary,
                 )
             }
+            Problems(diagnostics)
             PdButton(
                 stringResource(R.string.about_tour),
                 onShowWelcome,
@@ -86,6 +95,55 @@ fun AboutPanel(
                 style = PdButtonStyle.Tonal,
             )
         }
+    }
+}
+
+/** "Something not working?": the diagnostics go to the clipboard after saying what they hold, and the issue page opens. */
+@Composable
+private fun Problems(diagnostics: () -> String) {
+    val links = LocalUriHandler.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    var asking by rememberSaveable { mutableStateOf(false) }
+    var copied by rememberSaveable { mutableStateOf(false) }
+    if (asking) {
+        PdDialog(
+            title = stringResource(R.string.about_diagnostics_title),
+            onDismissRequest = { asking = false },
+            confirmText = stringResource(R.string.about_copy_diagnostics),
+            onConfirm = {
+                asking = false
+                copied = true
+                scope.launch {
+                    clipboard.setClipEntry(
+                        android.content.ClipData
+                            .newPlainText("PocketDeck diagnostics", diagnostics())
+                            .toClipEntry(),
+                    )
+                }
+            },
+            dismissText = stringResource(R.string.decks_cancel),
+        ) {
+            Text(
+                stringResource(R.string.about_diagnostics_text),
+                style = PocketDesign.typography.body,
+                color = PocketDesign.colors.ink,
+            )
+        }
+    }
+    Section(R.string.about_problems_title, R.string.about_problems_text) {
+        PdButton(
+            stringResource(R.string.about_copy_diagnostics),
+            { asking = true },
+            Modifier.fillMaxWidth(),
+            style = PdButtonStyle.Secondary,
+        )
+        PdButton(
+            stringResource(R.string.about_report_problem),
+            { links.openUri(Links.ISSUES) },
+            Modifier.fillMaxWidth(),
+        )
+        if (copied) PdBanner(stringResource(R.string.about_diagnostics_copied), kind = PdBannerKind.Success)
     }
 }
 

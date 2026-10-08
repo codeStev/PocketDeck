@@ -25,6 +25,7 @@ class AboutFilesTest {
     @Test
     fun `the links point at the repository the release notes name`() {
         Links.PRIVACY shouldBe "https://github.com/codeStev/PocketDeck/blob/main/PRIVACY.md"
+        Links.ISSUES shouldBe "https://github.com/codeStev/PocketDeck/issues"
         File(root, "README.md").readText().contains(Links.REPOSITORY) shouldBe true
     }
 }

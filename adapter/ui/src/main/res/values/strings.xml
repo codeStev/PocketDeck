@@ -348,4 +348,11 @@
     <string name="share_no_code">No import code: the game does not know every card of this deck.</string>
     <string name="share_footer">Made with PocketDeck, an unofficial fan tool</string>
     <string name="share_scan_hint">Scan in the game: Cards, Decks, Build New, Scan Code</string>
+    <string name="about_problems_title">Something not working?</string>
+    <string name="about_problems_text">Copy the diagnostics, then report the problem on GitHub and paste them in.</string>
+    <string name="about_copy_diagnostics">Copy diagnostics</string>
+    <string name="about_report_problem">Report a problem</string>
+    <string name="about_diagnostics_title">Copy diagnostics?</string>
+    <string name="about_diagnostics_text">This copies the app version, Android version, device model, screen size, language, the state of the auto-scroll service and the permissions, and the last lines the app wrote about scans and AI requests. It contains no API keys, no collection and no card names. Nothing is sent anywhere; you paste it yourself.</string>
+    <string name="about_diagnostics_copied">Copied. Paste it into your problem report.</string>
 </resources>

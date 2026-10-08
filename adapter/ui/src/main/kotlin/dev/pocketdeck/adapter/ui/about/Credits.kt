@@ -6,6 +6,7 @@ import dev.pocketdeck.adapter.ui.R
 internal object Links {
     const val REPOSITORY = "https://github.com/codeStev/PocketDeck"
     const val PRIVACY = "$REPOSITORY/blob/main/PRIVACY.md"
+    const val ISSUES = "$REPOSITORY/issues"
 }
 
 /**

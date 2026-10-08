@@ -236,7 +236,14 @@ class ScreensTest {
                     }, { Outcome.Failure(ImportFailure.NotACollectionFile) }, {})
                 }
             val actions = SettingsActions({ _, _ -> }, { _, _ -> }, { _, _ -> }, {}, {}, { _, _ -> }, {}, {})
-            PocketDeckTheme { SettingsContent(SettingsUiState(), files, AboutActions("1.0.0", {}, {}), actions) }
+            PocketDeckTheme {
+                SettingsContent(
+                    SettingsUiState(),
+                    files,
+                    AboutActions("1.0.0", { "" }, {}, {}),
+                    actions,
+                )
+            }
         }
 
     @Test

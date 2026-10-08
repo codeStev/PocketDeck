@@ -348,4 +348,11 @@
     <string name="share_no_code">Kein Import-Code: Das Spiel kennt nicht alle Karten dieses Decks.</string>
     <string name="share_footer">Erstellt mit PocketDeck, einem inoffiziellen Fan-Werkzeug</string>
     <string name="share_scan_hint">Im Spiel scannen: Karten, Decks, Neu erstellen, Code scannen</string>
+    <string name="about_problems_title">Etwas funktioniert nicht?</string>
+    <string name="about_problems_text">Kopiere die Diagnose, melde das Problem dann auf GitHub und füge sie dort ein.</string>
+    <string name="about_copy_diagnostics">Diagnose kopieren</string>
+    <string name="about_report_problem">Problem melden</string>
+    <string name="about_diagnostics_title">Diagnose kopieren?</string>
+    <string name="about_diagnostics_text">Kopiert werden die App-Version, die Android-Version, das Gerätemodell, die Bildschirmgröße, die Sprache, der Zustand des automatischen Scrollens und der Berechtigungen sowie die letzten Zeilen, die die App zu Scans und KI-Anfragen geschrieben hat. Sie enthält keine API-Schlüssel, keine Sammlung und keine Kartennamen. Es wird nichts gesendet; du fügst sie selbst ein.</string>
+    <string name="about_diagnostics_copied">Kopiert. Füge sie in deine Problemmeldung ein.</string>
 </resources>

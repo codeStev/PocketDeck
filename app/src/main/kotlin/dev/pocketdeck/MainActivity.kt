@@ -26,6 +26,9 @@ import dev.pocketdeck.adapter.capture.RequestScreenCapture
 import dev.pocketdeck.adapter.capture.ScanCapture
 import dev.pocketdeck.adapter.ui.AppTab
 import dev.pocketdeck.adapter.ui.PocketDeckApp
+import dev.pocketdeck.adapter.ui.about.DeviceInfo
+import dev.pocketdeck.adapter.ui.about.DiagnosticsLog
+import dev.pocketdeck.adapter.ui.about.DiagnosticsReport
 import dev.pocketdeck.adapter.ui.chase.ChaseViewModel
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
@@ -38,6 +41,7 @@ import dev.pocketdeck.adapter.ui.theme.PocketDeckTheme
 import dev.pocketdeck.adapter.ui.welcome.WelcomeFlow
 import dev.pocketdeck.adapter.ui.welcome.WelcomeViewModel
 import dev.pocketdeck.domain.card.Language
+import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -62,6 +66,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var profilesViewModelFactory: ProfilesViewModel.Factory
+
+    @Inject
+    lateinit var diagnosticsLog: DiagnosticsLog
 
     @Inject
     lateinit var filesViewModelFactory: CollectionFilesViewModel.Factory
@@ -151,6 +158,7 @@ class MainActivity : ComponentActivity() {
                     about =
                         AboutActions(
                             versionName = versionName(),
+                            diagnostics = ::diagnostics,
                             onOpenAccessibilitySettings = { startActivity(AutoScroll.settingsIntent()) },
                             onShowWelcome = { tourRequested = true },
                         ),
@@ -194,6 +202,25 @@ class MainActivity : ComponentActivity() {
             reviewIsComplete = intent.getBooleanExtra(ScanCapture.EXTRA_COMPLETE, false)
             reviewRequests++
         }
+    }
+
+    /** What a player pastes into a problem report: the phone's facts and the app's last notes, never keys or cards. */
+    private fun diagnostics(): String {
+        val metrics = resources.displayMetrics
+        val info =
+            DeviceInfo(
+                appVersion = "${versionName()} (${packageManager.getPackageInfo(packageName, 0).longVersionCode})",
+                android = "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
+                device = "${Build.MANUFACTURER} ${Build.MODEL}",
+                screen =
+                    "${metrics.widthPixels}x${metrics.heightPixels} px, ${metrics.densityDpi} dpi, " +
+                        "font scale ${resources.configuration.fontScale}",
+                language = Locale.getDefault().toLanguageTag(),
+                autoScroll = "switched on: ${AutoScroll.isSwitchedOn(this)}, connected: ${AutoScroll.isConnected()}",
+                permissions =
+                    "overlay ${OverlayPermission.isGranted(this)}, notifications ${!needsNotificationPermission()}",
+            )
+        return DiagnosticsReport.format(info, diagnosticsLog.lines())
     }
 
     private fun versionName(): String = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()

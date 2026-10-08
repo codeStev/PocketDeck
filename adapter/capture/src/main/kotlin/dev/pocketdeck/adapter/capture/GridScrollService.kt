@@ -111,9 +111,13 @@ object AutoScroll {
      * after the app is updated the service can stay listed as on without being bound until it is toggled off and on,
      * and every swipe then fails with "auto-scroll is off" although the switch looks on.
      */
-    fun isEnabled(context: Context): Boolean = isSwitchedOn(context) && GridScrollService.instance != null
+    fun isEnabled(context: Context): Boolean = isSwitchedOn(context) && isConnected()
 
-    private fun isSwitchedOn(context: Context): Boolean {
+    /** Whether Android has bound the service, which is what swiping needs. */
+    fun isConnected(): Boolean = GridScrollService.instance != null
+
+    /** Whether the player has switched the service on in the system settings (it may still not be connected). */
+    fun isSwitchedOn(context: Context): Boolean {
         val enabled = Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
         val ours = ComponentName(context, GridScrollService::class.java).flattenToString()
         return enabled?.split(':')?.any { it.equals(ours, ignoreCase = true) } == true

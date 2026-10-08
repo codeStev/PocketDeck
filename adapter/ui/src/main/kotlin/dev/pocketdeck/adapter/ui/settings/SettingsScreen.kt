@@ -85,7 +85,10 @@ internal fun SettingsContent(
     state.modelPicker?.let { ModelPickerDialog(it, state.form, actions) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
     if (showAbout) {
-        AboutPanel(about.versionName, about.onOpenAccessibilitySettings, about.onShowWelcome) { showAbout = false }
+        AboutPanel(about.versionName, about.diagnostics, about.onOpenAccessibilitySettings, about.onShowWelcome) {
+            showAbout =
+                false
+        }
     }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PdSpacing.space4),
@@ -112,6 +115,8 @@ internal fun SettingsContent(
 /** What the About panel needs from the app around it. */
 class AboutActions(
     val versionName: String,
+    /** The text of the diagnostics a player can copy; built when they ask, from the app's own state. */
+    val diagnostics: () -> String,
     val onOpenAccessibilitySettings: () -> Unit,
     val onShowWelcome: () -> Unit,
 )
