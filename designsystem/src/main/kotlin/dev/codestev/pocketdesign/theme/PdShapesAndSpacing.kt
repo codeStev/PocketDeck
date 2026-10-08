@@ -35,5 +35,14 @@ object PdSpacing {
 object PdMotion {
     const val PRESS_MILLIS = 120
     const val STATE_MILLIS = 200
+
+    /** Something appears (a dialog, a bar filling): a little slower than a state change so the eye can follow it. */
+    const val ENTER_MILLIS = 240
+
+    /** One screen replaces another. */
+    const val SCREEN_MILLIS = 160
     const val PRESSED_SCALE = 0.97f
+
+    /** How small a dialog is when it starts to grow in. */
+    const val ENTER_SCALE = 0.94f
 }

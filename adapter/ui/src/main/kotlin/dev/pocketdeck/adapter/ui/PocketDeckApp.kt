@@ -1,5 +1,7 @@
 package dev.pocketdeck.adapter.ui
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -15,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.codestev.pocketdesign.components.PdFloatingNav
 import dev.codestev.pocketdesign.components.PdNavTab
 import dev.codestev.pocketdesign.icons.PdIcons
+import dev.codestev.pocketdesign.theme.PdMotion
 import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.chase.ChaseViewModel
 import dev.pocketdeck.adapter.ui.collection.CollectionScreen
@@ -54,27 +57,29 @@ fun PocketDeckApp(
         bottomBar = { FloatingTabs(selectedTab, onTabSelected) },
     ) { padding ->
         Box(Modifier.padding(padding)) {
-            when (selectedTab) {
-                AppTab.COLLECTION -> {
-                    CollectionScreen(collectionViewModel) { onTabSelected(AppTab.SCAN) }
-                }
+            Crossfade(selectedTab, animationSpec = tween(PdMotion.SCREEN_MILLIS), label = "tab") { tab ->
+                when (tab) {
+                    AppTab.COLLECTION -> {
+                        CollectionScreen(collectionViewModel) { onTabSelected(AppTab.SCAN) }
+                    }
 
-                AppTab.DECKS -> {
-                    DecksScreen(decksViewModel, chaseViewModel) { onTabSelected(AppTab.SETTINGS) }
-                }
+                    AppTab.DECKS -> {
+                        DecksScreen(decksViewModel, chaseViewModel) { onTabSelected(AppTab.SETTINGS) }
+                    }
 
-                AppTab.SCAN -> {
-                    ScanTab(
-                        scanViewModel,
-                        profilesViewModel,
-                        autoScrollEnabled,
-                        onOpenAccessibilitySettings,
-                        onStartScan,
-                    )
-                }
+                    AppTab.SCAN -> {
+                        ScanTab(
+                            scanViewModel,
+                            profilesViewModel,
+                            autoScrollEnabled,
+                            onOpenAccessibilitySettings,
+                            onStartScan,
+                        )
+                    }
 
-                AppTab.SETTINGS -> {
-                    SettingsScreen(settingsViewModel, filesViewModel, about)
+                    AppTab.SETTINGS -> {
+                        SettingsScreen(settingsViewModel, filesViewModel, about)
+                    }
                 }
             }
         }

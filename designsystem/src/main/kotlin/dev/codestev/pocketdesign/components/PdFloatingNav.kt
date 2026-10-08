@@ -1,5 +1,7 @@
 package dev.codestev.pocketdesign.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -19,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.codestev.pocketdesign.theme.PdMotion
 import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PocketDesign
 
@@ -71,6 +75,21 @@ private fun NavTab(
 ) {
     val colors = PocketDesign.colors
     val shape = PocketDesign.shapes.pill
+    val glyphColor by animateColorAsState(
+        if (selected) tab.color else Color.Transparent,
+        tween(PdMotion.STATE_MILLIS),
+        label = "navGlyph",
+    )
+    val iconTint by animateColorAsState(
+        if (selected) colors.surfaceCard else tab.color,
+        tween(PdMotion.STATE_MILLIS),
+        label = "navIcon",
+    )
+    val labelColor by animateColorAsState(
+        if (selected) colors.ink else colors.inkMuted,
+        tween(PdMotion.STATE_MILLIS),
+        label = "navLabel",
+    )
     Column(
         modifier =
             Modifier
@@ -81,21 +100,21 @@ private fun NavTab(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Box(
-            Modifier.size(GlyphWidth, GlyphHeight).background(if (selected) tab.color else Color.Transparent, shape),
+            Modifier.size(GlyphWidth, GlyphHeight).background(glyphColor, shape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 tab.icon,
                 contentDescription = null,
                 modifier = Modifier.size(IconSize),
-                tint = if (selected) colors.surfaceCard else tab.color,
+                tint = iconTint,
             )
         }
         PdCapFontScale {
             Text(
                 tab.label,
                 style = PocketDesign.typography.titleSm.copy(fontSize = 11.sp, lineHeight = 14.sp),
-                color = if (selected) colors.ink else colors.inkMuted,
+                color = labelColor,
                 maxLines = 1,
             )
         }

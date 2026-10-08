@@ -1,5 +1,7 @@
 package dev.codestev.pocketdesign.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -11,12 +13,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.codestev.pocketdesign.icons.PdIcons
+import dev.codestev.pocketdesign.theme.PdMotion
 import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PocketDesign
 
@@ -38,15 +43,18 @@ fun PdFilterChip(
 ) {
     val colors = PocketDesign.colors
     val shape = PocketDesign.shapes.pill
-    val content = if (selected) colors.onAccent else colors.ink
+    val spec = tween<Color>(PdMotion.STATE_MILLIS)
+    val content by animateColorAsState(if (selected) colors.onAccent else colors.ink, spec, label = "chipContent")
+    val fill by animateColorAsState(if (selected) colors.accent else colors.surfaceCard, spec, label = "chipFill")
+    val outline by animateColorAsState(if (selected) colors.accent else colors.lineStrong, spec, label = "chipOutline")
     Box(modifier.heightIn(min = PdSpacing.minTouchTarget), contentAlignment = Alignment.Center) {
         Row(
             modifier =
                 Modifier
                     .heightIn(min = ChipHeight)
                     .pdSelectable(shape, selected, { onSelectedChange(!selected) }, Role.Checkbox)
-                    .background(if (selected) colors.accent else colors.surfaceCard, shape)
-                    .border(BorderWidth, if (selected) colors.accent else colors.lineStrong, shape)
+                    .background(fill, shape)
+                    .border(BorderWidth, outline, shape)
                     .padding(horizontal = PdSpacing.space4),
             horizontalArrangement = Arrangement.spacedBy(PdSpacing.space2),
             verticalAlignment = Alignment.CenterVertically,

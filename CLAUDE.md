@@ -252,6 +252,10 @@ New way of driving the app => new driving adapter calling inbound ports.
 - Light is the default theme, dark is designed. `PdColorContrastTest` fails the build if any text pair drops below 4.5:1 or
   any graphic below 3:1 in either theme.
 - Fonts Fredoka and Nunito are bundled (variable TTF, SIL OFL, `designsystem/licenses/`), so it works offline.
+- Motion (`PdMotion`: press 120 ms, state 200 ms, enter 240 ms, screen 160 ms): nav tab colours, filter chips and switches animate their state, the stepper
+  number slides the way it counts, meters grow in, dialogs scale in and full-screen panels slide up (entrance only: the platform closes a dialog window at once),
+  tabs cross-fade, collection tiles move when a filter or sort changes, banners push content smoothly. All of it uses Compose animations, which follow the
+  system's animation scale (checked at 10x on an emulator), so "Remove animations" gives instant changes. `PdSpinner` is frame-clock driven and ignores the scale.
 - The catalog (`CatalogActivity`, debug builds only) shows every token and component in light and dark:
   `adb shell am start -n io.github.codestev.pocketdeck/dev.codestev.pocketdesign.catalog.CatalogActivity`. Add every new component to it.
 - Migrated to the library: shell (floating nav, account top bar), Decks, Collection, Scan, Chase, Builder, Settings and their

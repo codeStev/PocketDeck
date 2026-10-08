@@ -1,5 +1,6 @@
 package dev.pocketdeck.adapter.ui.collection
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -83,7 +84,7 @@ internal fun CollectionContent(
     // Kept by id, so the dialog shows the live number of copies while the player changes them.
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
     state.items.firstOrNull { it.id.value == openId }?.let { CardDialog(it, onAdjust) { openId = null } }
-    Column(Modifier.fillMaxSize().padding(horizontal = PdSpacing.space4)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = PdSpacing.space4).animateContentSize()) {
         Title(state.sync, onSync)
         Filters(state, queryText, onQueryChange, onFilterChange)
         SyncBanner(state.sync, onSync)
@@ -235,7 +236,7 @@ private fun CardGrid(
         verticalArrangement = Arrangement.spacedBy(PdSpacing.space4),
         modifier = Modifier.fillMaxSize(),
     ) {
-        items(items, key = { it.id.value }) { item -> CardTile(item) { onOpen(item) } }
+        items(items, key = { it.id.value }) { item -> CardTile(item, Modifier.animateItem()) { onOpen(item) } }
     }
 }
 
@@ -243,9 +244,10 @@ private fun CardGrid(
 @Composable
 private fun CardTile(
     item: CardItem,
+    modifier: Modifier = Modifier,
     onOpen: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(PdSpacing.space1)) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(PdSpacing.space1)) {
         PdArtTile(
             tint = PocketDesign.colors.tint(item.detail.tintKey()),
             contentDescription = tileDescription(item),
