@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -70,9 +71,12 @@ internal fun CollectionContent(
     onAdjust: (CardId, Int) -> Unit,
     onSync: () -> Unit,
 ) {
+    // The app's own Scaffold already clears the status bar and the account row, so this one must not add it again.
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0),
                 title = { Text(stringResource(R.string.collection_title)) },
                 actions = {
                     TextButton(onClick = onSync, enabled = state.sync != SyncState.Syncing) {
@@ -223,7 +227,7 @@ private fun CardTile(
             }
             Text(item.name, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
-                item.detail,
+                detailText(item.detail),
                 style = MaterialTheme.typography.labelSmall,
                 minLines = DETAIL_LINES,
                 maxLines = DETAIL_LINES,

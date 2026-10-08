@@ -8,6 +8,7 @@ import dev.pocketdeck.domain.card.EnergyType
 import dev.pocketdeck.domain.card.Language
 import dev.pocketdeck.domain.card.PokemonCard
 import dev.pocketdeck.domain.card.Stage
+import dev.pocketdeck.domain.card.TrainerKind
 import dev.pocketdeck.domain.charizardEx
 import dev.pocketdeck.domain.charmander
 import dev.pocketdeck.domain.collection.CardCollection
@@ -90,10 +91,10 @@ class CollectionListingTest {
     fun `describes pokemon by type stage and hp and trainers by kind`() {
         val items = build().items.associateBy { it.name }
 
-        items.getValue("Charmander").detail shouldBe "Fire · Basic · 60 HP"
-        items.getValue("Charizard ex").detail shouldBe "Fire · Stage 2 · 90 HP"
-        items.getValue("Poké Ball").detail shouldBe "Item"
-        items.getValue("Professor's Research").detail shouldBe "Supporter"
+        items.getValue("Charmander").detail shouldBe CardDetail.OfPokemon(EnergyType.FIRE, Stage.BASIC, 60)
+        items.getValue("Charizard ex").detail shouldBe CardDetail.OfPokemon(EnergyType.FIRE, Stage.STAGE_2, 90)
+        items.getValue("Poké Ball").detail shouldBe CardDetail.OfTrainer(TrainerKind.ITEM)
+        items.getValue("Professor's Research").detail shouldBe CardDetail.OfTrainer(TrainerKind.SUPPORTER)
     }
 
     @Test
@@ -109,7 +110,7 @@ class CollectionListingTest {
                 Language.ENGLISH,
             )
 
-        listing.items.single().detail shouldBe "Water · Basic · 60 HP"
+        listing.items.single().detail shouldBe CardDetail.OfPokemon(EnergyType.WATER, Stage.BASIC, 60)
     }
 
     private val glurak =

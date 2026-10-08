@@ -2,14 +2,10 @@ package dev.pocketdeck.adapter.ui.collection
 
 import dev.pocketdeck.domain.card.Card
 import dev.pocketdeck.domain.card.CardCatalog
-import dev.pocketdeck.domain.card.EnergyType
 import dev.pocketdeck.domain.card.Language
 import dev.pocketdeck.domain.card.PokemonCard
-import dev.pocketdeck.domain.card.Stage
 import dev.pocketdeck.domain.card.TrainerCard
-import dev.pocketdeck.domain.card.TrainerKind
 import dev.pocketdeck.domain.collection.CardCollection
-import java.util.Locale
 
 /** The filtered, display-ready view of the catalog joined with what the player owns. */
 data class CollectionListing(
@@ -58,23 +54,10 @@ data class CollectionListing(
             copies = copies,
         )
 
-        private fun Card.detail(): String =
+        private fun Card.detail(): CardDetail =
             when (this) {
-                is PokemonCard -> "${energyType.label()} · ${stage.label()} · $hp HP"
-                is TrainerCard -> kind.label()
+                is PokemonCard -> CardDetail.OfPokemon(energyType, stage, hp)
+                is TrainerCard -> CardDetail.OfTrainer(kind)
             }
-
-        private fun EnergyType.label() = name.titleCase()
-
-        private fun TrainerKind.label() = name.titleCase()
-
-        private fun Stage.label() =
-            when (this) {
-                Stage.BASIC -> "Basic"
-                Stage.STAGE_1 -> "Stage 1"
-                Stage.STAGE_2 -> "Stage 2"
-            }
-
-        private fun String.titleCase() = lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
     }
 }
