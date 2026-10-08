@@ -35,15 +35,19 @@ for the developer's own phone.
 
 ## Blockers to settle before any public release
 1. **Data licences.** The card database is built by `tools/master_dataset` from:
-   - `chase-manning/pokemon-tcg-pocket-cards` (gameplay data: attacks, HP, effects): **no licence**; all rights are reserved
-     by default. Get permission or rebuild the data from permissively licensed sources (TCGdex also has the TCG Pocket
-     cards' attacks, HP and effects).
+   - `PocketDecks/pokemon-tcg-pocket-cards` (formerly `chase-manning/...`), `data/v5` (gameplay data: attacks, HP, effects):
+     **AGPL-3.0-or-later** (checked 2026-10-08; its older v1-v4 data is MIT). Bundling it makes the app a work distributed under
+     AGPL-3.0-or-later, so PocketDeck is released under that licence with its source public (`LICENSE`, `NOTICE.md`; link the
+     source in the About screen). The data itself is scraped from Limitless TCG: the repository calls it facts, but read
+     Limitless's terms once (see 4). The licence covers the data, not the card art or names (see 2).
    - `flibustier/pokemon-tcg-pocket-database` (MIT), `tcgdex/cards-database` (MIT), PokeAPI (BSD-3-Clause): attribution
      needed (`NOTICE.md`).
-   - `PocketDecks/pokemon-tcg-pocket-cards` is AGPL-3.0; the app only links to artwork it hosts. Hot-linking someone's
-     bandwidth is not a good idea for a public app.
+   - TCGdex also lists TCG Pocket cards (2,480 of our 4,317, not the newest 9 sets) and could replace the AGPL data for those
+     sets; not needed while the app is AGPL. Six TCGdex values are wrong (a1-055, a1-071, b2a-081, b2a-125, b2a-130, pa-022).
+   - The card and pack artwork that repository hosts is "for reference" and belongs to the game's owners.
 2. **Card images and names.** Card art, names and logos belong to The Pokémon Company, Nintendo, Creatures and GAME FREAK.
-   Do not use "Pokémon" or the game's name as if licensed (app name, icon, store text); say that the app is unofficial.
+   Naming the game the app works with in a description is common practice (other companion apps do), but it is not a licence:
+   keep the name from reading as official, use no logos or Poké Ball marks, and say that the app is unofficial.
 3. **The game's terms.** The game forbids scripts and bots that modify the application (Article 17(viii)). Auto-scroll
    performs swipes in the game; the consent dialog says so. Public distribution makes this more visible.
 4. **Limitless API.** The tournament data comes from the public Limitless API; check their terms for apps.

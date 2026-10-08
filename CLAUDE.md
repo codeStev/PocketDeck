@@ -52,6 +52,11 @@ New way of driving the app => new driving adapter calling inbound ports.
   `./gradlew :adapter:persistence:assembleDebugAndroidTest`, then
   `adb install -r -t adapter/persistence/build/outputs/apk/androidTest/debug/persistence-debug-androidTest.apk` and
   `adb shell am instrument -w dev.pocketdeck.adapter.persistence.test/androidx.test.runner.AndroidJUnitRunner`.
+- Emulators (AVDs `pd_small`, `pd_large`, `pd_tablet`, `pd_fold`, API 36 Google Play image) start headless with
+  `$ANDROID_HOME/emulator/emulator -avd pd_large -no-window -no-audio -gpu swiftshader_indirect -port 5554`. With the phone and an
+  emulator connected, every `adb` call needs `-s <serial>` (`emulator-5554`; the phone is the `192.168.2.96:<port>` one), or it
+  hits the wrong device. The game itself does not render on these emulators (Unity graphics init fails with the software GPU, draws
+  garbage with `-gpu host`), so scan frames cannot be recorded there.
 - Never send `adb shell input` events unless the same command first checks that `dev.pocketdeck` has window focus.
 
 ## Data tools (Python, `tools/*`; stdlib + numpy + Pillow; each has `python3 -m unittest discover -s tests -t .`)
