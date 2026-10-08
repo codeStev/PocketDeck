@@ -33,6 +33,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pocketdeck.adapter.ui.R
+import dev.pocketdeck.adapter.ui.chase.ChaseDialog
+import dev.pocketdeck.adapter.ui.chase.ChaseViewModel
 import dev.pocketdeck.domain.deck.SuggestionOrigin
 
 /** What the player can do on the decks screen. */
@@ -45,6 +47,8 @@ internal class DecksActions(
     val onBuild: (String?) -> Unit,
     val onAskAi: (String?) -> Unit,
     val onOpenSettings: () -> Unit,
+    val onOpenChase: () -> Unit,
+    val onShowOpening: (Int) -> Unit,
     val onSave: (String) -> Unit,
     val onRenameSaved: (DeckItem) -> Unit,
     val onDeleteSaved: (DeckItem) -> Unit,
@@ -56,9 +60,12 @@ internal class DecksActions(
 @Composable
 fun DecksScreen(
     viewModel: DecksViewModel,
+    chaseViewModel: ChaseViewModel,
     onOpenSettings: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var chasing by rememberSaveable { mutableStateOf(false) }
+    if (chasing) ChaseDialog(chaseViewModel) { chasing = false }
     DecksContent(
         state,
         DecksActions(
@@ -70,11 +77,13 @@ fun DecksScreen(
             onBuild = viewModel::onBuild,
             onAskAi = viewModel::onAskAi,
             onSave = viewModel::onSave,
+            onShowOpening = viewModel::onShowOpening,
             onRenameSaved = viewModel::onRenameSavedRequested,
             onDeleteSaved = viewModel::onDeleteSavedRequested,
             onRenamed = viewModel::onSavedRenamed,
             onDeleteConfirmed = viewModel::onSavedDeleteConfirmed,
             onSavedDialogDismissed = viewModel::onSavedDialogDismissed,
+            onOpenChase = { chasing = true },
             onOpenSettings = {
                 viewModel.onCloseBuilder()
                 onOpenSettings()
@@ -102,14 +111,22 @@ internal fun DecksContent(
                 )
             }
         }
+        ActionBar(kind, state, actions)
         val items = if (kind == DeckKind.SAVED) state.saved else state.items.ofKind(kind)
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { Header(kind, state, items.isEmpty(), actions) }
-            items(items, key = { it.key }) { item -> DeckCard(item, kind, actions) }
+            item { Header(kind, state, items.isEmpty()) }
+            items(items, key = { it.key }) { item ->
+                DeckCard(
+                    item,
+                    kind,
+                    DeckCardState(state.openings[item.deckId], item.deckId in state.savedDeckIds),
+                    actions,
+                )
+            }
         }
     }
 }
@@ -126,12 +143,11 @@ private fun Header(
     kind: DeckKind,
     state: DecksUiState,
     empty: Boolean,
-    actions: DecksActions,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (kind) {
-            DeckKind.TOURNAMENT -> TournamentHeader(state, empty, actions)
-            DeckKind.GENERATED -> GeneratedHeader(state, empty, actions)
+            DeckKind.TOURNAMENT -> TournamentHeader(state, empty)
+            DeckKind.GENERATED -> GeneratedHeader(state, empty)
             DeckKind.SAVED -> SavedHeader(empty)
         }
         state.notice?.takeIf { DeckKind.of(it) == kind }?.let {
@@ -140,17 +156,61 @@ private fun Header(
     }
 }
 
+/** The actions of a tab stay in view while its list scrolls. */
+@Composable
+private fun ActionBar(
+    kind: DeckKind,
+    state: DecksUiState,
+    actions: DecksActions,
+) {
+    when (kind) {
+        DeckKind.TOURNAMENT -> {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedButton(
+                    onClick = actions.onRefresh,
+                    enabled = !state.refreshing,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(stringResource(if (state.refreshing) R.string.decks_refreshing else R.string.decks_refresh))
+                }
+                OutlinedButton(onClick = actions.onOpenChase, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.chase_open))
+                }
+            }
+        }
+
+        DeckKind.GENERATED -> {
+            Button(
+                onClick = actions.onOpenBuilder,
+                enabled = !(state.building || state.asking),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                val label =
+                    when {
+                        state.asking -> R.string.decks_asking
+                        state.building -> R.string.decks_building
+                        else -> R.string.decks_build
+                    }
+                Text(stringResource(label))
+            }
+        }
+
+        DeckKind.SAVED -> {
+            // Kept decks only have per-deck actions.
+        }
+    }
+}
+
 @Composable
 private fun TournamentHeader(
     state: DecksUiState,
     empty: Boolean,
-    actions: DecksActions,
 ) {
     Text(stringResource(R.string.decks_intro_tournament), style = MaterialTheme.typography.bodyMedium)
-    if (empty && !state.refreshing) Text(stringResource(R.string.decks_empty_tournament))
-    OutlinedButton(onClick = actions.onRefresh, enabled = !state.refreshing, modifier = Modifier.fillMaxWidth()) {
-        Text(stringResource(if (state.refreshing) R.string.decks_refreshing else R.string.decks_refresh))
-    }
+    if (empty && state.loaded && !state.refreshing) Text(stringResource(R.string.decks_empty_tournament))
 }
 
 @Composable
@@ -163,23 +223,9 @@ private fun SavedHeader(empty: Boolean) {
 private fun GeneratedHeader(
     state: DecksUiState,
     empty: Boolean,
-    actions: DecksActions,
 ) {
     Text(stringResource(R.string.decks_intro_generated), style = MaterialTheme.typography.bodyMedium)
-    if (empty && !state.building && !state.asking) Text(stringResource(R.string.decks_empty_generated))
-    Button(
-        onClick = actions.onOpenBuilder,
-        enabled = !(state.building || state.asking),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        val label =
-            when {
-                state.asking -> R.string.decks_asking
-                state.building -> R.string.decks_building
-                else -> R.string.decks_build
-            }
-        Text(stringResource(label))
-    }
+    if (empty && state.loaded && !state.building && !state.asking) Text(stringResource(R.string.decks_empty_generated))
 }
 
 @Composable
@@ -202,13 +248,21 @@ private fun noticeText(
     }
 }
 
+/** What a deck card shows besides its deck: the opening odds, if asked for, and whether the deck is already kept. */
+private class DeckCardState(
+    val opening: OpeningState?,
+    val kept: Boolean,
+)
+
 @Composable
 private fun DeckCard(
     item: DeckItem,
     kind: DeckKind,
+    card: DeckCardState,
     actions: DecksActions,
 ) {
     var expanded by rememberSaveable(item.key) { mutableStateOf(false) }
+    var showOdds by rememberSaveable(item.deckId) { mutableStateOf(false) }
     Card(
         Modifier.fillMaxWidth().clickable { expanded = !expanded },
         colors = CardDefaults.cardColors(containerColor = containerColor(item.origin)),
@@ -222,9 +276,9 @@ private fun DeckCard(
                 }
             Text(title, style = MaterialTheme.typography.titleMedium)
             Text(originText(item.origin), style = MaterialTheme.typography.labelMedium)
-            item.rationale?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-            LinearProgressIndicator(progress = { item.ownedPercent / PERCENT_FULL }, modifier = Modifier.fillMaxWidth())
+            BuildStatus(item)
             Text(stringResource(R.string.decks_owned, item.ownedPercent))
+            LinearProgressIndicator(progress = { item.ownedPercent / PERCENT_FULL }, modifier = Modifier.fillMaxWidth())
             if (item.substitutes.isNotEmpty()) {
                 Text(
                     pluralStringResource(R.plurals.decks_substituted, item.substituteCopies, item.substituteCopies),
@@ -232,34 +286,63 @@ private fun DeckCard(
                 )
                 item.substitutes.forEach { SubstituteText(it) }
             }
-            if (item.missingCopies == 0) {
-                Text(stringResource(R.string.decks_buildable), color = MaterialTheme.colorScheme.primary)
-            } else {
-                Text(
-                    pluralStringResource(R.plurals.decks_missing, item.missingCopies, item.missingCopies),
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
+            item.rationale?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            Text(
+                stringResource(if (expanded) R.string.decks_tap_collapse else R.string.decks_tap_expand),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             if (expanded) item.cards.forEach { CardLine(it) }
             val showCode =
                 if (item.substitutes.isEmpty()) R.string.decks_code_show else R.string.decks_code_show_substituted
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { actions.onShowCode(item.key) }) { Text(stringResource(showCode)) }
+            Button(onClick = { actions.onShowCode(item.key) }, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(showCode))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OpeningOddsButton(
+                    expanded = showOdds,
+                    onToggle = {
+                        showOdds = !showOdds
+                        if (showOdds) actions.onShowOpening(item.deckId)
+                    },
+                    modifier = Modifier.weight(1f),
+                )
                 if (kind != DeckKind.SAVED) {
-                    OutlinedButton(onClick = { actions.onSave(item.key) }) { Text(stringResource(R.string.decks_save)) }
+                    CardOutlinedButton({ actions.onSave(item.key) }, Modifier.weight(1f), enabled = !card.kept) {
+                        Text(stringResource(if (card.kept) R.string.decks_saved_done else R.string.decks_save))
+                    }
                 }
             }
+            if (showOdds) OpeningOddsContent(card.opening)
             if (kind == DeckKind.SAVED) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        onClick = { actions.onRenameSaved(item) },
-                    ) { Text(stringResource(R.string.decks_rename)) }
-                    OutlinedButton(
-                        onClick = { actions.onDeleteSaved(item) },
-                    ) { Text(stringResource(R.string.decks_delete)) }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    CardOutlinedButton({ actions.onRenameSaved(item) }, Modifier.weight(1f)) {
+                        Text(stringResource(R.string.decks_rename))
+                    }
+                    CardOutlinedButton({ actions.onDeleteSaved(item) }, Modifier.weight(1f)) {
+                        Text(stringResource(R.string.decks_delete))
+                    }
                 }
             }
         }
+    }
+}
+
+/** The answer the player looks for first: can I build this deck, or what is missing. */
+@Composable
+private fun BuildStatus(item: DeckItem) {
+    if (item.missingCopies == 0) {
+        Text(
+            stringResource(R.string.decks_buildable),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+    } else {
+        Text(
+            pluralStringResource(R.plurals.decks_missing, item.missingCopies, item.missingCopies),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.error,
+        )
     }
 }
 

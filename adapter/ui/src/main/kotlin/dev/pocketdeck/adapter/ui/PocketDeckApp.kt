@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.pocketdeck.adapter.ui.chase.ChaseViewModel
 import dev.pocketdeck.adapter.ui.collection.CollectionScreen
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.DecksScreen
@@ -29,6 +30,7 @@ enum class AppTab { COLLECTION, DECKS, SCAN, SETTINGS }
 fun PocketDeckApp(
     collectionViewModel: CollectionViewModel,
     decksViewModel: DecksViewModel,
+    chaseViewModel: ChaseViewModel,
     scanViewModel: ScanViewModel,
     settingsViewModel: SettingsViewModel,
     profilesViewModel: ProfilesViewModel,
@@ -76,7 +78,7 @@ fun PocketDeckApp(
                 }
 
                 AppTab.DECKS -> {
-                    DecksScreen(decksViewModel) { onTabSelected(AppTab.SETTINGS) }
+                    DecksScreen(decksViewModel, chaseViewModel) { onTabSelected(AppTab.SETTINGS) }
                 }
 
                 AppTab.SCAN -> {

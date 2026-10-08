@@ -4,6 +4,7 @@ import dev.pocketdeck.application.savedeck.KeptDeck
 import dev.pocketdeck.domain.card.EffectTag
 import dev.pocketdeck.domain.card.GameplayKey
 import dev.pocketdeck.domain.card.Language
+import dev.pocketdeck.domain.deck.Deck
 import dev.pocketdeck.domain.deck.DeckSuggestion
 import dev.pocketdeck.domain.deck.SuggestionOrigin
 
@@ -38,6 +39,8 @@ data class DeckItem(
     val rationale: String? = null,
     /** Set for a kept deck: the id it is renamed and deleted by. */
     val savedId: Long? = null,
+    /** Identifies the cards of the deck, whatever list it is in and whichever prints it uses; see [DeckListing.deckIdOf]. */
+    val deckId: Int = 0,
 ) {
     val substituteCopies: Int get() = substitutes.sumOf { it.copies }
 }
@@ -55,6 +58,15 @@ object DeckListing {
         kept.mapIndexed { index, deck ->
             item(index, deck.suggestion, language).copy(key = "saved-${deck.id.value}", savedId = deck.id.value)
         }
+
+    /** The same cards give the same id, whichever prints they are and wherever the deck is listed; used to match saved decks. */
+    fun deckIdOf(deck: Deck): Int {
+        val copies =
+            deck.entries.groupBy { it.card.gameplayKey.value }.mapValues { (_, entries) ->
+                entries.sumOf { it.copies }
+            }
+        return listOf(copies.toSortedMap().toList(), deck.energyTypes.sortedBy { it.ordinal }).hashCode()
+    }
 
     private fun item(
         index: Int,
@@ -85,6 +97,7 @@ object DeckListing {
             totalCopies = suggestion.completeness.totalCopies,
             cards = lines,
             rationale = suggestion.rationale,
+            deckId = deckIdOf(suggestion.deck),
             substitutes =
                 suggestion.substitutions.map {
                     SubstituteLine(

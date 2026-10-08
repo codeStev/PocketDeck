@@ -24,6 +24,7 @@ import dev.pocketdeck.adapter.capture.RequestScreenCapture
 import dev.pocketdeck.adapter.capture.ScanCapture
 import dev.pocketdeck.adapter.ui.AppTab
 import dev.pocketdeck.adapter.ui.PocketDeckApp
+import dev.pocketdeck.adapter.ui.chase.ChaseViewModel
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
 import dev.pocketdeck.adapter.ui.profile.ProfilesViewModel
@@ -43,6 +44,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var decksViewModelFactory: DecksViewModel.Factory
+
+    @Inject
+    lateinit var chaseViewModelFactory: ChaseViewModel.Factory
 
     @Inject
     lateinit var scanViewModelFactory: ScanViewModel.Factory
@@ -72,6 +76,8 @@ class MainActivity : ComponentActivity() {
                     )
                 val decksViewModel =
                     viewModel<DecksViewModel>(key = "decks-${language.name}", factory = decksViewModelFactory)
+                val chaseViewModel =
+                    viewModel<ChaseViewModel>(key = "chase-${language.name}", factory = chaseViewModelFactory)
                 val scanViewModel =
                     viewModel<ScanViewModel>(key = "scan-${language.name}", factory = scanViewModelFactory)
                 val settingsViewModel = viewModel<SettingsViewModel>(factory = settingsViewModelFactory)
@@ -102,6 +108,7 @@ class MainActivity : ComponentActivity() {
                 PocketDeckApp(
                     collectionViewModel = collectionViewModel,
                     decksViewModel = decksViewModel,
+                    chaseViewModel = chaseViewModel,
                     scanViewModel = scanViewModel,
                     settingsViewModel = settingsViewModel,
                     profilesViewModel = profilesViewModel,

@@ -23,6 +23,7 @@ import dev.pocketdeck.adapter.recognition.CollectionGridDetector
 import dev.pocketdeck.adapter.recognition.DetectorGridLocator
 import dev.pocketdeck.adapter.recognition.DigitTemplates
 import dev.pocketdeck.adapter.recognition.GridCardRecognizer
+import dev.pocketdeck.adapter.ui.chase.ChaseViewModel
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.AiAssistant
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
@@ -49,6 +50,8 @@ import dev.pocketdeck.application.catalog.ObserveCardCatalog
 import dev.pocketdeck.application.catalog.ObserveCardCatalogService
 import dev.pocketdeck.application.catalog.SyncCardCatalog
 import dev.pocketdeck.application.catalog.SyncCardCatalogService
+import dev.pocketdeck.application.chase.RankCardsToChase
+import dev.pocketdeck.application.chase.RankCardsToChaseService
 import dev.pocketdeck.application.collection.AdjustOwnedCount
 import dev.pocketdeck.application.collection.AdjustOwnedCountService
 import dev.pocketdeck.application.collection.CollectionBackup
@@ -69,6 +72,8 @@ import dev.pocketdeck.application.meta.MetaDecklistSource
 import dev.pocketdeck.application.meta.MetaSnapshotRepository
 import dev.pocketdeck.application.meta.RefreshMetaSnapshot
 import dev.pocketdeck.application.meta.RefreshMetaSnapshotService
+import dev.pocketdeck.application.opening.AnalyseDeckOpening
+import dev.pocketdeck.application.opening.AnalyseDeckOpeningService
 import dev.pocketdeck.application.profile.CreateProfileService
 import dev.pocketdeck.application.profile.DeleteProfileService
 import dev.pocketdeck.application.profile.ObserveProfilesService
@@ -346,7 +351,23 @@ object AppModule {
             listOf(MetaBasedSuggestionStrategy(), HeuristicSuggestionStrategy()),
         )
 
+    @Provides
+    fun rankCardsToChase(
+        catalogs: CardCatalogRepository,
+        collections: CollectionRepository,
+        snapshots: MetaSnapshotRepository,
+    ): RankCardsToChase = RankCardsToChaseService(catalogs, collections, snapshots)
+
+    @Provides
+    fun analyseDeckOpening(catalogs: CardCatalogRepository): AnalyseDeckOpening = AnalyseDeckOpeningService(catalogs)
+
     // --- driving adapter wiring
+    @Provides
+    fun chaseViewModelFactory(
+        rankCardsToChase: RankCardsToChase,
+        language: Language,
+    ) = ChaseViewModel.Factory(rankCardsToChase, language)
+
     @Provides
     fun decksViewModelFactory(
         suggestDecks: SuggestDecks,
@@ -356,6 +377,7 @@ object AppModule {
         listDeckCentrepieces: ListDeckCentrepieces,
         aiAssistant: AiAssistant,
         savedDecks: SavedDecks,
+        analyseDeckOpening: AnalyseDeckOpening,
         language: Language,
     ) = DecksViewModel.Factory(
         suggestDecks,
@@ -365,6 +387,7 @@ object AppModule {
         listDeckCentrepieces,
         aiAssistant,
         savedDecks,
+        analyseDeckOpening,
         language,
     )
 

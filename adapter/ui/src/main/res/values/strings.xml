@@ -192,10 +192,47 @@
     <string name="decks_intro_saved">Decks you kept for this account. They are compared with your collection as it is now.</string>
     <string name="decks_empty_saved">Nothing saved yet. Tap Save on a deck to keep it.</string>
     <string name="decks_save">Save</string>
+    <string name="decks_saved_done">Saved</string>
+    <string name="decks_tap_expand">Tap the card to see all its cards</string>
+    <string name="decks_tap_collapse">Tap the card to hide its cards</string>
+    <string name="decks_opening_show">Opening odds</string>
+    <string name="decks_opening_hide">Hide opening odds</string>
+    <string name="decks_opening_loading">Simulating the first turns…</string>
+    <string name="decks_opening_first">Going first</string>
+    <string name="decks_opening_second">Going second</string>
+    <string name="decks_opening_intro">Chance that each Pokémon has attacked by your turn 1–4 (simulated).</string>
+    <plurals name="decks_opening_show_all">
+        <item quantity="one">Show %1$d Pokémon</item>
+        <item quantity="other">Show all %1$d Pokémon</item>
+    </plurals>
+    <string name="decks_opening_show_fewer">Show fewer</string>
+    <string name="decks_opening_turn">Turn</string>
+    <string name="decks_opening_each_turn">Attacks on that turn</string>
+    <string name="decks_opening_note">Card texts the app cannot read are not credited, so the real chances can be a little higher.</string>
+    <string name="decks_opening_percent">%1$d%%</string>
     <string name="decks_rename">Rename</string>
     <string name="decks_rename_save">Save</string>
     <string name="decks_delete">Delete</string>
     <string name="decks_delete_title">Delete \"%1$s\"?</string>
     <string name="decks_cancel">Cancel</string>
     <string name="scan_account">Scan for account: %1$s</string>
+    <string name="chase_open">What to chase</string>
+    <string name="chase_title">What to chase</string>
+    <string name="chase_hint">Cards you lack that would bring you closest to tournament decks, most useful first.</string>
+    <string name="chase_empty">Nothing to chase yet. Scan your collection and load the tournament decks first, or you can already build the decks that are close.</string>
+    <string name="chase_cards">Cards</string>
+    <string name="chase_packs">Packs to open</string>
+    <plurals name="chase_finishes">
+        <item quantity="one">Completes %1$d tournament deck</item>
+        <item quantity="other">Completes %1$d tournament decks</item>
+    </plurals>
+    <plurals name="chase_helps">
+        <item quantity="one">Needed in %1$d nearly complete deck</item>
+        <item quantity="other">Needed in %1$d nearly complete decks</item>
+    </plurals>
+    <string name="chase_no_pack">Not from a pack (missions, shop or promo)</string>
+    <plurals name="chase_pack_line">
+        <item quantity="one">%1$d useful card: %2$s</item>
+        <item quantity="other">%1$d useful cards, e.g. %2$s</item>
+    </plurals>
 </resources>

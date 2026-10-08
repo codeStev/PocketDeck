@@ -12,6 +12,7 @@ import dev.pocketdeck.application.deckcode.DeckCodeFailure
 import dev.pocketdeck.application.deckcode.ExportDeckCode
 import dev.pocketdeck.application.meta.MetaSourceFailure
 import dev.pocketdeck.application.meta.RefreshMetaSnapshot
+import dev.pocketdeck.application.opening.AnalyseDeckOpening
 import dev.pocketdeck.application.savedeck.KeptDeck
 import dev.pocketdeck.application.suggest.BuildDeck
 import dev.pocketdeck.application.suggest.ListDeckCentrepieces
@@ -80,6 +81,12 @@ data class DecksUiState(
     /** The kept decks of the active account, newest first. */
     val saved: List<DeckItem> = emptyList(),
     val savedDialog: SavedDeckDialog? = null,
+    /** The opening odds asked for so far, by [DeckItem.deckId]. */
+    val openings: Map<Int, OpeningState> = emptyMap(),
+    /** The [DeckItem.deckId] of every kept deck, so a deck that is already kept can say so. */
+    val savedDeckIds: Set<Int> = emptySet(),
+    /** False until the first list of suggestions has arrived, so an empty list is not shown as "nothing here" while loading. */
+    val loaded: Boolean = false,
 )
 
 /** Shows the suggested decks and refreshes the picture of the competitive field. */
@@ -91,6 +98,7 @@ class DecksViewModel(
     private val listCentrepieces: ListDeckCentrepieces,
     private val ai: AiAssistant,
     private val savedDecks: SavedDecks,
+    private val analyseOpening: AnalyseDeckOpening,
     private val language: Language,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(DecksUiState())
@@ -107,12 +115,14 @@ class DecksViewModel(
             suggestDecks().collect { latest ->
                 suggestions = latest
                 publish()
+                mutableState.update { it.copy(loaded = true) }
             }
         }
         viewModelScope.launch {
             savedDecks.observe().collect { latest ->
                 kept = latest
-                mutableState.update { it.copy(saved = DeckListing.buildSaved(latest, language)) }
+                val ids = latest.map { DeckListing.deckIdOf(it.suggestion.deck) }.toSet()
+                mutableState.update { it.copy(saved = DeckListing.buildSaved(latest, language), savedDeckIds = ids) }
             }
         }
         viewModelScope.launch {
@@ -145,6 +155,18 @@ class DecksViewModel(
                 is Outcome.Failure -> DeckCodeUi.Unavailable(item.title, outcome.reason.unknownCards())
             }
         mutableState.update { it.copy(code = code) }
+    }
+
+    /** Works out, once per deck, how likely its Pokémon are to be attacking in the first turns. */
+    fun onShowOpening(deckId: Int) {
+        if (deckId in state.value.openings) return
+        val deck =
+            (shown + kept.map { it.suggestion }).firstOrNull { DeckListing.deckIdOf(it.deck) == deckId }?.deck ?: return
+        mutableState.update { it.copy(openings = it.openings + (deckId to OpeningState.Loading)) }
+        viewModelScope.launch {
+            val odds = OpeningListing.build(analyseOpening(deck), language)
+            mutableState.update { it.copy(openings = it.openings + (deckId to OpeningState.Ready(odds))) }
+        }
     }
 
     private fun suggestionOf(item: DeckItem): DeckSuggestion? =
@@ -295,6 +317,7 @@ class DecksViewModel(
         private val listCentrepieces: ListDeckCentrepieces,
         private val ai: AiAssistant,
         private val savedDecks: SavedDecks,
+        private val analyseOpening: AnalyseDeckOpening,
         private val language: Language,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -308,6 +331,7 @@ class DecksViewModel(
                 listCentrepieces,
                 ai,
                 savedDecks,
+                analyseOpening,
                 language,
             ) as T
         }

@@ -192,10 +192,47 @@
     <string name="decks_intro_saved">Decks, die du für dieses Konto behalten hast. Sie werden mit deiner aktuellen Sammlung verglichen.</string>
     <string name="decks_empty_saved">Noch nichts gespeichert. Tippe bei einem Deck auf Speichern, um es zu behalten.</string>
     <string name="decks_save">Speichern</string>
+    <string name="decks_saved_done">Gespeichert</string>
+    <string name="decks_tap_expand">Tippe auf die Karte, um alle Karten zu sehen</string>
+    <string name="decks_tap_collapse">Tippe auf die Karte, um die Karten zu verbergen</string>
+    <string name="decks_opening_show">Startchancen</string>
+    <string name="decks_opening_hide">Startchancen ausblenden</string>
+    <string name="decks_opening_loading">Simuliere die ersten Züge …</string>
+    <string name="decks_opening_first">Beginnt</string>
+    <string name="decks_opening_second">Zieht nach</string>
+    <string name="decks_opening_intro">Chance, dass jedes Pokémon bis zu deinem Zug 1–4 angegriffen hat (simuliert).</string>
+    <plurals name="decks_opening_show_all">
+        <item quantity="one">%1$d Pokémon anzeigen</item>
+        <item quantity="other">Alle %1$d Pokémon anzeigen</item>
+    </plurals>
+    <string name="decks_opening_show_fewer">Weniger anzeigen</string>
+    <string name="decks_opening_turn">Zug</string>
+    <string name="decks_opening_each_turn">Greift in diesem Zug an</string>
+    <string name="decks_opening_note">Kartentexte, die die App nicht lesen kann, werden nicht angerechnet; die echten Chancen können etwas höher sein.</string>
+    <string name="decks_opening_percent">%1$d %%</string>
     <string name="decks_rename">Umbenennen</string>
     <string name="decks_rename_save">Speichern</string>
     <string name="decks_delete">Löschen</string>
     <string name="decks_delete_title">\"%1$s\" löschen?</string>
     <string name="decks_cancel">Abbrechen</string>
     <string name="scan_account">Scan für Konto: %1$s</string>
+    <string name="chase_open">Was als Nächstes holen?</string>
+    <string name="chase_title">Was als Nächstes holen?</string>
+    <string name="chase_hint">Karten, die dir fehlen und dich Turnier-Decks am nächsten bringen, die nützlichsten zuerst.</string>
+    <string name="chase_empty">Noch nichts zu holen. Scanne zuerst deine Sammlung und lade die Turnier-Decks.</string>
+    <string name="chase_cards">Karten</string>
+    <string name="chase_packs">Packs zum Öffnen</string>
+    <plurals name="chase_finishes">
+        <item quantity="one">Vervollständigt %1$d Turnier-Deck</item>
+        <item quantity="other">Vervollständigt %1$d Turnier-Decks</item>
+    </plurals>
+    <plurals name="chase_helps">
+        <item quantity="one">Gebraucht in %1$d fast fertigen Deck</item>
+        <item quantity="other">Gebraucht in %1$d fast fertigen Decks</item>
+    </plurals>
+    <string name="chase_no_pack">Nicht aus einem Pack (Missionen, Shop oder Promo)</string>
+    <plurals name="chase_pack_line">
+        <item quantity="one">%1$d nützliche Karte: %2$s</item>
+        <item quantity="other">%1$d nützliche Karten, z. B. %2$s</item>
+    </plurals>
 </resources>

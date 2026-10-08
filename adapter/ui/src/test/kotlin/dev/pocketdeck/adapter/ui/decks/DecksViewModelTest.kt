@@ -19,6 +19,7 @@ import dev.pocketdeck.application.meta.InMemoryMetaSnapshotRepository
 import dev.pocketdeck.application.meta.MetaSourceFailure
 import dev.pocketdeck.application.meta.RefreshMetaSnapshot
 import dev.pocketdeck.application.meta.RefreshMetaSnapshotService
+import dev.pocketdeck.application.opening.AnalyseDeckOpening
 import dev.pocketdeck.application.savedeck.DeleteSavedDeckService
 import dev.pocketdeck.application.savedeck.ObserveSavedDecksService
 import dev.pocketdeck.application.savedeck.RenameSavedDeckService
@@ -42,6 +43,9 @@ import dev.pocketdeck.domain.deck.DeckSuggestion
 import dev.pocketdeck.domain.deck.Substitution
 import dev.pocketdeck.domain.deck.SuggestionOrigin
 import dev.pocketdeck.domain.meta.MetaSnapshot
+import dev.pocketdeck.domain.opening.OpeningAnalysis
+import dev.pocketdeck.domain.opening.PokemonOdds
+import dev.pocketdeck.domain.opening.TurnOdds
 import dev.pocketdeck.domain.validFireDeck
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
@@ -93,6 +97,16 @@ class DecksViewModelTest {
             listOf(DeckSuggestion("Charizard", SuggestionOrigin.META, deck, completeness, 1.0))
         }
 
+    private var analyses = 0
+    private val analyseOpening =
+        AnalyseDeckOpening {
+            analyses++
+            OpeningAnalysis(
+                goingFirst = listOf(PokemonOdds(charmander, (1..4).map { TurnOdds(it, it / 10.0, it / 10.0) })),
+                goingSecond = emptyList(),
+            )
+        }
+
     private fun viewModel(
         refresh: RefreshMetaSnapshot,
         export: ExportDeckCode = ExportDeckCodeService(),
@@ -117,6 +131,7 @@ class DecksViewModelTest {
             centrepieces,
             aiAssistant(askAi, advisor),
             savedDecks,
+            analyseOpening,
             Language.ENGLISH,
         )
     }
@@ -298,6 +313,7 @@ class DecksViewModelTest {
                         InMemoryAdvisorSettingsStore(),
                     ),
                     savedDecks,
+                    analyseOpening,
                     Language.ENGLISH,
                 )
             advanceUntilIdle()
@@ -619,5 +635,44 @@ class DecksViewModelTest {
             viewModel.onShowCode("saved-1")
 
             (viewModel.state.value.code as DeckCodeUi.Ready).text shouldBe "AAAA"
+        }
+
+    @Test
+    fun `works out the opening odds of a deck once, when asked for`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(succeeding)
+            advanceUntilIdle()
+            val deckId =
+                viewModel.state.value.items
+                    .single()
+                    .deckId
+
+            viewModel.onShowOpening(deckId)
+            viewModel.state.value.openings[deckId] shouldBe OpeningState.Loading
+            advanceUntilIdle()
+            viewModel.onShowOpening(deckId)
+            advanceUntilIdle()
+
+            val ready = viewModel.state.value.openings[deckId] as OpeningState.Ready
+            ready.odds.goingFirst
+                .single()
+                .name shouldBe "Charmander"
+            analyses shouldBe 1
+        }
+
+    @Test
+    fun `knows which decks are already kept`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(succeeding)
+            advanceUntilIdle()
+            val item =
+                viewModel.state.value.items
+                    .single()
+            viewModel.state.value.savedDeckIds shouldBe emptySet()
+
+            viewModel.onSave(item.key)
+            advanceUntilIdle()
+
+            viewModel.state.value.savedDeckIds shouldBe setOf(item.deckId)
         }
 }

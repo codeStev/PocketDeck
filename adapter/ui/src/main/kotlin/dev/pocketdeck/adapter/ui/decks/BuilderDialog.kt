@@ -3,20 +3,19 @@ package dev.pocketdeck.adapter.ui.decks
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.pocketdeck.adapter.ui.R
+import dev.pocketdeck.adapter.ui.components.FullScreenPanel
 
 /** Lets the player choose what a deck is built around, or leave it to the builder. */
 @Composable
@@ -38,29 +38,24 @@ internal fun BuilderDialog(
     actions: DecksActions,
 ) {
     val onBuild = actions.onBuild
-    val onClose = actions.onCloseBuilder
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text(stringResource(R.string.decks_build_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.decks_build_hint), style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    stringResource(R.string.decks_build_best),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.fillMaxWidth().clickable { onBuild(null) }.padding(vertical = 8.dp),
-                )
-                HorizontalDivider()
-                AskAiSection(aiConfigured, actions)
-                HorizontalDivider()
-                LazyColumn(Modifier.heightIn(max = LIST_HEIGHT)) {
-                    items(centrepieces, key = { it.cardId }) { item -> CentrepieceRow(item, onBuild) }
+    FullScreenPanel(stringResource(R.string.decks_build_title), actions.onCloseBuilder) {
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item { Text(stringResource(R.string.decks_build_hint), style = MaterialTheme.typography.bodyMedium) }
+            item {
+                Button(onClick = { onBuild(null) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.decks_build_best))
                 }
             }
-        },
-        confirmButton = { TextButton(onClick = onClose) { Text(stringResource(R.string.decks_code_close)) } },
-    )
+            item { HorizontalDivider() }
+            item { AskAiSection(aiConfigured, actions) }
+            item { HorizontalDivider() }
+            items(centrepieces, key = { it.cardId }) { item -> CentrepieceRow(item, onBuild) }
+        }
+    }
 }
 
 /** Asks an AI for a deck, with a wish in the player's own words; needs a key for one of the AI services. */
@@ -107,5 +102,3 @@ private fun CentrepieceRow(
         Text(item.name, style = MaterialTheme.typography.bodyLarge)
     }
 }
-
-private val LIST_HEIGHT = 360.dp
