@@ -167,4 +167,51 @@ New way of driving the app => new driving adapter calling inbound ports.
   longer knows are left out). Saving the same cards twice keeps one entry. `SavedDeckRepository` follows the active profile
   (`RoomSavedDeckRepository`, table `saved_deck`, schema 7, cards as `SavedDeckCodec` strings) and a profile's decks are deleted
   with it. Only generated decks have a Save button; saved decks can be renamed, deleted (with confirmation) and exported as code.
+- "What to chase": `ChaseRanker` (domain, `meta/`) ranks the cards the player is missing by how many tournament decklists they
+  would finish. Only lists missing 1..`MAX_MISSING_COPIES` (4, a guess) copies count; a list's weight is its archetype's strength
+  shared among its lists and split over the missing cards by missing copies. Prints count as one card. `Card.packs` comes from the
+  master dataset (`packs`) through `carddb` and Room (schema 8, `PackCodec`); a catalog whose cards have no pack at all counts as
+  stored by an older version (`CardCatalog.lacksCardDetails`). `RankCardsToChase` (application) feeds the dialog opened from the
+  Tournament tab (`adapter/ui/chase`). Not yet measured on real decklists; stand-ins (`DeckSubstituter`) are ignored.
+- UI conventions (reviewed on the real phone, 2026-10): tasks that are too big for a dialog box (chase list, deck builder) use
+  `components/FullScreenPanel`; secondary actions on deck cards use `CardOutlinedButton` (the default outline vanishes on the tinted
+  cards) and each card has one filled primary button; a tab's actions are pinned above its list (`ActionBar`); empty-state texts wait
+  for `DecksUiState.loaded`. Domain enums are shown through string resources in composables (`CardDetail` -> `detailText`), never as
+  hardcoded English words. A nested `Scaffold` must pass `WindowInsets(0)` or the status bar is cleared twice. Screens are checked
+  with `adb exec-out screencap` (no input needed); any tap first checks that `dev.pocketdeck` has window focus.
 - Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).
+
+## How a game starts (measured with the user, 2026; the opening model follows it)
+- Turn 0 (setup): each player has 5 cards; the game forces a Basic into the starting hand (no mulligans). The first player lays out
+  Basic Pokémon (one Active, up to three on the Bench), then the second player does. Nothing else may be played.
+- From round 1 both players draw one card every turn. The first player's first turn has no Energy Zone energy, no attack and no
+  evolving; the second player attaches energy, attacks and evolves on theirs. Rare Candy says "not during your first turn" (both).
+- A Pokémon cannot evolve on the turn it was put into play or evolved. Only the Active Pokémon attacks. Retreating discards energy
+  equal to the Retreat Cost (to the discard pile). One supporter per turn, any number of items.
+- Energy Zone: the deck's energy types (chosen when building the deck, up to 3) come into the zone at random, one at a time. The
+  energy that is there stays until it is attached (blocking the next one); only one zone energy can be attached per turn. Trainers
+  and abilities that "take an Energy from your Energy Zone" create energy of the named type and do not use that one.
+- Energy that leaves a Pokémon (attack self-discards such as Mega Rayquaza ex's Mega Burst, retreat) goes to the discard pile; decks
+  rely on pulling it back (Dragonair's "attach an Energy from your discard pile to your Active [N] Pokémon", Flame Patch, Volkner).
+
+## Opening model (domain `opening/`)
+- `OpeningSimulator` plays a deck's first turns many times (seeded `Random`, so tests are deterministic) and returns an
+  `OpeningReport`: `chanceToPlay`, `chanceToAttack` (ever, by turn), `chanceToAttackFully` (strongest attack), `chanceToAttackOn`
+  (on that turn itself, which shows decks that drain their own energy). Per `TurnOrder` (`FIRST`, `SECOND`).
+- Shown in the Decks tab: every deck card has an "Opening odds" button (`OpeningOddsSection`). `AnalyseDeckOpening` (application) runs
+  `OpeningAnalyser` for both seats off the main thread, seeded by the deck so a deck always shows the same numbers; the view model
+  does it once per deck (`DeckListing.deckIdOf`: same cards, same id, whatever the prints). 2,000 starts per plan and the two
+  seats on two cores: about 2.4 s on the user's phone for a 5-Pokémon deck (5,000 starts on one core took 6-16 s).
+- Strict readings: a trainer is playable once in hand; a Pokémon only once on the board (evolutions respect the timing rules; Rare
+  Candy skips a stage); a Pokémon attacks only from the Active Spot, so retreat/switch count. Trainers are rated in a neutral plan;
+  each Pokémon is rated in a plan built around its own evolution line (`Scenario.focus`).
+- Effects are read from the English card texts: `HandEffectReader` (draw, random search by filter or name list, look at top N,
+  hand reshuffles, Rare Candy, evolve-from-deck such as Quick-Grow Extract), `BoardEffectReader` (attach energy from the zone or
+  the discard pile, move energy between Pokémon, own switches, retreat discounts), `AttackEffectReader` (energy an attack discards
+  from itself). Measured on the master dataset: most texts left unread target the opponent or need damage/knock-out tracking. A text that is not fully understood gives null: the card is simply
+  not credited with the effect.
+- Not modelled yet: Professor Sada, Lusamine, Miraidon ex's switch-and-move, Rainbow Cave, Pokémon tools (balloons), energy doubling,
+  conditional free retreats, damage scaling (Mega Burst's 50 per energy counts as ready, not as damage), abilities
+  that draw or search, anything about the opponent. "Can attack" ignores damage, knock-outs and retreat from Active by the opponent.
+- Assumptions to recheck against the game: the zone picks uniformly among the deck's types; the Basic guarantee is modelled as
+  dealing again until the hand has one; policy is greedy (attach where it makes an attack payable, favour the focus line).
