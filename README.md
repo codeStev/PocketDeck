@@ -14,9 +14,10 @@ screen and suggests competitive decks you can build from the cards you own.
 - Several accounts, English and German, light and dark theme. Everything is stored on your phone.
 
 ## Install
-Releases are on the [releases page](https://github.com/codeStev/PocketDeck/releases) as signed APKs with their SHA-256.
-Once published, an own F-Droid repository gives automatic updates: `https://codestev.github.io/PocketDeck/repo`.
-The app is not on the Play Store.
+Releases are on the [releases page](https://github.com/codeStev/PocketDeck/releases) as signed APKs with their SHA-256 (`SHA256SUMS.txt`).
+For automatic updates add the repository `https://codestev.github.io/PocketDeck/repo` in F-Droid (or Droid-ify, Neo Store) under
+Settings > Repositories, and check that the fingerprint shown matches the one printed on the releases page. Without F-Droid, install the new
+APK over the old one; it updates in place and keeps your data. The app is not on the Play Store.
 
 ## Auto-scroll
 Auto-scroll is optional and off until you agree in the app. It uses an Android Accessibility service only to swipe the card list while
@@ -34,7 +35,8 @@ Needs JDK 25 (`JAVA_HOME=/usr/lib/jvm/java-25-openjdk` if your default is older)
 ./gradlew :app:assembleDebug
 ```
 The architecture is hexagonal (ports and adapters), enforced by tests; see `CLAUDE.md` for the layout, the data tools in `tools/` and
-how the design system in `designsystem/` is used. Releasing is described in `docs/RELEASE.md`.
+how the design system in `designsystem/` is used. Branches and versions (gitflow, SemVer) are in `docs/BRANCHING.md`, releasing in `docs/RELEASE.md`.
+Found a bug? Use *Report a problem* in the app (About), which opens the [issue tracker](https://github.com/codeStev/PocketDeck/issues).
 
 ## Data and credits
 Card data: [PocketDecks/pokemon-tcg-pocket-cards](https://github.com/PocketDecks/pokemon-tcg-pocket-cards) (AGPL-3.0-or-later), scraped

@@ -1,16 +1,35 @@
 # Releasing PocketDeck
 
-## Build a release
+## The normal way: gitflow and the workflows
+Branches, versions and the release steps are in `docs/BRANCHING.md`. In short: features go into `develop` (every push builds a signed
+release candidate `X.Y.Z-rc.N` in CI), `release/X.Y.Z` is merged into `main`, the owner tags `vX.Y.Z` and publishes the GitHub release,
+and the release workflow attaches the signed APK and its SHA-256 and adds the version to the F-Droid repository. The version lives in
+`version.properties` only.
+
+### One-time setup
+1. `./scripts/create-release-key.sh` (APK key, writes `~/.pocketdeck/signing.properties`) and `./scripts/create-fdroid-key.sh` (signs the
+   F-Droid index). Both use the certificate name `CN=codeStev, O=codeStev`. **Back up both `.jks` files with their passwords off this machine**:
+   a lost APK key means the app can never be updated; a new F-Droid key means every user adds the repository again.
+2. Repository secrets (Settings > Secrets and variables > Actions): `SIGNING_KEYSTORE_BASE64`, `SIGNING_STORE_PASSWORD`,
+   `SIGNING_KEY_PASSWORD`, `SIGNING_KEY_ALIAS` (`pocketdeck`), `FDROID_KEYSTORE_BASE64`, `FDROID_KEYSTORE_PASSWORD`, `FDROID_KEY_ALIAS`
+   (`pocketdeck-repo`). Set the keystores with `gh secret set NAME < <(base64 -w0 file.jks)`.
+3. GitHub settings: default branch `develop`, branch protection, Pages from the `gh-pages` branch (after the first release created it).
+4. **The first release candidate needs a clean install.** A release-signed build cannot update a debug-signed install; Android demands an
+   uninstall first, which deletes the data. Export the collection (Settings > Your data) before, import it afterwards.
+
+### Building a release locally
 ```
 export JAVA_HOME=/usr/lib/jvm/java-25-openjdk
-./scripts/create-release-key.sh        # once; writes ~/.pocketdeck/signing.properties (outside the repository)
 ./gradlew check :app:assembleRelease    # app/build/outputs/apk/release/app-release.apk
+python3 scripts/licence-scan.py         # licences of the libraries in it
 ```
-Without `~/.pocketdeck/signing.properties` the release build is unsigned (`app-release-unsigned`-style output); sign it
-with `apksigner` or create the key first. The release build is minified with R8, resources are shrunk, and
-`Log.v/d/i` calls are removed (`app/proguard-rules.pro`).
+Without `~/.pocketdeck/signing.properties` the release build is unsigned; the release build is minified with R8, resources are shrunk and
+`Log.v/d/i` calls are removed (`app/proguard-rules.pro`). `-Ppocketdeck.rc=N` makes it the release candidate `X.Y.Z-rc.N`.
 
-Bump `versionCode` (must grow with every release) and `versionName` in `app/build.gradle.kts`.
+### What CI checks
+`check` and the unsigned release build, the licence scan, and a smoke test of the R8 build on an emulator (`scripts/smoke-test.py`: install,
+welcome tour, every tab, no crash). A release candidate is only built when both are green. The smoke test does not cover Decks' sub-tabs,
+the AI requests or a scan; open those once on a release candidate by hand (see the next section).
 
 ## Try a release build next to the real app
 `./gradlew :app:assembleRelease -Ppocketdeck.signWithDebugKey=true -Ppocketdeck.idSuffix=.rc` builds "PocketDeck RC"
@@ -21,8 +40,9 @@ debug key**; Android demands an uninstall first, which deletes the collection (r
 for the developer's own phone.
 
 ## Direct release (GitHub release, own F-Droid repository)
-- Publish the signed APK, its SHA-256 and a changelog. Keep the signing key; the same key must sign every update.
+- The GitHub release carries the signed APK, its SHA-256 and the changelog section. Keep the signing key; the same key must sign every update.
 - Nothing from the Play policies applies, but see the blockers below.
+- Before the first release: read Limitless's terms and tell them about the app (blocker 4), and let someone listen to the app with TalkBack once.
 
 ## Play Store (later) additionally needs
 - A Play developer account; a personal account created after 13 Nov 2023 needs a closed test with 12 testers opted in for
