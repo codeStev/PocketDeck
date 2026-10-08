@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 enum class Consent {
     /** The accessibility service swipes the card list in the game while a scan runs. */
     AUTO_SCROLL,
+
+    /** The first-run tour: the player has read what stays on the phone, what is downloaded and what the AI feature sends. */
+    WELCOME,
 }
 
 /** Outbound port: remembers what the player has agreed to. */

@@ -14,8 +14,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dagger.hilt.android.AndroidEntryPoint
 import dev.pocketdeck.adapter.capture.AutoScroll
@@ -29,8 +31,11 @@ import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
 import dev.pocketdeck.adapter.ui.profile.ProfilesViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
+import dev.pocketdeck.adapter.ui.settings.AboutActions
 import dev.pocketdeck.adapter.ui.settings.SettingsViewModel
 import dev.pocketdeck.adapter.ui.theme.PocketDeckTheme
+import dev.pocketdeck.adapter.ui.welcome.WelcomeFlow
+import dev.pocketdeck.adapter.ui.welcome.WelcomeViewModel
 import dev.pocketdeck.domain.card.Language
 import javax.inject.Inject
 
@@ -56,6 +61,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var profilesViewModelFactory: ProfilesViewModel.Factory
+
+    @Inject
+    lateinit var welcomeViewModelFactory: WelcomeViewModel.Factory
 
     private var selectedTab by mutableStateOf(AppTab.COLLECTION)
     private var reviewRequests by mutableIntStateOf(0)
@@ -83,6 +91,9 @@ class MainActivity : ComponentActivity() {
                     viewModel<ScanViewModel>(key = "scan-${language.name}", factory = scanViewModelFactory)
                 val settingsViewModel = viewModel<SettingsViewModel>(factory = settingsViewModelFactory)
                 val profilesViewModel = viewModel<ProfilesViewModel>(factory = profilesViewModelFactory)
+                val welcomeViewModel = viewModel<WelcomeViewModel>(factory = welcomeViewModelFactory)
+                val welcome by welcomeViewModel.state.collectAsStateWithLifecycle()
+                var tourRequested by rememberSaveable { mutableStateOf(false) }
                 LaunchedEffect(reviewRequests) {
                     if (reviewRequests >
                         0
@@ -106,6 +117,20 @@ class MainActivity : ComponentActivity() {
                 val overlaySettings =
                     rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
 
+                // Nothing is shown until storage has answered, so the tour does not flash up for a returning player.
+                val firstRun = welcome.agreed == false
+                if (firstRun || tourRequested) {
+                    WelcomeFlow(firstRun = firstRun) {
+                        if (firstRun) {
+                            welcomeViewModel.onAgree()
+                        } else {
+                            tourRequested =
+                                false
+                        }
+                    }
+                    return@PocketDeckTheme
+                }
+                if (welcome.agreed == null) return@PocketDeckTheme
                 PocketDeckApp(
                     collectionViewModel = collectionViewModel,
                     decksViewModel = decksViewModel,
@@ -117,6 +142,12 @@ class MainActivity : ComponentActivity() {
                     onTabSelected = { selectedTab = it },
                     autoScrollEnabled = autoScrollEnabled,
                     onOpenAccessibilitySettings = { startActivity(AutoScroll.settingsIntent()) },
+                    about =
+                        AboutActions(
+                            versionName = versionName(),
+                            onOpenAccessibilitySettings = { startActivity(AutoScroll.settingsIntent()) },
+                            onShowWelcome = { tourRequested = true },
+                        ),
                     onStartScan = { automatic ->
                         pendingAutomatic = automatic
                         when {
@@ -158,6 +189,8 @@ class MainActivity : ComponentActivity() {
             reviewRequests++
         }
     }
+
+    private fun versionName(): String = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
 
     private fun needsNotificationPermission() =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&

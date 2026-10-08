@@ -50,7 +50,10 @@ private const val MAX_COPIES = 99
 private val DetailArtWidth = 160.dp
 
 @Composable
-fun CollectionScreen(viewModel: CollectionViewModel) {
+fun CollectionScreen(
+    viewModel: CollectionViewModel,
+    onOpenScan: () -> Unit,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val queryText by viewModel.queryText.collectAsStateWithLifecycle()
     CollectionContent(
@@ -60,6 +63,7 @@ fun CollectionScreen(viewModel: CollectionViewModel) {
         onOwnedOnlyChange = viewModel::onOwnedOnlyChange,
         onAdjust = viewModel::adjust,
         onSync = viewModel::sync,
+        onOpenScan = onOpenScan,
     )
 }
 
@@ -71,6 +75,7 @@ internal fun CollectionContent(
     onOwnedOnlyChange: (Boolean) -> Unit,
     onAdjust: (CardId, Int) -> Unit,
     onSync: () -> Unit,
+    onOpenScan: () -> Unit,
 ) {
     // Kept by id, so the dialog shows the live number of copies while the player changes them.
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -79,6 +84,7 @@ internal fun CollectionContent(
         Title(state.sync, onSync)
         Filters(state, queryText, onQueryChange, onOwnedOnlyChange)
         SyncBanner(state.sync, onSync)
+        if (state.totalOwned == 0 && state.catalogSize > 0 && state.sync == SyncState.Idle) EmptyHint(onOpenScan)
         when {
             state.items.isEmpty() && state.sync == SyncState.Syncing -> {
                 CenteredProgress()
@@ -95,6 +101,17 @@ internal fun CollectionContent(
             }
         }
     }
+}
+
+/** A new player sees 4,000 faded cards and no hint: say that scanning is how the collection gets filled. */
+@Composable
+private fun EmptyHint(onOpenScan: () -> Unit) {
+    PdBanner(
+        stringResource(R.string.collection_empty_hint),
+        kind = PdBannerKind.Info,
+        actionLabel = stringResource(R.string.collection_empty_action),
+        onAction = onOpenScan,
+    )
 }
 
 @Composable

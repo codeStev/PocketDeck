@@ -34,6 +34,7 @@ import dev.pocketdeck.adapter.ui.profile.ProfilesViewModel
 import dev.pocketdeck.adapter.ui.scan.ConsentAccess
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
 import dev.pocketdeck.adapter.ui.settings.SettingsViewModel
+import dev.pocketdeck.adapter.ui.welcome.WelcomeViewModel
 import dev.pocketdeck.application.advice.AdvisorDiagnostics
 import dev.pocketdeck.application.advice.AdvisorModelCatalog
 import dev.pocketdeck.application.advice.AdvisorProvider
@@ -438,6 +439,10 @@ object AppModule {
         language,
         ConsentAccess(ObserveConsentService(consent), GrantConsentService(consent)),
     )
+
+    @Provides
+    fun welcomeViewModelFactory(consent: ConsentStore) =
+        WelcomeViewModel.Factory(ConsentAccess(ObserveConsentService(consent), GrantConsentService(consent)))
 
     @Provides
     @Singleton

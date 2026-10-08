@@ -3,14 +3,19 @@ package dev.pocketdeck.adapter.ui.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -21,18 +26,25 @@ import dev.codestev.pocketdesign.components.PdButton
 import dev.codestev.pocketdesign.components.PdButtonSize
 import dev.codestev.pocketdesign.components.PdButtonStyle
 import dev.codestev.pocketdesign.components.PdCard
+import dev.codestev.pocketdesign.components.PdChevron
+import dev.codestev.pocketdesign.components.PdRowGroup
 import dev.codestev.pocketdesign.components.PdSectionHeader
 import dev.codestev.pocketdesign.components.PdTextField
 import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
+import dev.pocketdeck.adapter.ui.about.AboutPanel
 import dev.pocketdeck.application.advice.AdvisorProvider
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel) {
+fun SettingsScreen(
+    viewModel: SettingsViewModel,
+    about: AboutActions,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     SettingsContent(
         state,
+        about,
         SettingsActions(
             viewModel::onKeyChanged,
             viewModel::onModelChanged,
@@ -62,9 +74,14 @@ internal class SettingsActions(
 @Composable
 internal fun SettingsContent(
     state: SettingsUiState,
+    about: AboutActions,
     actions: SettingsActions,
 ) {
     state.modelPicker?.let { ModelPickerDialog(it, state.form, actions) }
+    var showAbout by rememberSaveable { mutableStateOf(false) }
+    if (showAbout) {
+        AboutPanel(about.versionName, about.onOpenAccessibilitySettings, about.onShowWelcome) { showAbout = false }
+    }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PdSpacing.space4),
         verticalArrangement = Arrangement.spacedBy(PdSpacing.space4),
@@ -77,8 +94,21 @@ internal fun SettingsContent(
         )
         LanguageSection()
         AiSection(state, actions)
+        val aboutTitle = stringResource(R.string.settings_about)
+        val aboutValue = stringResource(R.string.settings_about_value, about.versionName)
+        PdRowGroup {
+            row(aboutTitle, onClick = { showAbout = true }, value = aboutValue, trailing = { PdChevron() })
+        }
+        Spacer(Modifier.height(PdSpacing.space4))
     }
 }
+
+/** What the About panel needs from the app around it. */
+class AboutActions(
+    val versionName: String,
+    val onOpenAccessibilitySettings: () -> Unit,
+    val onShowWelcome: () -> Unit,
+)
 
 @Composable
 private fun AiSection(

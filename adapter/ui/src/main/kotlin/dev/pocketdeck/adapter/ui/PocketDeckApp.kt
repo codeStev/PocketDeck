@@ -25,6 +25,7 @@ import dev.pocketdeck.adapter.ui.profile.ProfileSwitcher
 import dev.pocketdeck.adapter.ui.profile.ProfilesViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanScreen
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
+import dev.pocketdeck.adapter.ui.settings.AboutActions
 import dev.pocketdeck.adapter.ui.settings.SettingsScreen
 import dev.pocketdeck.adapter.ui.settings.SettingsViewModel
 
@@ -44,6 +45,7 @@ fun PocketDeckApp(
     autoScrollEnabled: Boolean,
     onOpenAccessibilitySettings: () -> Unit,
     onStartScan: (automatic: Boolean) -> Unit,
+    about: AboutActions,
 ) {
     Scaffold(
         topBar = { ProfileSwitcher(profilesViewModel) },
@@ -52,7 +54,7 @@ fun PocketDeckApp(
         Box(Modifier.padding(padding)) {
             when (selectedTab) {
                 AppTab.COLLECTION -> {
-                    CollectionScreen(collectionViewModel)
+                    CollectionScreen(collectionViewModel) { onTabSelected(AppTab.SCAN) }
                 }
 
                 AppTab.DECKS -> {
@@ -70,7 +72,7 @@ fun PocketDeckApp(
                 }
 
                 AppTab.SETTINGS -> {
-                    SettingsScreen(settingsViewModel)
+                    SettingsScreen(settingsViewModel, about)
                 }
             }
         }
