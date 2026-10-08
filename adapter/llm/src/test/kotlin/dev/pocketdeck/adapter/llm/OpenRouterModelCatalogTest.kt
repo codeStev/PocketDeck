@@ -32,6 +32,8 @@ class OpenRouterModelCatalogTest {
          "pricing":{"prompt":"0","completion":"0"},"supported_parameters":["tools"],"reasoning":null},
         {"id":"anthropic/claude-x","name":"Claude X","context_length":200000,
          "pricing":{"prompt":"0.000003","completion":"0.000015"},"supported_parameters":["tools"],"reasoning":null},
+        {"id":"x/router","name":"Router","context_length":2000000,
+         "pricing":{"prompt":"-1","completion":"-1"},"supported_parameters":["tools"],"reasoning":null},
         {"id":"x/no-pricing","name":"No pricing","context_length":1000,"supported_parameters":[]}
         ]}"""
 
@@ -48,7 +50,7 @@ class OpenRouterModelCatalogTest {
                     OpenRouterModelCatalog(
                         client(answer),
                         "https://or.test/api/v1",
-                    ).available(AdvisorProvider.OPENROUTER) as Outcome.Success
+                    ).available(AdvisorProvider.OPENROUTER, null) as Outcome.Success
                 ).value
 
             val gemma = models.first { it.id == "google/gemma-4-31b-it:free" }
@@ -70,7 +72,7 @@ class OpenRouterModelCatalogTest {
                     OpenRouterModelCatalog(
                         client(answer),
                         "https://or.test",
-                    ).available(AdvisorProvider.OPENROUTER) as Outcome.Success
+                    ).available(AdvisorProvider.OPENROUTER, null) as Outcome.Success
                 ).value
 
             models.first { it.id == "anthropic/claude-x" }.free shouldBe false
@@ -89,7 +91,7 @@ class OpenRouterModelCatalogTest {
                     },
                 )
 
-            OpenRouterModelCatalog(http, "https://or.test/api/v1").available(AdvisorProvider.OPENROUTER)
+            OpenRouterModelCatalog(http, "https://or.test/api/v1").available(AdvisorProvider.OPENROUTER, null)
 
             asked shouldBe "https://or.test/api/v1/models"
         }
@@ -97,7 +99,10 @@ class OpenRouterModelCatalogTest {
     @Test
     fun `lists nothing for a provider it does not know`() =
         runTest {
-            OpenRouterModelCatalog(client(answer), "https://or.test").available(AdvisorProvider.ANTHROPIC) shouldBe
+            OpenRouterModelCatalog(
+                client(answer),
+                "https://or.test",
+            ).available(AdvisorProvider.ANTHROPIC, null) shouldBe
                 Outcome.Success(emptyList())
         }
 
@@ -106,13 +111,13 @@ class OpenRouterModelCatalogTest {
         runTest {
             val offline = HttpClient(MockEngine { throw IOException("no network") })
 
-            OpenRouterModelCatalog(offline, "https://x").available(AdvisorProvider.OPENROUTER) shouldBe
+            OpenRouterModelCatalog(offline, "https://x").available(AdvisorProvider.OPENROUTER, null) shouldBe
                 Outcome.Failure(AdvisorFailure.NotReachable("no network"))
             (
                 OpenRouterModelCatalog(
                     client("<html>"),
                     "https://x",
-                ).available(AdvisorProvider.OPENROUTER) as Outcome.Failure
+                ).available(AdvisorProvider.OPENROUTER, null) as Outcome.Failure
             ).reason.javaClass shouldBe AdvisorFailure.Unusable::class.java
         }
 
@@ -124,11 +129,27 @@ class OpenRouterModelCatalogTest {
                     OpenRouterModelCatalog(
                         client(answer),
                         "https://or.test",
-                    ).available(AdvisorProvider.OPENROUTER) as Outcome.Success
+                    ).available(AdvisorProvider.OPENROUTER, null) as Outcome.Success
                 ).value
 
             // Seen in practice: models with this metadata thought for minutes and never answered.
             models.first { it.id == "cohere/silent-flag:free" }.thinking shouldBe Thinking.THINKS_BY_DEFAULT
             models.first { it.id == "x/no-reasoning:free" }.thinking shouldBe Thinking.ANSWERS_DIRECTLY
+        }
+
+    @Test
+    fun `reads the prices as dollars per million tokens`() =
+        runTest {
+            val models =
+                (
+                    OpenRouterModelCatalog(client(answer), "https://or.test")
+                        .available(AdvisorProvider.OPENROUTER, null) as Outcome.Success
+                ).value
+
+            val claude = models.first { it.id == "anthropic/claude-x" }
+            claude.promptPrice shouldBe 3.0
+            claude.completionPrice shouldBe 15.0
+            models.first { it.id == "x/no-pricing" }.promptPrice shouldBe null
+            models.first { it.id == "x/router" }.promptPrice shouldBe null
         }
 }

@@ -1,6 +1,7 @@
 package dev.pocketdeck.application.advice
 
 import dev.pocketdeck.application.Outcome
+import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
@@ -14,10 +15,13 @@ class ListSuitableModelsServiceTest {
         thinking: Thinking = Thinking.ANSWERS_DIRECTLY,
     ) = ListedModel(id, id, context, free, tools, thinking, expiresOn = null)
 
-    private fun service(vararg models: ListedModel) = ListSuitableModelsService { Outcome.Success(models.toList()) }
+    private fun service(vararg models: ListedModel) =
+        ListSuitableModelsService { _, _ -> Outcome.Success(models.toList()) }
 
-    private suspend fun ids(service: ListSuitableModelsService) =
-        (service(AdvisorProvider.OPENROUTER) as Outcome.Success).value.map { it.id }
+    private suspend fun ids(
+        service: ListSuitableModelsService,
+        request: ModelRequest = ModelRequest(AdvisorProvider.OPENROUTER),
+    ) = (service(request) as Outcome.Success).value.map { it.id }
 
     @Test
     fun `keeps only free models that take tools and a long prompt`() =
@@ -58,9 +62,10 @@ class ListSuitableModelsServiceTest {
     @Test
     fun `passes on a failure to reach the catalog`() =
         runTest {
-            val failing = ListSuitableModelsService { Outcome.Failure(AdvisorFailure.NotReachable("offline")) }
+            val failing = ListSuitableModelsService { _, _ -> Outcome.Failure(AdvisorFailure.NotReachable("offline")) }
 
-            failing(AdvisorProvider.OPENROUTER) shouldBe Outcome.Failure(AdvisorFailure.NotReachable("offline"))
+            failing(ModelRequest(AdvisorProvider.OPENROUTER)) shouldBe
+                Outcome.Failure(AdvisorFailure.NotReachable("offline"))
         }
 
     @Test
@@ -69,5 +74,69 @@ class ListSuitableModelsServiceTest {
             val service = service(model("openrouter/free"), model("good"))
 
             ids(service) shouldBe listOf("good")
+        }
+
+    @Test
+    fun `offers paid models too when asked, after the free ones`() =
+        runTest {
+            val paid = model("paid-a", free = false).copy(promptPrice = 1.0, completionPrice = 2.0)
+            val service = service(paid, model("free-b"), model("paid-short", free = false, context = 8_000))
+
+            ids(service, ModelRequest(AdvisorProvider.OPENROUTER, includePaid = true)) shouldBe
+                listOf("free-b", "paid-a")
+        }
+
+    @Test
+    fun `keeps Claude models as the service lists them, newest first`() =
+        runTest {
+            val service = service(model("claude-new", free = false), model("claude-old", free = false))
+
+            ids(service, ModelRequest(AdvisorProvider.ANTHROPIC, apiKey = "k")) shouldBe
+                listOf("claude-new", "claude-old")
+        }
+
+    @Test
+    fun `hands the typed key to the catalog`() =
+        runTest {
+            var seen: String? = null
+            val service =
+                ListSuitableModelsService { _, key ->
+                    seen = key
+                    Outcome.Success(emptyList())
+                }
+
+            service(ModelRequest(AdvisorProvider.ANTHROPIC, apiKey = "sk-ant"))
+
+            seen shouldBe "sk-ant"
+        }
+
+    @Test
+    fun `estimates what one deck costs`() {
+        val paid =
+            ListedModel(
+                "m",
+                "m",
+                200_000,
+                false,
+                true,
+                Thinking.ANSWERS_DIRECTLY,
+                null,
+                promptPrice = 3.0,
+                completionPrice = 15.0,
+            )
+
+        // 30,000 tokens in at $3 per million, 3,000 out at $15 per million.
+        ModelCost.perDeck(paid) shouldBe (0.09 + 0.045 plusOrMinus 1e-9)
+        ModelCost.perDeck(model("free")) shouldBe 0.0
+        ModelCost.perDeck(paid.copy(promptPrice = null)) shouldBe null
+    }
+
+    @Test
+    fun `a paid model without a stated price is left out, as the routers are`() =
+        runTest {
+            val priced = model("priced", free = false).copy(promptPrice = 1.0, completionPrice = 2.0)
+            val service = service(priced, model("router", free = false))
+
+            ids(service, ModelRequest(AdvisorProvider.OPENROUTER, includePaid = true)) shouldBe listOf("priced")
         }
 }

@@ -11,8 +11,10 @@ import dev.pocketdeck.LogScanDiagnostics
 import dev.pocketdeck.adapter.carddb.MasterCatalogSource
 import dev.pocketdeck.adapter.limitless.LimitlessMetaDecklistSource
 import dev.pocketdeck.adapter.llm.AnthropicDeckAdvisor
+import dev.pocketdeck.adapter.llm.AnthropicModelCatalog
 import dev.pocketdeck.adapter.llm.OpenRouterDeckAdvisor
 import dev.pocketdeck.adapter.llm.OpenRouterModelCatalog
+import dev.pocketdeck.adapter.llm.ProviderModelCatalog
 import dev.pocketdeck.adapter.persistence.PocketDeckDatabases
 import dev.pocketdeck.adapter.persistence.PocketDeckStorage
 import dev.pocketdeck.adapter.persistence.SharedPreferencesAdvisorSettingsStore
@@ -310,7 +312,13 @@ object AppModule {
     ) = AiAssistant(askAiForDeck, ObserveAdvisorSettingsService(settings))
 
     @Provides
-    fun advisorModelCatalog(client: HttpClient): AdvisorModelCatalog = OpenRouterModelCatalog(client)
+    fun advisorModelCatalog(client: HttpClient): AdvisorModelCatalog =
+        ProviderModelCatalog(
+            mapOf(
+                AdvisorProvider.ANTHROPIC to AnthropicModelCatalog(client),
+                AdvisorProvider.OPENROUTER to OpenRouterModelCatalog(client),
+            ),
+        )
 
     @Provides
     fun listSuitableModels(catalog: AdvisorModelCatalog): ListSuitableModels = ListSuitableModelsService(catalog)

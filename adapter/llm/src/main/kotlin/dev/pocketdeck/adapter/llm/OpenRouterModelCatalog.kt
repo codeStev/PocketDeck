@@ -26,7 +26,10 @@ class OpenRouterModelCatalog(
     private val client: HttpClient,
     private val baseUrl: String = "https://openrouter.ai/api/v1",
 ) : AdvisorModelCatalog {
-    override suspend fun available(provider: AdvisorProvider): Outcome<List<ListedModel>, AdvisorFailure> {
+    override suspend fun available(
+        provider: AdvisorProvider,
+        apiKey: String?,
+    ): Outcome<List<ListedModel>, AdvisorFailure> {
         if (provider != AdvisorProvider.OPENROUTER) return Outcome.Success(emptyList())
         return try {
             val response = client.get("$baseUrl/models")
@@ -65,8 +68,22 @@ class OpenRouterModelCatalog(
             supportsTools = "tools" in parameters,
             thinking = thinkingOf(model["reasoning"] as? JsonObject),
             expiresOn = model["expiration_date"]?.jsonPrimitive?.contentOrNull,
+            promptPrice = perMillion(pricing, "prompt"),
+            completionPrice = perMillion(pricing, "completion"),
         )
     }
+
+    /** OpenRouter states dollars per token; the picker shows dollars per million, which is what people compare. */
+    private fun perMillion(
+        pricing: JsonObject?,
+        field: String,
+    ): Double? =
+        pricing
+            ?.get(field)
+            ?.jsonPrimitive
+            ?.doubleOrNull
+            ?.takeIf { it >= 0.0 } // routers state -1: the price depends on the model they pick
+            ?.times(TOKENS_PER_MILLION)
 
     /** Free means both prices are stated and zero; a model without prices is not assumed to be free. */
     private fun isFree(pricing: JsonObject?): Boolean {
@@ -84,5 +101,9 @@ class OpenRouterModelCatalog(
         if (reasoning["mandatory"]?.jsonPrimitive?.booleanOrNull == true) return Thinking.MUST_THINK
         val default = reasoning["default_enabled"]?.jsonPrimitive?.booleanOrNull
         return if (default == false) Thinking.ANSWERS_DIRECTLY else Thinking.THINKS_BY_DEFAULT
+    }
+
+    private companion object {
+        const val TOKENS_PER_MILLION = 1_000_000.0
     }
 }

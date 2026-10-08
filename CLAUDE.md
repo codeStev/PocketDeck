@@ -149,12 +149,15 @@ New way of driving the app => new driving adapter calling inbound ports.
   for low effort). Gemma 4 was tried first and dropped: its free capacity answered HTTP 429 every time. The player may type several
   models separated by commas; they are tried in order until one gives a deck. Free models change often: recheck OpenRouter's
   public `/api/v1/models` (free + tools + long context).
-- Model picker (Settings > AI > OpenRouter > "Browse free models"): `OpenRouterModelCatalog` (adapter) reads the public
-  `/api/v1/models`; `ListSuitableModelsService` (application) keeps free models with tools and >= 100k context, drops the
-  `openrouter/` router, and sorts models that answer directly before ones that think first. A model whose `reasoning` metadata
-  has no `default_enabled` counts as thinking first (cohere north-mini-code and nemotron-lightning reported nothing and still
-  thought for minutes); only an explicit `default_enabled: false` or no reasoning support counts as direct. Tapping models
-  writes them, in order, into the comma-separated model field.
+- Model pickers (Settings > AI, one per provider, `ModelPickerDialog`): `AdvisorModelCatalog` (port, `ProviderModelCatalog` dispatches)
+  has `OpenRouterModelCatalog` (public `/api/v1/models`, prices in dollars per million tokens, routers state -1 = no price) and
+  `AnthropicModelCatalog` (`GET /v1/models`, needs the key, which the picker takes from the form as typed, saved or not).
+  `ListSuitableModelsService` (application) keeps models with tools and >= 100k context, drops the `openrouter/` routers and sorts
+  models that answer directly before ones that think first. OpenRouter lists free models only until the player switches on "Include
+  paid models" (then free first, and a paid model needs a stated price; each shows the price and `ModelCost.perDeck`, about 30,000
+  tokens in and 3,000 out); several OpenRouter models are chosen in order, a Claude model is chosen alone (tap again = default).
+  A model whose `reasoning` metadata has no `default_enabled` counts as thinking first (cohere north-mini-code and nemotron-lightning
+  reported nothing and still thought for minutes); only an explicit `default_enabled: false` or no reasoning support counts as direct.
 - The Decks tab has two tabs: Tournament (`SuggestionOrigin.META`, with the refresh button) and Generated (builder and AI decks,
   with the build button); `DeckKind` decides which tab a deck or a notice belongs to. Generated decks are tinted
   (tertiary for the builder, secondary for the AI) so they cannot be mistaken for tournament decks.

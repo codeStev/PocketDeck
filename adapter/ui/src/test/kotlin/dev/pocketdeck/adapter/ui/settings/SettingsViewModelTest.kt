@@ -7,6 +7,7 @@ import dev.pocketdeck.application.advice.AdvisorSettings
 import dev.pocketdeck.application.advice.AdvisorSettingsStore
 import dev.pocketdeck.application.advice.ListSuitableModels
 import dev.pocketdeck.application.advice.ListedModel
+import dev.pocketdeck.application.advice.ModelRequest
 import dev.pocketdeck.application.advice.ObserveAdvisorSettingsService
 import dev.pocketdeck.application.advice.SaveAdvisorSettingsService
 import dev.pocketdeck.application.advice.Thinking
@@ -231,5 +232,48 @@ class SettingsViewModelTest {
             viewModel.onCloseModelPicker()
 
             viewModel.state.value.modelPicker shouldBe null
+        }
+
+    @Test
+    fun `asks for the key as typed and for paid models only when switched on`() =
+        runTest(dispatcher) {
+            val asked = mutableListOf<ModelRequest>()
+            val viewModel =
+                viewModel(
+                    models = {
+                        asked += it
+                        Outcome.Success(listOf(model("a/one:free")))
+                    },
+                )
+            advanceUntilIdle()
+            viewModel.onKeyChanged(AdvisorProvider.OPENROUTER, "typed-not-saved")
+
+            viewModel.onOpenModelPicker(AdvisorProvider.OPENROUTER)
+            advanceUntilIdle()
+            viewModel.onIncludePaidChanged(true)
+            advanceUntilIdle()
+
+            asked shouldBe
+                listOf(
+                    ModelRequest(AdvisorProvider.OPENROUTER, "typed-not-saved", includePaid = false),
+                    ModelRequest(AdvisorProvider.OPENROUTER, "typed-not-saved", includePaid = true),
+                )
+            viewModel.state.value.modelPicker!!
+                .includePaid shouldBe true
+        }
+
+    @Test
+    fun `a Claude model is chosen alone and replaces the one before`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            advanceUntilIdle()
+
+            viewModel.onToggleModel(AdvisorProvider.ANTHROPIC, "claude-opus-5-5")
+            viewModel.onToggleModel(AdvisorProvider.ANTHROPIC, "claude-haiku-4-5-20251001")
+
+            viewModel.state.value.form.models[AdvisorProvider.ANTHROPIC] shouldBe "claude-haiku-4-5-20251001"
+            viewModel.onToggleModel(AdvisorProvider.ANTHROPIC, "claude-haiku-4-5-20251001")
+            viewModel.state.value.form.models
+                .containsKey(AdvisorProvider.ANTHROPIC) shouldBe false
         }
 }

@@ -9,6 +9,7 @@ import dev.pocketdeck.application.advice.AdvisorProvider
 import dev.pocketdeck.application.advice.AdvisorSettings
 import dev.pocketdeck.application.advice.ListSuitableModels
 import dev.pocketdeck.application.advice.ListedModel
+import dev.pocketdeck.application.advice.ModelRequest
 import dev.pocketdeck.application.advice.ObserveAdvisorSettings
 import dev.pocketdeck.application.advice.SaveAdvisorSettings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +40,12 @@ sealed interface ModelPickerContent {
 data class ModelPicker(
     val provider: AdvisorProvider,
     val content: ModelPickerContent,
-)
+    /** Whether paid models are listed too; only OpenRouter has free ones to leave out. */
+    val includePaid: Boolean = false,
+) {
+    /** OpenRouter models are tried in turn, so several can be chosen; a Claude model is chosen alone. */
+    val chooseSeveral: Boolean get() = provider == AdvisorProvider.OPENROUTER
+}
 
 data class SettingsUiState(
     val form: AiSettingsForm = AiSettingsForm(AdvisorProvider.entries, emptyMap(), emptyMap()),
@@ -93,11 +99,22 @@ class SettingsViewModel(
         }
     }
 
-    fun onOpenModelPicker(provider: AdvisorProvider) {
-        mutableState.update { it.copy(modelPicker = ModelPicker(provider, ModelPickerContent.Loading)) }
+    fun onOpenModelPicker(provider: AdvisorProvider) = loadModels(ModelPicker(provider, ModelPickerContent.Loading))
+
+    /** Lists paid models too, or not; the list is asked for again. */
+    fun onIncludePaidChanged(includePaid: Boolean) {
+        val picker = mutableState.value.modelPicker ?: return
+        loadModels(picker.copy(content = ModelPickerContent.Loading, includePaid = includePaid))
+    }
+
+    private fun loadModels(picker: ModelPicker) {
+        mutableState.update { it.copy(modelPicker = picker) }
         viewModelScope.launch {
+            // The key as typed, saved or not: the player should not have to save before looking at Claude's models.
+            val request =
+                ModelRequest(picker.provider, mutableState.value.form.keys[picker.provider], picker.includePaid)
             val content =
-                when (val outcome = listModels(provider)) {
+                when (val outcome = listModels(request)) {
                     is Outcome.Success -> ModelPickerContent.Loaded(outcome.value)
                     is Outcome.Failure -> ModelPickerContent.Failed(outcome.reason.message())
                 }
@@ -121,7 +138,13 @@ class SettingsViewModel(
                 .split(',')
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
-        val updated = if (id in chosen) chosen - id else chosen + id
+        val several = provider == AdvisorProvider.OPENROUTER
+        val updated =
+            when {
+                id in chosen -> chosen - id
+                several -> chosen + id
+                else -> listOf(id)
+            }
         form.copy(
             models =
                 if (updated.isEmpty()) {

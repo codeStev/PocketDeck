@@ -41,6 +41,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             viewModel::onOpenModelPicker,
             viewModel::onToggleModel,
             viewModel::onCloseModelPicker,
+            viewModel::onIncludePaidChanged,
         ),
     )
 }
@@ -54,6 +55,7 @@ internal class SettingsActions(
     val onOpenModelPicker: (AdvisorProvider) -> Unit,
     val onToggleModel: (AdvisorProvider, String) -> Unit,
     val onCloseModelPicker: () -> Unit,
+    val onIncludePaidChanged: (Boolean) -> Unit,
 )
 
 /** The settings, in sections; "AI" is the first. A new section is another composable in this column. */
@@ -136,14 +138,12 @@ private fun ProviderCard(
                 placeholder = provider.defaultModel,
                 supportingText = stringResource(R.string.settings_ai_model_hint),
             )
-            if (provider == AdvisorProvider.OPENROUTER) {
-                PdButton(
-                    stringResource(R.string.settings_ai_browse_models),
-                    { actions.onOpenModelPicker(provider) },
-                    Modifier.fillMaxWidth(),
-                    style = PdButtonStyle.Tonal,
-                )
-            }
+            PdButton(
+                stringResource(provider.browseLabel()),
+                { actions.onOpenModelPicker(provider) },
+                Modifier.fillMaxWidth(),
+                style = PdButtonStyle.Tonal,
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(PdSpacing.space2)) {
                 PdButton(
                     stringResource(R.string.settings_ai_earlier),
@@ -165,6 +165,12 @@ private fun ProviderCard(
         }
     }
 }
+
+private fun AdvisorProvider.browseLabel() =
+    when (this) {
+        AdvisorProvider.ANTHROPIC -> R.string.settings_ai_browse_claude
+        AdvisorProvider.OPENROUTER -> R.string.settings_ai_browse_models
+    }
 
 private fun AdvisorProvider.title() =
     when (this) {
