@@ -8,6 +8,7 @@ android {
 
 dependencies {
     api(project(":core:application"))
+    implementation(project(":designsystem"))
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

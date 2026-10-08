@@ -26,4 +26,8 @@ tasks.test {
         .files(scannedModules.map { fileTree(it) { include("**/*.kt") } })
         .withPropertyName("scannedSources")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs
+        .files(fileTree(rootProject.layout.projectDirectory.dir("designsystem/src")) { include("**/*.kt") })
+        .withPropertyName("designSystemSources")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }

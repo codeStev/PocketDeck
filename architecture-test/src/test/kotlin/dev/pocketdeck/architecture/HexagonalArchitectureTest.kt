@@ -56,6 +56,33 @@ class HexagonalArchitectureTest {
     }
 
     @Test
+    fun `the design system knows nothing about the app`() {
+        Konsist
+            .scopeFromDirectory("designsystem/src")
+            .files
+            .assertFalse(
+                additionalMessage = "the design system is reusable: it must not import any dev.pocketdeck code",
+            ) { file ->
+                file.imports.any { it.name.startsWith("dev.pocketdeck") }
+            }
+    }
+
+    @Test
+    fun `only the ui adapter uses the design system`() {
+        val others = listOf("capture", "persistence", "carddb", "limitless", "llm", "recognition")
+        others.forEach { adapter ->
+            Konsist
+                .scopeFromDirectory("adapter/$adapter/src/main")
+                .files
+                .assertFalse(
+                    additionalMessage = "adapter '$adapter' has no screens, so it must not use the design system",
+                ) { file ->
+                    file.imports.any { it.name.startsWith("dev.codestev.pocketdesign") }
+                }
+        }
+    }
+
+    @Test
     fun `no class is named Manager, Helper or Util`() {
         Konsist
             .scopeFromProduction()

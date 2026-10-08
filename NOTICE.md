@@ -12,3 +12,7 @@ Data and formats used (see `docs/RELEASE.md` for what still has to be cleared be
 
 Open source libraries: Kotlin, AndroidX (Compose, Room, Lifecycle), Dagger Hilt, Ktor, kotlinx.serialization, Coil, ZXing,
 OkHttp, kotlinx.coroutines, all under the Apache License 2.0 (ZXing: Apache 2.0).
+
+Fonts bundled in the design system (`designsystem/src/main/res/font/`, licences in `designsystem/licenses/`): Fredoka
+(Copyright 2016 The Fredoka Project Authors) and Nunito (Copyright 2014 The Nunito Project Authors), both under the SIL
+Open Font License 1.1.

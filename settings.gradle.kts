@@ -31,6 +31,7 @@ include(
     ":adapter:limitless",
     ":adapter:llm",
     ":adapter:recognition",
+    ":designsystem",
     ":app",
     ":architecture-test",
 )
