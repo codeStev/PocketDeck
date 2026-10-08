@@ -54,6 +54,8 @@
     <string name="review_check">prüfen</string>
     <string name="review_save">In Sammlung speichern</string>
     <string name="review_discard">Verwerfen</string>
+    <string name="review_fewer">Weniger Exemplare von %1$s</string>
+    <string name="review_more">Mehr Exemplare von %1$s</string>
     <string name="review_remove">%1$s aus dem Ergebnis entfernen</string>
     <string name="saved_title">Sammlung aktualisiert</string>
     <plurals name="saved_summary">
@@ -64,7 +66,7 @@
     <string name="scan_automatic_label">Automatisch scrollen</string>
     <string name="scan_automatic_on">PocketDeck scrollt die Liste für dich, vom Anfang bis zum Ende. Berühre den Bildschirm währenddessen nicht; tippe auf den kleinen Knopf, um vorzeitig zu beenden.</string>
     <string name="scan_automatic_needs_service">Zum automatischen Scrollen schalte „PocketDeck Auto-Scroll“ in den Bedienungshilfen ein. Es führt nur Wischgesten aus und liest nichts vom Bildschirm.</string>
-    <string name="scan_open_accessibility">Bedienungshilfen öffnen</string>
+    <string name="scan_open_accessibility">Einstellungen öffnen</string>
     <string name="review_reason_never_read">Die Anzahl war nie sichtbar, daher wird 1 angenommen.</string>
     <string name="review_reason_disagrees">Verschiedene Bilder zeigten unterschiedliche Anzahlen.</string>
     <string name="review_reason_low_confidence">Unsicher, ob Karte oder Anzahl stimmt.</string>

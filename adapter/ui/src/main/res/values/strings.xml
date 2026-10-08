@@ -54,6 +54,8 @@
     <string name="review_check">check</string>
     <string name="review_save">Save to collection</string>
     <string name="review_discard">Discard</string>
+    <string name="review_fewer">Fewer copies of %1$s</string>
+    <string name="review_more">More copies of %1$s</string>
     <string name="review_remove">Remove %1$s from the result</string>
     <string name="saved_title">Collection updated</string>
     <plurals name="saved_summary">
@@ -64,7 +66,7 @@
     <string name="scan_automatic_label">Scroll automatically</string>
     <string name="scan_automatic_on">PocketDeck scrolls the list for you, from the top to the end. Do not touch the screen while it runs; tap Stop on the small button to end early.</string>
     <string name="scan_automatic_needs_service">To scroll for you, switch on "PocketDeck auto-scroll" in the Accessibility settings. It only performs swipes and reads nothing on the screen.</string>
-    <string name="scan_open_accessibility">Open Accessibility settings</string>
+    <string name="scan_open_accessibility">Open settings</string>
     <string name="review_reason_never_read">The count was never visible, so 1 is assumed.</string>
     <string name="review_reason_disagrees">Different screenshots showed different counts.</string>
     <string name="review_reason_low_confidence">Not sure this is the right card or count.</string>

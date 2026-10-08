@@ -1,10 +1,10 @@
 package dev.pocketdeck.adapter.ui.scan
 
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import dev.codestev.pocketdesign.components.PdDialog
+import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
 
 /**
@@ -16,11 +16,17 @@ internal fun AutoScrollConsentDialog(
     onAgree: () -> Unit,
     onDecline: () -> Unit,
 ) {
-    AlertDialog(
+    PdDialog(
+        title = stringResource(R.string.consent_autoscroll_title),
         onDismissRequest = onDecline,
-        title = { Text(stringResource(R.string.consent_autoscroll_title)) },
-        text = { Text(stringResource(R.string.consent_autoscroll_text)) },
-        confirmButton = { TextButton(onClick = onAgree) { Text(stringResource(R.string.consent_agree)) } },
-        dismissButton = { TextButton(onClick = onDecline) { Text(stringResource(R.string.consent_decline)) } },
-    )
+        confirmText = stringResource(R.string.consent_agree),
+        onConfirm = onAgree,
+        dismissText = stringResource(R.string.consent_decline),
+    ) {
+        Text(
+            stringResource(R.string.consent_autoscroll_text),
+            style = PocketDesign.typography.body,
+            color = PocketDesign.colors.ink,
+        )
+    }
 }

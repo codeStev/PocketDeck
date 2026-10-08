@@ -1,24 +1,22 @@
 package dev.pocketdeck.adapter.ui.scan
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Switch
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,17 +24,41 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import dev.codestev.pocketdesign.components.PdAction
+import dev.codestev.pocketdesign.components.PdBanner
+import dev.codestev.pocketdesign.components.PdBannerKind
+import dev.codestev.pocketdesign.components.PdButton
+import dev.codestev.pocketdesign.components.PdButtonSize
+import dev.codestev.pocketdesign.components.PdButtonStyle
+import dev.codestev.pocketdesign.components.PdCard
+import dev.codestev.pocketdesign.components.PdChip
+import dev.codestev.pocketdesign.components.PdChipKind
+import dev.codestev.pocketdesign.components.PdEmptyState
+import dev.codestev.pocketdesign.components.PdIconButton
+import dev.codestev.pocketdesign.components.PdIconButtonStyle
+import dev.codestev.pocketdesign.components.PdStepper
+import dev.codestev.pocketdesign.components.PdSwitch
+import dev.codestev.pocketdesign.icons.PdIcons
+import dev.codestev.pocketdesign.theme.PdSpacing
+import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
-import dev.pocketdeck.adapter.ui.collection.semanticsLabel
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.scan.ReviewReason
+
+private val ThumbWidth = 56.dp
+private val ThumbHeight = 78.dp
+private val ThumbCorner = 6.dp
+private val StepBadge = 28.dp
+private const val MAX_COPIES = 99
 
 @Composable
 fun ScanScreen(
@@ -132,50 +154,125 @@ private fun Instructions(
             onDecline = { asking = false },
         )
     }
-    Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.scan_title), style = MaterialTheme.typography.headlineSmall)
-        AccountNotice(accountName)
-        Text(stringResource(R.string.scan_intro))
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Switch(checked = state.automatic, onCheckedChange = onAutomaticChanged)
-            Text(stringResource(R.string.scan_automatic_label), style = MaterialTheme.typography.titleMedium)
-        }
-        if (state.automatic) {
-            val hint = if (autoScrollEnabled) R.string.scan_automatic_on else R.string.scan_automatic_needs_service
-            Text(stringResource(hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        val steps =
-            if (state.automatic) {
-                listOf(R.string.scan_step_view, R.string.scan_step_start)
-            } else {
-                listOf(
-                    R.string.scan_step_view,
-                    R.string.scan_step_start,
-                    R.string.scan_step_scroll,
-                    R.string.scan_step_stop,
-                )
-            }
-        steps.forEachIndexed { index, step -> Text("${index + 1}. ${stringResource(step)}") }
-        Spacer(Modifier.height(8.dp))
+    // Scrolls, so large system fonts and the German texts never push the start button off screen.
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PdSpacing.space4),
+        verticalArrangement = Arrangement.spacedBy(PdSpacing.space4),
+    ) {
+        Title(R.string.scan_title, accountName)
+        Text(
+            stringResource(R.string.scan_intro),
+            style = PocketDesign.typography.body,
+            color = PocketDesign.colors.inkMuted,
+        )
+        AutomaticSwitch(state.automatic, autoScrollEnabled, onAutomaticChanged)
+        Steps(if (state.automatic) AUTOMATIC_STEPS else MANUAL_STEPS)
         state.progress?.let {
-            Text(
+            PdChip(
                 pluralStringResource(R.plurals.scan_running, it.distinctCards, it.distinctCards),
-                color = MaterialTheme.colorScheme.primary,
+                kind = PdChipKind.Success,
             )
         }
-        state.notice?.let { Text(noticeText(it), color = MaterialTheme.colorScheme.error) }
-        Button(
-            onClick = { if (state.automatic && !state.autoScrollConsented) asking = true else proceed() },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(if (needsService) R.string.scan_open_accessibility else R.string.scan_start))
+        // Said before the player taps Start, with its own button, instead of Start silently opening system settings.
+        if (needsService) {
+            PdBanner(
+                stringResource(R.string.scan_automatic_needs_service),
+                kind = PdBannerKind.Warning,
+                actionLabel = stringResource(R.string.scan_open_accessibility),
+                onAction = onOpenAccessibilitySettings,
+            )
         }
+        state.notice?.let { Notice(it) }
+        PdButton(
+            stringResource(R.string.scan_start),
+            { if (state.automatic && !state.autoScrollConsented) asking = true else proceed() },
+            Modifier.fillMaxWidth(),
+            enabled = !needsService,
+            leadingIcon = PdIcons.Scan,
+        )
         if (state.backupAvailable) {
-            OutlinedButton(onClick = onRestorePrevious, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.scan_restore_previous))
+            PdButton(
+                stringResource(R.string.scan_restore_previous),
+                onRestorePrevious,
+                Modifier.fillMaxWidth(),
+                style = PdButtonStyle.Secondary,
+            )
+        }
+    }
+}
+
+private val AUTOMATIC_STEPS = listOf(R.string.scan_step_view, R.string.scan_step_start)
+private val MANUAL_STEPS =
+    listOf(R.string.scan_step_view, R.string.scan_step_start, R.string.scan_step_scroll, R.string.scan_step_stop)
+
+/** The screen title and, because both game instances look alike on screen, the account the scan is for. */
+@Composable
+private fun Title(
+    title: Int,
+    accountName: String?,
+) {
+    Column(Modifier.padding(top = PdSpacing.space2), verticalArrangement = Arrangement.spacedBy(PdSpacing.space2)) {
+        Text(stringResource(title), style = PocketDesign.typography.titleLg, color = PocketDesign.colors.ink)
+        accountName?.let { PdChip(stringResource(R.string.scan_account, it), kind = PdChipKind.Selected) }
+    }
+}
+
+@Composable
+private fun AutomaticSwitch(
+    automatic: Boolean,
+    serviceOn: Boolean,
+    onChange: (Boolean) -> Unit,
+) {
+    PdCard {
+        PdSwitch(
+            checked = automatic,
+            onCheckedChange = onChange,
+            label = stringResource(R.string.scan_automatic_label),
+            supportingText = if (automatic && serviceOn) stringResource(R.string.scan_automatic_on) else null,
+        )
+    }
+}
+
+@Composable
+private fun Steps(steps: List<Int>) {
+    Column(verticalArrangement = Arrangement.spacedBy(PdSpacing.space3)) {
+        steps.forEachIndexed { index, step ->
+            Row(horizontalArrangement = Arrangement.spacedBy(PdSpacing.space3), verticalAlignment = Alignment.Top) {
+                StepNumber(index + 1)
+                Text(
+                    stringResource(step),
+                    style = PocketDesign.typography.body,
+                    color = PocketDesign.colors.ink,
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
     }
+}
+
+@Composable
+private fun StepNumber(number: Int) {
+    val colors = PocketDesign.colors
+    Row(
+        Modifier
+            .size(StepBadge)
+            .clip(PocketDesign.shapes.pill)
+            .background(colors.accentSoft),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            number.toString(),
+            style = PocketDesign.typography.numeric.copy(fontSize = 14.sp),
+            color = colors.onAccentSoft,
+        )
+    }
+}
+
+@Composable
+private fun Notice(notice: ScanNotice) {
+    val kind = if (notice == ScanNotice.RESTORED) PdBannerKind.Success else PdBannerKind.Danger
+    PdBanner(noticeText(notice), kind = kind)
 }
 
 @Composable
@@ -199,42 +296,61 @@ private fun Review(
     onDiscard: () -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.review_title), style = MaterialTheme.typography.headlineSmall)
-            AccountNotice(accountName)
-            Text(stringResource(R.string.review_summary, state.review.size, state.review.count { it.needsReview }))
-            if (state.review.any { it.needsReview }) {
-                Text(stringResource(R.string.review_check_hint), style = MaterialTheme.typography.bodySmall)
-            }
-            state.notice?.let { Text(noticeText(it), color = MaterialTheme.colorScheme.error) }
-            if (state.looksIncomplete) {
-                Text(
-                    stringResource(R.string.review_incomplete_warning, state.review.size, state.ownedBefore),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Switch(checked = state.replaceCollection, onCheckedChange = onReplaceChanged)
-                Text(stringResource(R.string.review_replace), style = MaterialTheme.typography.bodyMedium)
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(
-                    onClick = onConfirm,
-                    enabled = state.review.isNotEmpty(),
-                ) { Text(stringResource(R.string.review_save)) }
-                OutlinedButton(onClick = onDiscard) { Text(stringResource(R.string.review_discard)) }
-            }
-        }
+        ReviewHeader(state, accountName, onReplaceChanged)
         LazyColumn(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding =
-                androidx.compose.foundation.layout
-                    .PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(PdSpacing.space3),
+            contentPadding = PaddingValues(horizontal = PdSpacing.space4, vertical = PdSpacing.space2),
         ) {
             items(state.review, key = { it.cardId.value }) { item -> ReviewRow(item, onAdjust, onAccept, onRemove) }
         }
+        // Pinned, so saving never needs a scroll to the end of a long list.
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = PdSpacing.space4, vertical = PdSpacing.space3),
+            horizontalArrangement = Arrangement.spacedBy(PdSpacing.space2),
+        ) {
+            PdButton(
+                stringResource(R.string.review_discard),
+                onDiscard,
+                Modifier.weight(1f),
+                style = PdButtonStyle.Secondary,
+            )
+            PdButton(
+                stringResource(R.string.review_save),
+                onConfirm,
+                Modifier.weight(2f),
+                enabled = state.review.isNotEmpty(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReviewHeader(
+    state: ScanUiState,
+    accountName: String?,
+    onReplaceChanged: (Boolean) -> Unit,
+) {
+    val toCheck = state.review.count { it.needsReview }
+    Column(
+        Modifier.padding(horizontal = PdSpacing.space4),
+        verticalArrangement = Arrangement.spacedBy(PdSpacing.space3),
+    ) {
+        Title(R.string.review_title, accountName)
+        Text(
+            stringResource(R.string.review_summary, state.review.size, toCheck),
+            style = PocketDesign.typography.titleSm,
+            color = PocketDesign.colors.ink,
+        )
+        if (toCheck > 0) PdBanner(stringResource(R.string.review_check_hint), kind = PdBannerKind.Warning)
+        state.notice?.let { Notice(it) }
+        if (state.looksIncomplete) {
+            PdBanner(
+                stringResource(R.string.review_incomplete_warning, state.review.size, state.ownedBefore),
+                kind = PdBannerKind.Danger,
+            )
+        }
+        PdSwitch(state.replaceCollection, onReplaceChanged, stringResource(R.string.review_replace))
     }
 }
 
@@ -245,47 +361,55 @@ private fun ReviewRow(
     onAccept: (CardId) -> Unit,
     onRemove: (CardId) -> Unit,
 ) {
-    Card(Modifier.fillMaxWidth()) {
-        Row(
-            Modifier.padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
+    PdCard(Modifier.fillMaxWidth(), contentPadding = PdSpacing.space3) {
+        Row(horizontalArrangement = Arrangement.spacedBy(PdSpacing.space3)) {
             AsyncImage(
                 model = item.artworkUrl,
                 contentDescription = item.name,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.size(width = 56.dp, height = 78.dp),
+                contentScale = ContentScale.Crop,
+                modifier =
+                    Modifier
+                        .size(
+                            width = ThumbWidth,
+                            height = ThumbHeight,
+                        ).clip(RoundedCornerShape(ThumbCorner)),
             )
-            Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PdSpacing.space1)) {
                 Text(
                     item.name,
+                    style = PocketDesign.typography.titleSm,
+                    color = PocketDesign.colors.ink,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleSmall,
                 )
                 item.reason?.let {
-                    Text(
-                        reasonText(it),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
+                    Text(reasonText(it), style = PocketDesign.typography.bodySm, color = PocketDesign.colors.warning)
                 }
                 if (item.needsReview) {
-                    TextButton(onClick = { onAccept(item.cardId) }) {
-                        Text(
-                            "${stringResource(R.string.review_check)} · ${stringResource(R.string.review_looks_right)}",
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
+                    PdButton(
+                        "${stringResource(R.string.review_check)} · ${stringResource(R.string.review_looks_right)}",
+                        { onAccept(item.cardId) },
+                        style = PdButtonStyle.Tonal,
+                        size = PdButtonSize.Small,
+                    )
                 }
             }
-            FilledTonalIconButton(onClick = { onAdjust(item.cardId, -1) }, enabled = item.copies > 1) { Text("−") }
-            Text("${item.copies}", style = MaterialTheme.typography.titleMedium)
-            FilledTonalIconButton(onClick = { onAdjust(item.cardId, 1) }) { Text("+") }
-            TextButton(onClick = { onRemove(item.cardId) }) {
-                Text("✕", modifier = Modifier.semanticsLabel(stringResource(R.string.review_remove, item.name)))
-            }
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            PdStepper(
+                value = item.copies,
+                onValueChange = { onAdjust(item.cardId, it - item.copies) },
+                range = 1..MAX_COPIES,
+                decrementDescription = stringResource(R.string.review_fewer, item.name),
+                incrementDescription = stringResource(R.string.review_more, item.name),
+            )
+            Spacer(Modifier.weight(1f))
+            PdIconButton(
+                PdIcons.Close,
+                stringResource(R.string.review_remove, item.name),
+                { onRemove(item.cardId) },
+                style = PdIconButtonStyle.Plain,
+            )
         }
     }
 }
@@ -305,21 +429,11 @@ private fun Saved(
     cards: Int,
     onDone: () -> Unit,
 ) {
-    Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.saved_title), style = MaterialTheme.typography.headlineSmall)
-        Text(pluralStringResource(R.plurals.saved_summary, cards, cards))
-        Button(onClick = onDone) { Text(stringResource(R.string.saved_done)) }
-    }
-}
-
-/** Says which account the scan is for: both game instances look alike on screen, so a mix-up would go unnoticed. */
-@Composable
-private fun AccountNotice(accountName: String?) {
-    accountName?.let {
-        Text(
-            stringResource(R.string.scan_account, it),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        PdEmptyState(
+            title = stringResource(R.string.saved_title),
+            message = pluralStringResource(R.plurals.saved_summary, cards, cards),
+            primaryAction = PdAction(stringResource(R.string.saved_done), onDone),
         )
     }
 }
