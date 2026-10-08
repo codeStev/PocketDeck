@@ -50,4 +50,10 @@ for the developer's own phone.
    keep the name from reading as official, use no logos or Poké Ball marks, and say that the app is unofficial.
 3. **The game's terms.** The game forbids scripts and bots that modify the application (Article 17(viii)). Auto-scroll
    performs swipes in the game; the consent dialog says so. Public distribution makes this more visible.
-4. **Limitless API.** The tournament data comes from the public Limitless API; check their terms for apps.
+4. **Limitless API.** The tournament data comes from the public Limitless API; check their terms for apps. The app sends a User-Agent
+   with the repository link, fetches one tournament at a time, keeps finished tournaments on the phone and stops at a rate limit until
+   `Retry-After` has passed. The owner contacts Limitless before the first public release.
+5. **Libraries (done 2026-10-09, enforced by CI).** `scripts/licence-scan.py` reads the licence of every library in the release build
+   (225 at the time: Apache-2.0 for almost all, MIT for slf4j, BSD-3-Clause for the JSR-305 annotations). No Google Play services, Firebase
+   or other proprietary library is in it, and nothing under a copyleft licence the AGPL cannot take in. CI runs the scan after the release build,
+   so a new library with an unknown or unfit licence fails the build. Fonts (SIL OFL) and card data are listed in `NOTICE.md`.

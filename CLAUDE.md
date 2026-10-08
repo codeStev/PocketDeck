@@ -229,6 +229,8 @@ New way of driving the app => new driving adapter calling inbound ports.
   carddb and Room (schema 9, auto-migration); a catalog without any rarity is reloaded (`lacksCardDetails`).
 - Smoke test (`scripts/smoke-test.py`, CI job `smoke-test`): installs the R8 release build (debug-signed with `-Ppocketdeck.signWithDebugKey=true`) on an emulator, clicks
   through the tour and all tabs, fails on a crash; refuses any serial that is not `emulator-*`. A release candidate needs it green.
+- Libraries' licences: `scripts/licence-scan.py` (run after `assembleRelease`, also a CI step) reads every POM in the release classpath and fails on a missing
+  or unfit licence; `KNOWN_EXACT` pins the three libraries whose POM has none.
 - Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).
 
 ## Design system (`:designsystem`, package `dev.codestev.pocketdesign`)
