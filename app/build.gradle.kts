@@ -11,7 +11,9 @@ val semver = Regex("""(\d+)\.(\d+)\.(\d+)(?:-[A-Za-z]+\.(\d+))?""")
 val appVersion =
     Properties().apply { rootProject.file("version.properties").inputStream().use(::load) }.getProperty("version")
 val versionParts =
-    checkNotNull(semver.matchEntire(appVersion)) { "version.properties: '$appVersion' is not MAJOR.MINOR.PATCH[-pre.N]" }
+    checkNotNull(
+        semver.matchEntire(appVersion),
+    ) { "version.properties: '$appVersion' is not MAJOR.MINOR.PATCH[-pre.N]" }
         .destructured
 val appVersionCode =
     versionParts.let { (major, minor, patch, pre) ->
