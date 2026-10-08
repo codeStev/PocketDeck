@@ -43,6 +43,7 @@ import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
 import dev.pocketdeck.adapter.ui.theme.tintKey
+import dev.pocketdeck.adapter.ui.thumbnailOf
 import dev.pocketdeck.application.catalog.CatalogSyncFailure
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.card.EnergyType
@@ -239,7 +240,7 @@ private fun CardTile(
             owned = item.copies > 0,
             onClick = onOpen,
         ) {
-            Art(item)
+            Art(item, small = true)
         }
         Text(
             item.name,
@@ -262,9 +263,12 @@ private fun tileDescription(item: CardItem) =
     }
 
 @Composable
-private fun Art(item: CardItem) {
+private fun Art(
+    item: CardItem,
+    small: Boolean = false,
+) {
     AsyncImage(
-        model = item.artworkUrl,
+        model = if (small) thumbnailOf(item.artworkUrl) else item.artworkUrl,
         contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = Modifier.fillMaxSize(),

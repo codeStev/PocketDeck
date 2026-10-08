@@ -34,6 +34,7 @@ import dev.codestev.pocketdesign.icons.PdIcons
 import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
+import dev.pocketdeck.adapter.ui.thumbnailOf
 
 private val ThumbWidth = 44.dp
 private val ThumbHeight = 61.dp
@@ -130,7 +131,7 @@ private fun CentrepieceRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsyncImage(
-                model = item.artworkUrl,
+                model = thumbnailOf(item.artworkUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.size(ThumbWidth, ThumbHeight).clip(RoundedCornerShape(ThumbCorner)),

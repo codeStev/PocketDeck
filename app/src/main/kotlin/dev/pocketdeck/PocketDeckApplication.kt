@@ -5,6 +5,7 @@ import dagger.Lazy
 import dagger.hilt.android.HiltAndroidApp
 import dev.pocketdeck.adapter.capture.CaptureDependencies
 import dev.pocketdeck.adapter.capture.CaptureDependenciesProvider
+import dev.pocketdeck.adapter.ui.installCardImageCache
 import dev.pocketdeck.application.scan.AutoScanService
 import dev.pocketdeck.application.scan.GridLocator
 import dev.pocketdeck.application.scan.GridScroller
@@ -37,6 +38,11 @@ class PocketDeckApplication :
 
     @Inject
     lateinit var diagnostics: ScanDiagnostics
+
+    override fun onCreate() {
+        super.onCreate()
+        installCardImageCache(this)
+    }
 
     override val captureDependencies: CaptureDependencies =
         object : CaptureDependencies {

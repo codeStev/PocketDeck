@@ -11,6 +11,7 @@ import dev.pocketdeck.LogScanDiagnostics
 import dev.pocketdeck.adapter.carddb.MasterCatalogSource
 import dev.pocketdeck.adapter.exchange.JsonCsvCollectionFileCodec
 import dev.pocketdeck.adapter.limitless.LimitlessMetaDecklistSource
+import dev.pocketdeck.adapter.limitless.LimitlessSettings
 import dev.pocketdeck.adapter.llm.AnthropicDeckAdvisor
 import dev.pocketdeck.adapter.llm.AnthropicModelCatalog
 import dev.pocketdeck.adapter.llm.OpenRouterDeckAdvisor
@@ -125,6 +126,7 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import java.io.File
 import java.time.Clock
 import java.util.Locale
 import javax.inject.Singleton
@@ -346,7 +348,24 @@ object AppModule {
     )
 
     @Provides
-    fun metaDecklistSource(client: HttpClient): MetaDecklistSource = LimitlessMetaDecklistSource(client)
+    @Singleton
+    fun metaDecklistSource(
+        client: HttpClient,
+        @ApplicationContext context: Context,
+    ): MetaDecklistSource {
+        val version =
+            context.packageManager
+                .getPackageInfo(context.packageName, 0)
+                .versionName
+                .orEmpty()
+        val settings =
+            LimitlessSettings(
+                // Says who is asking and where to reach the maker, as the API's etiquette asks.
+                userAgent = "PocketDeck/$version (+https://github.com/codeStev/PocketDeck)",
+                cacheDirectory = File(context.cacheDir, "limitless"),
+            )
+        return LimitlessMetaDecklistSource(client, settings)
+    }
 
     @Provides
     @Singleton

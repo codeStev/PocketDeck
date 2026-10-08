@@ -51,6 +51,7 @@ import dev.codestev.pocketdesign.icons.PdIcons
 import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
+import dev.pocketdeck.adapter.ui.thumbnailOf
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.scan.ReviewReason
 
@@ -364,7 +365,7 @@ private fun ReviewRow(
     PdCard(Modifier.fillMaxWidth(), contentPadding = PdSpacing.space3) {
         Row(horizontalArrangement = Arrangement.spacedBy(PdSpacing.space3)) {
             AsyncImage(
-                model = item.artworkUrl,
+                model = thumbnailOf(item.artworkUrl),
                 contentDescription = item.name,
                 contentScale = ContentScale.Crop,
                 modifier =
