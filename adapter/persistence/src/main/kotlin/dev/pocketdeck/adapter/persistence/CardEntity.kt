@@ -29,6 +29,8 @@ internal data class CardEntity(
     val effectText: String? = null,
     // Added in schema version 8: where the card can be obtained, see PackCodec; rows from version 7 have none until the next sync.
     val packs: String? = null,
+    // Added in schema version 9: the rarity code (see Rarity); rows from version 8 have none until the next sync.
+    val rarity: String? = null,
 )
 
 /** One game account. The first one (id 1) is created with the database and holds what existed before profiles. */

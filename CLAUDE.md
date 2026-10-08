@@ -219,6 +219,10 @@ New way of driving the app => new driving adapter calling inbound ports.
 - Branches and versions (`docs/BRANCHING.md`): `main` = released, `develop` = next release, features branch off `develop` and are
   squash-merged back by pull request; `develop` -> `main` is a merge commit; the owner tags `v<version>` and publishes the GitHub release by hand, which
   starts `.github/workflows/release.yml` (signed APK + SHA-256 attached). SemVer lives only in `version.properties` (the next release; develop CI builds add `-rc.N` via `-Ppocketdeck.rc`); `versionCode` is derived in `app/build.gradle.kts`.
+- Collection filters (`adapter/ui/collection`): `CollectionFilter` (search, owned only, sets, rarities, types, sort) is applied by
+  `CollectionListing`; groups are OR inside and AND between; `FilterOptions` lists only what the catalog has. The panel (`CollectionFilterPanel`) is a
+  `PdFullScreenPanel` opened from the "Filters" chip. `Card.rarity` (`Rarity`, dataset `rarityCode`) and `Card.set` (id prefix) come through
+  carddb and Room (schema 9, auto-migration); a catalog without any rarity is reloaded (`lacksCardDetails`).
 - Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).
 
 ## Design system (`:designsystem`, package `dev.codestev.pocketdesign`)

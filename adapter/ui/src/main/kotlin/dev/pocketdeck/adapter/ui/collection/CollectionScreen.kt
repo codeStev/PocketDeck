@@ -63,7 +63,7 @@ fun CollectionScreen(
         state = state,
         queryText = queryText,
         onQueryChange = viewModel::onQueryChange,
-        onOwnedOnlyChange = viewModel::onOwnedOnlyChange,
+        onFilterChange = viewModel::onFilterChange,
         onAdjust = viewModel::adjust,
         onSync = viewModel::sync,
         onOpenScan = onOpenScan,
@@ -75,7 +75,7 @@ internal fun CollectionContent(
     state: CollectionUiState,
     queryText: String,
     onQueryChange: (String) -> Unit,
-    onOwnedOnlyChange: (Boolean) -> Unit,
+    onFilterChange: (CollectionFilter) -> Unit,
     onAdjust: (CardId, Int) -> Unit,
     onSync: () -> Unit,
     onOpenScan: () -> Unit,
@@ -85,7 +85,7 @@ internal fun CollectionContent(
     state.items.firstOrNull { it.id.value == openId }?.let { CardDialog(it, onAdjust) { openId = null } }
     Column(Modifier.fillMaxSize().padding(horizontal = PdSpacing.space4)) {
         Title(state.sync, onSync)
-        Filters(state, queryText, onQueryChange, onOwnedOnlyChange)
+        Filters(state, queryText, onQueryChange, onFilterChange)
         SyncBanner(state.sync, onSync)
         if (state.totalOwned == 0 && state.catalogSize > 0 && state.sync == SyncState.Idle) EmptyHint(onOpenScan)
         when {
@@ -148,8 +148,10 @@ private fun Filters(
     state: CollectionUiState,
     queryText: String,
     onQueryChange: (String) -> Unit,
-    onOwnedOnlyChange: (Boolean) -> Unit,
+    onFilterChange: (CollectionFilter) -> Unit,
 ) {
+    var panelOpen by rememberSaveable { mutableStateOf(false) }
+    if (panelOpen) CollectionFilterPanel(state.filter, state.options, onFilterChange) { panelOpen = false }
     Column(verticalArrangement = Arrangement.spacedBy(PdSpacing.space2)) {
         PdTextField(
             queryText,
@@ -166,9 +168,10 @@ private fun Filters(
         ) {
             PdFilterChip(
                 stringResource(R.string.collection_owned_only),
-                state.ownedOnly,
-                onOwnedOnlyChange,
+                state.filter.ownedOnly,
+                { onFilterChange(state.filter.copy(ownedOnly = it)) },
             )
+            PdFilterChip(filtersLabel(state.filter.chosenCount), state.filter.chosenCount > 0, { panelOpen = true })
             Text(
                 stringResource(R.string.collection_stats, state.uniqueOwned, state.catalogSize, state.totalOwned),
                 style = PocketDesign.typography.bodySm,
@@ -177,6 +180,16 @@ private fun Filters(
         }
     }
 }
+
+@Composable
+private fun filtersLabel(chosen: Int) =
+    if (chosen ==
+        0
+    ) {
+        stringResource(R.string.collection_filters)
+    } else {
+        stringResource(R.string.collection_filters_count, chosen)
+    }
 
 @Composable
 private fun SyncBanner(

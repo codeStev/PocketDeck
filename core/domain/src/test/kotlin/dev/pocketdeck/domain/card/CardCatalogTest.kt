@@ -44,4 +44,18 @@ class CardCatalogTest {
 
         CardCatalog(listOf(bulbasaur, promo)).lacksCardDetails shouldBe false
     }
+
+    @Test
+    fun `a catalog stored before rarities existed has to be loaded again`() {
+        val withoutRarity = basicPokemon("Bulbasaur", id = "A1-001").copy(rarity = null)
+
+        CardCatalog(listOf(withoutRarity)).lacksCardDetails shouldBe true
+    }
+
+    @Test
+    fun `rarities are read from the dataset codes and ordered from common to crown`() {
+        Rarity.ofCode("RR") shouldBe Rarity.DOUBLE_RARE
+        Rarity.ofCode("nonsense") shouldBe null
+        (Rarity.COMMON < Rarity.CROWN) shouldBe true
+    }
 }

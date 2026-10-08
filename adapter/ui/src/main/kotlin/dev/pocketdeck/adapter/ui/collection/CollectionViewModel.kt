@@ -39,7 +39,8 @@ class CollectionViewModel(
     /** What the player has typed so far; updates immediately so the text field never lags behind the keyboard. */
     val queryText: StateFlow<String> = query
 
-    private val ownedOnly = MutableStateFlow(false)
+    // Everything the filter panel and the owned-only switch set; the search text is kept apart so typing never waits for it.
+    private val choices = MutableStateFlow(CollectionFilter())
     private val syncState = MutableStateFlow<SyncState>(SyncState.Idle)
 
     val state: StateFlow<CollectionUiState> =
@@ -47,17 +48,18 @@ class CollectionViewModel(
             observeCatalog(),
             observeCollection(),
             query,
-            ownedOnly,
+            choices,
             syncState,
-        ) { catalog, collection, q, owned, sync ->
-            val listing = CollectionListing.build(catalog, collection, q, owned, language)
+        ) { catalog, collection, q, chosen, sync ->
+            val filter = chosen.copy(query = q)
+            val listing = CollectionListing.build(catalog, collection, filter, language)
             CollectionUiState(
                 items = listing.items,
                 uniqueOwned = listing.uniqueOwned,
                 totalOwned = listing.totalOwned,
                 catalogSize = listing.catalogSize,
-                query = q,
-                ownedOnly = owned,
+                filter = filter,
+                options = listing.options,
                 sync = sync,
             )
         }.flowOn(listingDispatcher)
@@ -72,7 +74,7 @@ class CollectionViewModel(
 
     fun onQueryChange(newQuery: String) = query.update { newQuery }
 
-    fun onOwnedOnlyChange(enabled: Boolean) = ownedOnly.update { enabled }
+    fun onFilterChange(filter: CollectionFilter) = choices.update { filter.copy(query = "") }
 
     fun adjust(
         cardId: CardId,

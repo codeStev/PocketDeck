@@ -9,6 +9,7 @@ import dev.pocketdeck.domain.card.CardName
 import dev.pocketdeck.domain.card.EnergyType
 import dev.pocketdeck.domain.card.GameplayKey
 import dev.pocketdeck.domain.card.PokemonCard
+import dev.pocketdeck.domain.card.Rarity
 import dev.pocketdeck.domain.card.Stage
 import dev.pocketdeck.domain.card.TrainerCard
 import dev.pocketdeck.domain.card.TrainerKind
@@ -46,6 +47,7 @@ private fun MasterCardDto.toPokemon(): PokemonCard =
             attacks = attacks.map { Attack(it.name, it.cost, it.damage, it.effect) },
             ability = ability?.let { Ability(it.name, it.effect) },
             packs = packs,
+            rarity = Rarity.ofCode(rarityCode),
         )
     } catch (invalid: InvalidCardData) {
         throw invalid
@@ -64,6 +66,7 @@ private fun MasterCardDto.toTrainer() =
         gameEntityId = gameEntityId,
         effect = text,
         packs = packs,
+        rarity = Rarity.ofCode(rarityCode),
     )
 
 /** The player's game is usually German, so the German picture matches what they see in the game. */

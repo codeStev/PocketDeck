@@ -132,11 +132,11 @@ class CollectionViewModelTest {
             settled(viewModel).items.map { it.name } shouldBe listOf("Magmar")
 
             viewModel.onQueryChange("")
-            viewModel.onOwnedOnlyChange(true)
+            viewModel.onFilterChange(CollectionFilter(ownedOnly = true))
             val state = settled(viewModel)
             state.items.map { it.name } shouldBe listOf("Magmar")
-            state.query shouldBe ""
-            state.ownedOnly shouldBe true
+            state.filter.query shouldBe ""
+            state.filter.ownedOnly shouldBe true
         }
 
     @Test

@@ -6,6 +6,7 @@ import dev.pocketdeck.domain.card.CardName
 import dev.pocketdeck.domain.card.EnergyType
 import dev.pocketdeck.domain.card.GameplayKey
 import dev.pocketdeck.domain.card.PokemonCard
+import dev.pocketdeck.domain.card.Rarity
 import dev.pocketdeck.domain.card.Stage
 import dev.pocketdeck.domain.card.TrainerCard
 import dev.pocketdeck.domain.card.TrainerKind
@@ -31,6 +32,7 @@ fun basicPokemon(
     gameEntityId = entityIdOf(id),
     attacks = listOf(TACKLE),
     packs = packs,
+    rarity = Rarity.COMMON,
 )
 
 fun evolvedPokemon(
@@ -50,6 +52,7 @@ fun evolvedPokemon(
     gameEntityId = entityIdOf(id),
     attacks = listOf(TACKLE),
     packs = packs,
+    rarity = Rarity.COMMON,
 )
 
 fun trainer(
@@ -65,6 +68,7 @@ fun trainer(
     gameEntityId = entityIdOf(id),
     packs = packs,
     effect = effect,
+    rarity = Rarity.COMMON,
 )
 
 /** A stable stand-in for the number the game gives a card. */

@@ -35,6 +35,12 @@ sealed interface Card {
     /** Where the card can be obtained: the packs it is drawn from, or other sources such as missions. May be empty. */
     val packs: List<String>
 
+    /** How rare the card is; null when the dataset does not say. */
+    val rarity: Rarity?
+
+    /** The expansion the card belongs to, as the first part of its id (`a1`, `b2a`, `pa`). */
+    val set: String get() = id.value.substringBefore('-')
+
     fun nameIn(language: Language): CardName =
         when (language) {
             Language.ENGLISH -> name
@@ -57,6 +63,7 @@ data class PokemonCard(
     val attacks: List<Attack> = emptyList(),
     val ability: Ability? = null,
     override val packs: List<String> = emptyList(),
+    override val rarity: Rarity? = null,
 ) : Card {
     override val effectTexts: List<String> get() = attacks.mapNotNull { it.effect } + listOfNotNull(ability?.effect)
 
@@ -86,6 +93,7 @@ data class TrainerCard(
     /** What the card says; null when not known. */
     val effect: String? = null,
     override val packs: List<String> = emptyList(),
+    override val rarity: Rarity? = null,
 ) : Card {
     override val effectTexts: List<String> get() = listOfNotNull(effect)
 }

@@ -1,15 +1,21 @@
 package dev.pocketdeck.adapter.ui
 
 import androidx.compose.runtime.remember
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.pocketdeck.adapter.ui.collection.CardType
 import dev.pocketdeck.adapter.ui.collection.CollectionContent
+import dev.pocketdeck.adapter.ui.collection.CollectionFilter
+import dev.pocketdeck.adapter.ui.collection.CollectionSort
 import dev.pocketdeck.adapter.ui.collection.CollectionUiState
+import dev.pocketdeck.adapter.ui.collection.FilterOptions
 import dev.pocketdeck.adapter.ui.decks.DecksActions
 import dev.pocketdeck.adapter.ui.decks.DecksContent
 import dev.pocketdeck.adapter.ui.decks.DecksNotice
@@ -27,6 +33,8 @@ import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.exchange.ExportedFile
 import dev.pocketdeck.application.exchange.FileFormat
 import dev.pocketdeck.application.exchange.ImportFailure
+import dev.pocketdeck.domain.card.EnergyType
+import dev.pocketdeck.domain.card.Rarity
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
@@ -62,11 +70,11 @@ class ScreensTest {
 
     private fun collection(
         state: CollectionUiState,
-        onOwnedOnly: (Boolean) -> Unit = {},
+        onFilterChange: (CollectionFilter) -> Unit = {},
         onOpenScan: () -> Unit = {},
     ) = compose.setContent {
         PocketDeckTheme {
-            CollectionContent(state, "", {}, onOwnedOnly, { _, _ -> }, {}, onOpenScan)
+            CollectionContent(state, "", {}, onFilterChange, { _, _ -> }, {}, onOpenScan)
         }
     }
 
@@ -90,11 +98,37 @@ class ScreensTest {
     @Test
     fun collectionOwnedOnlyChipSwitchesTheFilter() {
         var ownedOnly: Boolean? = null
-        collection(emptyCollection, onOwnedOnly = { ownedOnly = it })
+        collection(emptyCollection, onFilterChange = { ownedOnly = it.ownedOnly })
 
         compose.onNodeWithText(string(R.string.collection_owned_only)).performClick()
 
         ownedOnly shouldBe true
+    }
+
+    @Test
+    fun collectionFilterPanelOffersSortRarityAndTypeAndReportsTheChoice() {
+        // The state here is fixed, so every tap reports what that one tap changes.
+        val reported = mutableListOf<CollectionFilter>()
+        collection(
+            emptyCollection.copy(
+                options =
+                    FilterOptions(
+                        sets = listOf("a1"),
+                        rarities = listOf(Rarity.COMMON),
+                        types = listOf(CardType.OfEnergy(EnergyType.GRASS)),
+                    ),
+            ),
+            onFilterChange = { reported += it },
+        )
+
+        compose.onNodeWithText(string(R.string.collection_filters)).performClick()
+        // "Rarity" is both a sort choice and the title of the rarity group.
+        compose.onAllNodesWithText(string(R.string.collection_filter_rarity)).assertCountEquals(2)
+        compose.onNodeWithText(string(R.string.rarity_common)).performClick()
+        compose.onNodeWithText(string(R.string.collection_sort_name)).performClick()
+
+        reported.map { it.rarities to it.sort } shouldBe
+            listOf(setOf(Rarity.COMMON) to CollectionSort.NUMBER, emptySet<Rarity>() to CollectionSort.NAME)
     }
 
     @Test
