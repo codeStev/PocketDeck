@@ -8,19 +8,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.codestev.pocketdesign.components.PdBanner
+import dev.codestev.pocketdesign.components.PdBannerKind
+import dev.codestev.pocketdesign.components.PdButton
+import dev.codestev.pocketdesign.components.PdButtonSize
+import dev.codestev.pocketdesign.components.PdButtonStyle
+import dev.codestev.pocketdesign.components.PdCard
+import dev.codestev.pocketdesign.components.PdSectionHeader
+import dev.codestev.pocketdesign.components.PdTextField
+import dev.codestev.pocketdesign.theme.PdSpacing
+import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
 import dev.pocketdeck.application.advice.AdvisorProvider
 
@@ -60,10 +64,15 @@ internal fun SettingsContent(
 ) {
     state.modelPicker?.let { ModelPickerDialog(it, state.form, actions) }
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PdSpacing.space4),
+        verticalArrangement = Arrangement.spacedBy(PdSpacing.space4),
     ) {
-        Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineSmall)
+        Text(
+            stringResource(R.string.settings_title),
+            style = PocketDesign.typography.titleLg,
+            color = PocketDesign.colors.ink,
+            modifier = Modifier.padding(top = PdSpacing.space2),
+        )
         LanguageSection()
         AiSection(state, actions)
     }
@@ -74,15 +83,24 @@ private fun AiSection(
     state: SettingsUiState,
     actions: SettingsActions,
 ) {
-    Text(stringResource(R.string.settings_ai_title), style = MaterialTheme.typography.titleLarge)
-    Text(stringResource(R.string.settings_ai_hint), style = MaterialTheme.typography.bodyMedium)
-    state.form.order.forEachIndexed { index, provider ->
-        ProviderCard(provider, state.form, index, actions)
+    Column(verticalArrangement = Arrangement.spacedBy(PdSpacing.space3)) {
+        PdSectionHeader(stringResource(R.string.settings_ai_title))
+        Text(
+            stringResource(R.string.settings_ai_hint),
+            style = PocketDesign.typography.body,
+            color = PocketDesign.colors.inkMuted,
+        )
+        state.form.order.forEachIndexed { index, provider ->
+            ProviderCard(provider, state.form, index, actions)
+        }
+        PdButton(
+            stringResource(R.string.settings_save),
+            actions.onSave,
+            Modifier.fillMaxWidth(),
+            enabled = state.changed,
+        )
+        if (state.justSaved) PdBanner(stringResource(R.string.settings_saved), kind = PdBannerKind.Success)
     }
-    Button(onClick = actions.onSave, enabled = state.changed, modifier = Modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.settings_save))
-    }
-    if (state.justSaved) Text(stringResource(R.string.settings_saved), color = MaterialTheme.colorScheme.primary)
 }
 
 @Composable
@@ -92,39 +110,57 @@ private fun ProviderCard(
     index: Int,
     actions: SettingsActions,
 ) {
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(provider.title()), style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(provider.hint()), style = MaterialTheme.typography.bodySmall)
-            OutlinedTextField(
+    PdCard(Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(PdSpacing.space3)) {
+            Text(
+                stringResource(provider.title()),
+                style = PocketDesign.typography.titleMd,
+                color = PocketDesign.colors.ink,
+            )
+            Text(
+                stringResource(provider.hint()),
+                style = PocketDesign.typography.bodySm,
+                color = PocketDesign.colors.inkMuted,
+            )
+            PdTextField(
                 value = form.keys[provider].orEmpty(),
                 onValueChange = { actions.onKeyChanged(provider, it) },
-                label = { Text(stringResource(R.string.settings_ai_key)) },
-                visualTransformation = PasswordVisualTransformation(),
-                singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
+                placeholder = stringResource(R.string.settings_ai_key),
+                visualTransformation = PasswordVisualTransformation(),
             )
-            OutlinedTextField(
+            PdTextField(
                 value = form.models[provider].orEmpty(),
                 onValueChange = { actions.onModelChanged(provider, it) },
-                label = { Text(stringResource(R.string.settings_ai_model)) },
-                placeholder = { Text(provider.defaultModel) },
-                supportingText = { Text(stringResource(R.string.settings_ai_model_hint)) },
-                singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
+                placeholder = provider.defaultModel,
+                supportingText = stringResource(R.string.settings_ai_model_hint),
             )
             if (provider == AdvisorProvider.OPENROUTER) {
-                TextButton(onClick = { actions.onOpenModelPicker(provider) }) {
-                    Text(stringResource(R.string.settings_ai_browse_models))
-                }
+                PdButton(
+                    stringResource(R.string.settings_ai_browse_models),
+                    { actions.onOpenModelPicker(provider) },
+                    Modifier.fillMaxWidth(),
+                    style = PdButtonStyle.Tonal,
+                )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = { actions.onMove(provider, -1) }, enabled = index > 0) {
-                    Text(stringResource(R.string.settings_ai_earlier))
-                }
-                TextButton(onClick = { actions.onMove(provider, 1) }, enabled = index < form.order.lastIndex) {
-                    Text(stringResource(R.string.settings_ai_later))
-                }
+            Row(horizontalArrangement = Arrangement.spacedBy(PdSpacing.space2)) {
+                PdButton(
+                    stringResource(R.string.settings_ai_earlier),
+                    { actions.onMove(provider, -1) },
+                    Modifier.weight(1f),
+                    style = PdButtonStyle.Secondary,
+                    size = PdButtonSize.Small,
+                    enabled = index > 0,
+                )
+                PdButton(
+                    stringResource(R.string.settings_ai_later),
+                    { actions.onMove(provider, 1) },
+                    Modifier.weight(1f),
+                    style = PdButtonStyle.Secondary,
+                    size = PdButtonSize.Small,
+                    enabled = index < form.order.lastIndex,
+                )
             }
         }
     }

@@ -4,14 +4,9 @@ import android.app.LocaleManager
 import android.os.Build
 import android.os.LocaleList
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,7 +15,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import dev.codestev.pocketdesign.components.PdSectionHeader
+import dev.codestev.pocketdesign.components.PdSegmentedTabs
+import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.pocketdeck.adapter.ui.R
 
 /**
@@ -46,22 +43,20 @@ private fun AppLanguagePicker() {
             ),
         )
     }
-    Text(stringResource(R.string.settings_language_title), style = MaterialTheme.typography.titleLarge)
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        AppLanguageChoice.entries.forEach { choice ->
-            FilterChip(
-                selected = selected == choice,
-                onClick = {
-                    selected = choice
-                    manager.applicationLocales =
-                        choice.tag?.let(LocaleList::forLanguageTags) ?: LocaleList.getEmptyLocaleList()
-                },
-                label = { Text(stringResource(choice.label())) },
-            )
-        }
+    val choices = AppLanguageChoice.entries
+    Column(verticalArrangement = Arrangement.spacedBy(PdSpacing.space3)) {
+        PdSectionHeader(stringResource(R.string.settings_language_title))
+        PdSegmentedTabs(
+            labels = choices.map { stringResource(it.label()) },
+            selectedIndex = choices.indexOf(selected),
+            onSelect = { index ->
+                val choice = choices[index]
+                selected = choice
+                manager.applicationLocales =
+                    choice.tag?.let(LocaleList::forLanguageTags) ?: LocaleList.getEmptyLocaleList()
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

@@ -202,7 +202,7 @@
     <string name="consent_agree">I understand, allow</string>
     <string name="consent_decline">No, I will scroll myself</string>
     <string name="settings_language_title">Language</string>
-    <string name="settings_language_system">Phone\'s language</string>
+    <string name="settings_language_system">Phone</string>
     <string name="settings_language_english">English</string>
     <string name="settings_language_german">Deutsch</string>
 

@@ -202,7 +202,7 @@
     <string name="consent_agree">Verstanden, erlauben</string>
     <string name="consent_decline">Nein, ich scrolle selbst</string>
     <string name="settings_language_title">Sprache</string>
-    <string name="settings_language_system">Sprache des Handys</string>
+    <string name="settings_language_system">Handy</string>
     <string name="settings_language_english">English</string>
     <string name="settings_language_german">Deutsch</string>
 
