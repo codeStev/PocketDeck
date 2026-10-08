@@ -11,6 +11,8 @@ import android.graphics.Typeface
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.scale
+import androidx.core.graphics.withClip
+import androidx.core.graphics.withRotation
 import dev.codestev.pocketdesign.brand.SignalBrand
 import java.io.File
 import java.io.IOException
@@ -133,10 +135,7 @@ private class DeckPainter(
     private fun band() {
         canvas ?: return
         canvas.drawRect(0f, 0f, WIDTH.toFloat(), BAND_HEIGHT, fill(style.soft))
-        canvas.save()
-        canvas.clipRect(0f, 0f, WIDTH.toFloat(), BAND_HEIGHT)
-        fan()
-        canvas.restore()
+        canvas.withClip(0f, 0f, WIDTH.toFloat(), BAND_HEIGHT) { fan() }
         wordmark()
     }
 
@@ -166,15 +165,11 @@ private class DeckPainter(
     ) {
         val width = height * CARD_ASPECT
         val rect = RectF(centreX - width / 2, bottom - height, centreX + width / 2, bottom)
-        canvas.save()
-        canvas.rotate(tilt, rect.centerX(), rect.bottom)
-        val clip = Path().apply { addRoundRect(rect, CORNER, CORNER, Path.Direction.CW) }
-        canvas.save()
-        canvas.clipPath(clip)
-        canvas.drawBitmap(bitmap.scale(width.toInt(), height.toInt(), true), rect.left, rect.top, null)
-        canvas.restore()
-        canvas.drawRoundRect(rect, CORNER, CORNER, stroke(style.strong, OUTLINE))
-        canvas.restore()
+        canvas.withRotation(tilt, rect.centerX(), rect.bottom) {
+            val clip = Path().apply { addRoundRect(rect, CORNER, CORNER, Path.Direction.CW) }
+            withClip(clip) { drawBitmap(bitmap.scale(width.toInt(), height.toInt(), true), rect.left, rect.top, null) }
+            drawRoundRect(rect, CORNER, CORNER, stroke(style.strong, OUTLINE))
+        }
     }
 
     /** "PocketDeck" in a pill of the brand's accent, top left of the band. */
