@@ -30,9 +30,13 @@ A pull request into `develop` or `main` must pass the CI workflow (`./gradlew ch
 4. On GitHub, create the release for that tag by hand (notes from `CHANGELOG.md`) and publish it.
 5. Publishing starts the release workflow: it checks that the tag matches `version.properties`, runs `./gradlew check`, signs the APK from
    the repository secrets and attaches the APK and its SHA-256 to the release.
+6. For a final release (not a pre-release) the workflow then adds the APK to the F-Droid repository on the `gh-pages` branch, rebuilds and
+   signs the index, and pushes it; GitHub Pages serves it at `https://codestev.github.io/PocketDeck/repo`. Nothing to do by hand.
 
 Repository secrets: `SIGNING_KEYSTORE_BASE64` (`base64 -w0 release.jks`), `SIGNING_STORE_PASSWORD`, `SIGNING_KEY_ALIAS`,
-`SIGNING_KEY_PASSWORD`. See `docs/RELEASE.md` for creating and backing up the key.
+`SIGNING_KEY_PASSWORD`; for F-Droid (`scripts/create-fdroid-key.sh`, a different key from the APK key, same password for store and key):
+`FDROID_KEYSTORE_BASE64`, `FDROID_KEYSTORE_PASSWORD`, `FDROID_KEY_ALIAS` (`pocketdeck-repo`). Back that key up too: users pin its fingerprint.
+GitHub Pages must be switched on for the `gh-pages` branch (a private repository needs a paid plan for that; a public one does not). See `docs/RELEASE.md` for creating and backing up the key.
 
 ## Repository settings (GitHub, set once)
 Default branch `develop`; protect `main` and `develop` (pull request required, status check `check` required, no force pushes);

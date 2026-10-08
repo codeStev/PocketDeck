@@ -1,0 +1,24 @@
+Categories:
+  - Games
+License: AGPL-3.0-or-later
+AuthorName: codeStev
+WebSite: https://github.com/codeStev/PocketDeck
+SourceCode: https://github.com/codeStev/PocketDeck
+IssueTracker: https://github.com/codeStev/PocketDeck/issues
+Changelog: https://github.com/codeStev/PocketDeck/blob/main/CHANGELOG.md
+
+AutoName: PocketDeck
+Summary: Companion for Pokémon TCG Pocket - scans your collection, suggests decks
+Description: |-
+  Unofficial companion for Pokémon TCG Pocket. Scans your collection from the screen, suggests competitive decks you can
+  build from the cards you own, builds decks with a heuristic or an AI of your choice, and shows opening odds.
+
+  Not affiliated with or endorsed by Nintendo, Creatures Inc., GAME FREAK inc. or The Pokémon Company. Pokémon and card
+  artwork are property of their owners.
+
+  The optional auto-scroll uses an accessibility service (gestures only, it never reads the screen).
+AntiFeatures:
+  NonFreeNet:
+    en-US: Uses Limitless TCG, TCGdex and, when you set it up, OpenRouter or Anthropic.
+  NonFreeAssets:
+    en-US: Card names and artwork belong to their owners.

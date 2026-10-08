@@ -58,3 +58,64 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber
+
+  fdroid:
+    # Final releases only: a pre-release must not reach the people who follow the repository.
+    if: ${{ !github.event.release.prerelease }}
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install fdroidserver
+      - name: Fetch the signed APK of this release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download "${{ github.event.release.tag_name }}" --pattern '*.apk' --dir new
+      - name: Check out the published repository (gh-pages)
+        run: |
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null; then
+            git fetch origin gh-pages
+            git worktree add pages FETCH_HEAD
+          else
+            git worktree add --detach pages
+            git -C pages checkout --orphan gh-pages
+            git -C pages rm -rf . >/dev/null
+          fi
+      - name: Add the APK and rebuild the index
+        env:
+          KEYSTORE_BASE64: ${{ secrets.FDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.FDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.FDROID_KEY_ALIAS }}
+        run: |
+          mkdir -p work/repo
+          cp -r pages/repo/. work/repo/ 2>/dev/null || true
+          cp new/*.apk work/repo/
+          cp -r fdroid/metadata work/metadata
+          echo "$KEYSTORE_BASE64" | base64 -d > work/keystore.jks
+          cat > work/config.yml <<CONFIG
+          repo_url: https://codestev.github.io/PocketDeck/repo
+          repo_name: PocketDeck
+          repo_description: Releases of PocketDeck, an unofficial companion for Pokémon TCG Pocket.
+          repo_keyalias: $KEY_ALIAS
+          keystore: keystore.jks
+          keystorepass: $KEYSTORE_PASSWORD
+          keypass: $KEYSTORE_PASSWORD
+          CONFIG
+          chmod 600 work/config.yml
+          (cd work && fdroid update)
+          mkdir -p pages/repo
+          rsync -a --delete work/repo/ pages/repo/
+          touch pages/.nojekyll
+      - name: Publish
+        run: |
+          cd pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "F-Droid repository: ${{ github.event.release.tag_name }}"
+          git push origin HEAD:gh-pages
