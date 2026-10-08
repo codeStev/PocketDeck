@@ -18,12 +18,10 @@ class DeckKindTest {
 
     @Test
     fun `a notice belongs to the tab whose action caused it`() {
-        listOf(DecksNotice.NOT_REACHABLE, DecksNotice.NO_DECKLISTS).forEach {
-            DeckKind.of(it) shouldBe
-                DeckKind.TOURNAMENT
-        }
+        val tournament = listOf(DecksNotice.NOT_REACHABLE, DecksNotice.RATE_LIMITED, DecksNotice.NO_DECKLISTS)
+        tournament.forEach { DeckKind.of(it) shouldBe DeckKind.TOURNAMENT }
         DecksNotice.entries
-            .filterNot { it == DecksNotice.NOT_REACHABLE || it == DecksNotice.NO_DECKLISTS }
+            .filterNot { it in tournament }
             .forEach { DeckKind.of(it) shouldBe DeckKind.GENERATED }
     }
 

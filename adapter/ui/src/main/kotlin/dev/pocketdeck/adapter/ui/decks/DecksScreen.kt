@@ -236,6 +236,7 @@ private fun noticeText(
     val more = detail.orEmpty()
     return when (notice) {
         DecksNotice.NOT_REACHABLE -> stringResource(R.string.decks_not_reachable)
+        DecksNotice.RATE_LIMITED -> stringResource(R.string.decks_rate_limited)
         DecksNotice.NO_DECKLISTS -> stringResource(R.string.decks_no_decklists)
         DecksNotice.BUILD_FAILED -> stringResource(R.string.decks_build_failed)
         DecksNotice.AI_NEEDS_KEY -> stringResource(R.string.decks_ai_needs_key)

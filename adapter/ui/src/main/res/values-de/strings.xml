@@ -76,6 +76,7 @@
     <string name="decks_refresh">Turnier-Decks aktualisieren</string>
     <string name="decks_refreshing">Turnier-Decks werden geladen…</string>
     <string name="decks_not_reachable">Turnier-Decks konnten nicht geladen werden. Prüfe deine Verbindung.</string>
+    <string name="decks_rate_limited">Die Turnier-Seite erlaubt nur wenige Anfragen in kurzer Zeit, und dieses Limit ist erreicht. Warte ein paar Minuten und aktualisiere dann erneut. Die vorhandenen Decks bleiben erhalten.</string>
     <string name="decks_no_decklists">Aktuell wurden keine Turnier-Decks gefunden.</string>
     <string name="decks_origin_meta">Turnier-Deck</string>
     <string name="decks_origin_heuristic">Für dich gebaut</string>

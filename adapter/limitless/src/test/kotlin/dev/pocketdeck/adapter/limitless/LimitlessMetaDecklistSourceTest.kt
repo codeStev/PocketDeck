@@ -100,6 +100,21 @@ class LimitlessMetaDecklistSourceTest {
         }
 
     @Test
+    fun `reports when the api limits the requests`() =
+        runTest {
+            val outcome =
+                source { request ->
+                    if (request.url.encodedPath.endsWith("/tournaments")) {
+                        json(tournaments)
+                    } else {
+                        respond("", HttpStatusCode.TooManyRequests)
+                    }
+                }.recentDecklists()
+
+            outcome shouldBe Outcome.Failure(MetaSourceFailure.RateLimited)
+        }
+
+    @Test
     fun `reports when no tournament has a decklist`() =
         runTest {
             val outcome =

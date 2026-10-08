@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 
 enum class DecksNotice {
     NOT_REACHABLE,
+    RATE_LIMITED,
     NO_DECKLISTS,
     BUILD_FAILED,
     AI_NEEDS_KEY,
@@ -302,6 +303,7 @@ class DecksViewModel(
     private fun MetaSourceFailure.toNotice() =
         when (this) {
             is MetaSourceFailure.NotReachable -> DecksNotice.NOT_REACHABLE
+            MetaSourceFailure.RateLimited -> DecksNotice.RATE_LIMITED
             MetaSourceFailure.NoDecklists -> DecksNotice.NO_DECKLISTS
         }
 

@@ -76,6 +76,7 @@
     <string name="decks_refresh">Refresh tournament decks</string>
     <string name="decks_refreshing">Loading tournament decks…</string>
     <string name="decks_not_reachable">Could not load tournament decks. Check your connection.</string>
+    <string name="decks_rate_limited">The tournament site allows only a few requests in a short time, and that limit is reached. Wait a few minutes, then refresh again. The decks you already have stay.</string>
     <string name="decks_no_decklists">No tournament decks found right now.</string>
     <string name="decks_origin_meta">Tournament deck</string>
     <string name="decks_origin_heuristic">Built for you</string>

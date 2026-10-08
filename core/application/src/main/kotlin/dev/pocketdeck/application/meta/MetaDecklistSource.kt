@@ -8,6 +8,9 @@ sealed interface MetaSourceFailure {
         val reason: String,
     ) : MetaSourceFailure
 
+    /** The source is limiting how often it is asked (HTTP 429); trying again a little later works. */
+    data object RateLimited : MetaSourceFailure
+
     /** The source answered, but with nothing that can be used as a decklist. */
     data object NoDecklists : MetaSourceFailure
 }

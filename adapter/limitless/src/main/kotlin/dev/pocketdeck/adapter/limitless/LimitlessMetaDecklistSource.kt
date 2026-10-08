@@ -8,6 +8,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
 import io.ktor.serialization.ContentConvertException
 import kotlinx.coroutines.CancellationException
@@ -47,6 +48,8 @@ class LimitlessMetaDecklistSource(
             notReachable(failure)
         } catch (failure: ContentConvertException) {
             notReachable(failure)
+        } catch (failure: RateLimitedResponse) {
+            Outcome.Failure(MetaSourceFailure.RateLimited)
         } catch (failure: UnsuccessfulResponse) {
             notReachable(failure)
         }
@@ -74,9 +77,13 @@ class LimitlessMetaDecklistSource(
         crossinline configure: io.ktor.client.request.HttpRequestBuilder.() -> Unit,
     ): T {
         val response = client.get("$baseUrl/$path") { configure() }
+        // Not swallowed per tournament: a limit hit means every further request fails too, and the player should hear why.
+        if (response.status == HttpStatusCode.TooManyRequests) throw RateLimitedResponse()
         if (!response.status.isSuccess()) throw UnsuccessfulResponse("$path answered ${response.status}")
         return response.body()
     }
+
+    private class RateLimitedResponse : Exception("rate limited")
 
     private class UnsuccessfulResponse(
         message: String,
