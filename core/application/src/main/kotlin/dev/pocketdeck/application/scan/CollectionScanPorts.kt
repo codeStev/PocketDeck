@@ -17,11 +17,19 @@ data class ScanProgress(
     /** Cards whose identity or count is still uncertain; the player will be asked about them afterwards. */
     val cardsNeedingReview: Int,
     val breakdown: ReviewBreakdown = ReviewBreakdown.NONE,
+    /** The last frames showed no card at all: the game is probably not on its card list. */
+    val screenLooksWrong: Boolean = false,
 ) {
     companion object {
         fun of(session: ScanSession): ScanProgress {
             val breakdown = session.breakdown()
-            return ScanProgress(session.framesProcessed, session.distinctCards, breakdown.total, breakdown)
+            return ScanProgress(
+                session.framesProcessed,
+                session.distinctCards,
+                breakdown.total,
+                breakdown,
+                session.screenLooksWrong,
+            )
         }
     }
 }

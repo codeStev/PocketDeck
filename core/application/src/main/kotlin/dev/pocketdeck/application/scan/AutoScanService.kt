@@ -64,6 +64,7 @@ class AutoScanService(
     }
 
     override suspend fun invoke(): Outcome<AutoScanSummary, AutoScanFailure> {
+        if (!showsCardGrid()) return Outcome.Failure(AutoScanFailure.NotOnCardList)
         rewindToTop()?.let { return Outcome.Failure(it) }
         var screens = 0
         var pages = 0
@@ -93,6 +94,22 @@ class AutoScanService(
             if (!scroller.perform(gesture.first)) return Outcome.Failure(AutoScanFailure.GestureUnavailable)
             delay(settings.afterScrollMillis)
         }
+    }
+
+    /**
+     * Looks for the card grid for a moment (the list may still be loading) before the first swipe. The locator alone is not
+     * trusted to say "no": it may miss a real grid (the scan then swipes by a default distance), so when it finds nothing the
+     * recognizer gets the picture too, and only a picture without one recognised card counts as the wrong screen.
+     */
+    private suspend fun showsCardGrid(): Boolean {
+        repeat(settings.gridLookPolls) {
+            val frame = awaitFrame()
+            if (locator.locate(frame) != null) return true
+            val analysis = submit(frame)
+            if (analysis is Outcome.Success && analysis.value.tilesRecognized > 0) return true
+            delay(settings.pollMillis)
+        }
+        return false
     }
 
     /**
@@ -277,10 +294,15 @@ class ManualScanService(
 ) : RunManualScan {
     override suspend fun invoke() {
         var last: ScreenFrame? = null
+        var lastShowedCards = true
         while (true) {
             val frame = capturer.latestFrame()
-            if (frame != null && (last == null || !frame.looksLike(last))) {
-                if (submit(frame) is Outcome.Failure) return
+            // A picture without cards is looked at again even when it does not change: that is how a still wrong screen
+            // (the home screen, another game menu) is told from a list that is just resting.
+            if (frame != null && (last == null || !frame.looksLike(last) || !lastShowedCards)) {
+                val analysis = submit(frame)
+                if (analysis !is Outcome.Success) return
+                lastShowedCards = analysis.value.tilesRecognized > 0
                 last = frame
             }
             delay(settings.pollMillis)

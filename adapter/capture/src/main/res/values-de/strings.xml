@@ -7,5 +7,6 @@
     <string name="accessibility_label">PocketDeck Auto-Scroll</string>
     <string name="accessibility_description">Lässt PocketDeck die Kartenliste in Pokémon TCG Pocket selbst scrollen, während es deine Sammlung scannt. Es führt nur Wischgesten aus und liest nichts vom Bildschirm.</string>
     <string name="scan_auto_unavailable">Auto-Scroll ist aus. Schalte es in den Bedienungshilfen ein.</string>
+    <string name="scan_wrong_screen">Öffne im Spiel „Meine Karten“ (3 Karten pro Reihe), um zu scannen.</string>
     <string name="scan_auto_too_long">Gestoppt: Die Liste ist länger als erwartet.</string>
 </resources>

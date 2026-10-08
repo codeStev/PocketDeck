@@ -21,6 +21,7 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.IntentCompat
 import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.scan.AutoScanFailure
+import dev.pocketdeck.application.scan.ScanProgress
 import dev.pocketdeck.application.scan.ScreenCapturer
 import dev.pocketdeck.application.scan.ScreenFrame
 import kotlinx.coroutines.CancellationException
@@ -84,7 +85,7 @@ class ScanCaptureService : Service() {
         overlay = ScanOverlay(this, onStop = { finish(openReview = true) }).also(ScanOverlay::show)
         scope.launch {
             dependencies.observeScanProgress().collect { progress ->
-                overlay?.update(ProgressText.of(progress, automatic))
+                overlay?.update(overlayText(progress))
                 if (progress != null &&
                     progress.framesProcessed % LOG_EVERY_FRAMES == 0
                 ) {
@@ -147,10 +148,20 @@ class ScanCaptureService : Service() {
         }
     }
 
+    private fun overlayText(progress: ScanProgress?) =
+        if (progress?.screenLooksWrong ==
+            true
+        ) {
+            getString(R.string.scan_wrong_screen)
+        } else {
+            ProgressText.of(progress, automatic)
+        }
+
     private suspend fun endAutomaticScan(reason: AutoScanFailure) {
         when (reason) {
             AutoScanFailure.GestureUnavailable -> overlay?.update(getString(R.string.scan_auto_unavailable))
             AutoScanFailure.TooManyScreens -> overlay?.update(getString(R.string.scan_auto_too_long))
+            AutoScanFailure.NotOnCardList -> overlay?.update(getString(R.string.scan_wrong_screen))
             AutoScanFailure.ScanNotRunning -> Unit
         }
         if (reason != AutoScanFailure.ScanNotRunning) delay(FAILURE_NOTICE_MILLIS)
