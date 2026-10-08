@@ -11,6 +11,9 @@
     <string name="collection_filter_rarity">Rarity</string>
     <string name="collection_filter_type">Type</string>
     <string name="collection_filter_clear">Clear all</string>
+    <string name="collection_filter_order">Order</string>
+    <string name="collection_order_ascending">Ascending</string>
+    <string name="collection_order_descending">Descending</string>
     <string name="collection_sort_number">Number</string>
     <string name="collection_sort_name">Name</string>
     <string name="collection_sort_copies">Copies owned</string>

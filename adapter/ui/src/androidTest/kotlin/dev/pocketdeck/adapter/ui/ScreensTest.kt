@@ -126,9 +126,14 @@ class ScreensTest {
         compose.onAllNodesWithText(string(R.string.collection_filter_rarity)).assertCountEquals(2)
         compose.onNodeWithText(string(R.string.rarity_common)).performClick()
         compose.onNodeWithText(string(R.string.collection_sort_name)).performClick()
+        compose.onNodeWithText(string(R.string.collection_order_descending)).performClick()
 
-        reported.map { it.rarities to it.sort } shouldBe
-            listOf(setOf(Rarity.COMMON) to CollectionSort.NUMBER, emptySet<Rarity>() to CollectionSort.NAME)
+        reported.map { Triple(it.rarities, it.sort, it.descending) } shouldBe
+            listOf(
+                Triple(setOf(Rarity.COMMON), CollectionSort.NUMBER, false),
+                Triple(emptySet<Rarity>(), CollectionSort.NAME, false),
+                Triple(emptySet<Rarity>(), CollectionSort.NUMBER, true),
+            )
     }
 
     @Test

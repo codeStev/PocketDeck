@@ -58,12 +58,47 @@ class CollectionFilterTest {
     }
 
     @Test
-    fun `sorts by name, by copies owned and by rarity with the rarest first`() {
+    fun `sorts ascending by name, by copies owned and by rarity`() {
         names(CollectionFilter(sort = CollectionSort.NAME)) shouldBe
             listOf("Bulbasaur", "Charizard ex", "Mew", "Poké Ball", "Unknown")
-        names(CollectionFilter(sort = CollectionSort.COPIES)).take(2) shouldBe listOf("Bulbasaur", "Mew")
+        names(CollectionFilter(sort = CollectionSort.COPIES)) shouldBe
+            listOf("Charizard ex", "Poké Ball", "Unknown", "Mew", "Bulbasaur")
+        // The most common first; a card of unknown rarity comes last whichever way the list runs.
         names(CollectionFilter(sort = CollectionSort.RARITY)) shouldBe
+            listOf("Bulbasaur", "Poké Ball", "Charizard ex", "Mew", "Unknown")
+    }
+
+    @Test
+    fun `sorts descending by name, by copies owned and by rarity`() {
+        names(CollectionFilter(sort = CollectionSort.NAME, descending = true)) shouldBe
+            listOf("Unknown", "Poké Ball", "Mew", "Charizard ex", "Bulbasaur")
+        names(CollectionFilter(sort = CollectionSort.COPIES, descending = true)) shouldBe
+            listOf("Bulbasaur", "Mew", "Charizard ex", "Poké Ball", "Unknown")
+        names(CollectionFilter(sort = CollectionSort.RARITY, descending = true)) shouldBe
             listOf("Mew", "Charizard ex", "Poké Ball", "Bulbasaur", "Unknown")
+    }
+
+    @Test
+    fun `cards that tie keep catalog order in both directions`() {
+        // Charizard ex, Poké Ball and Unknown own nothing.
+        names(CollectionFilter(sort = CollectionSort.COPIES)).take(3) shouldBe
+            listOf("Charizard ex", "Poké Ball", "Unknown")
+        names(CollectionFilter(sort = CollectionSort.COPIES, descending = true)).takeLast(3) shouldBe
+            listOf("Charizard ex", "Poké Ball", "Unknown")
+    }
+
+    @Test
+    fun `the number order runs backwards when descending`() {
+        names(CollectionFilter(descending = true)) shouldBe
+            listOf("Unknown", "Poké Ball", "Mew", "Charizard ex", "Bulbasaur")
+    }
+
+    @Test
+    fun `picking another sort starts in the direction that suits it, picking the same one keeps the choice`() {
+        val byCopies = CollectionFilter().sortedBy(CollectionSort.COPIES)
+        byCopies.descending shouldBe true
+        CollectionFilter(descending = true).sortedBy(CollectionSort.NAME).descending shouldBe false
+        byCopies.copy(descending = false).sortedBy(CollectionSort.COPIES).descending shouldBe false
     }
 
     @Test

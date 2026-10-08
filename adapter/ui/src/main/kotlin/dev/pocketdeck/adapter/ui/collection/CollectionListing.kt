@@ -36,11 +36,8 @@ data class CollectionListing(
             return CollectionListing(
                 items =
                     shown
-                        .sortedBy(
-                            filter.sort,
-                            collection,
-                            language,
-                        ).map { it.toItem(collection.copiesOf(it.id), language) },
+                        .sortedBy(filter, collection, language)
+                        .map { it.toItem(collection.copiesOf(it.id), language) },
                 uniqueOwned = owned.size,
                 totalOwned = owned.sumOf { collection.copiesOf(it.id) },
                 catalogSize = catalog.size,
@@ -48,22 +45,33 @@ data class CollectionListing(
             )
         }
 
-        /** Every sort is stable, so cards that tie stay in catalog order. */
+        /** Every sort is stable, so cards that tie stay in catalog order, whichever way the list runs. */
         private fun List<Card>.sortedBy(
-            sort: CollectionSort,
+            filter: CollectionFilter,
             collection: CardCollection,
             language: Language,
-        ): List<Card> =
-            when (sort) {
-                CollectionSort.NUMBER -> this
+        ): List<Card> {
+            val ascending: Comparator<Card> =
+                when (filter.sort) {
+                    CollectionSort.NUMBER -> Comparator { _, _ -> 0 }
+                    CollectionSort.NAME -> compareBy { it.nameIn(language).value.lowercase() }
+                    CollectionSort.COPIES -> compareBy { collection.copiesOf(it.id) }
+                    CollectionSort.RARITY -> compareBy { it.rarity?.ordinal ?: 0 }
+                }
+            if (filter.sort == CollectionSort.RARITY) return sortedByRarity(ascending, filter.descending)
+            if (!filter.descending) return sortedWith(ascending)
+            // The number order has no key to reverse: its descending list is the catalog read backwards.
+            return if (filter.sort == CollectionSort.NUMBER) reversed() else sortedWith(ascending.reversed())
+        }
 
-                CollectionSort.NAME -> sortedBy { it.nameIn(language).value.lowercase() }
-
-                CollectionSort.COPIES -> sortedByDescending { collection.copiesOf(it.id) }
-
-                // Cards without a known rarity come last.
-                CollectionSort.RARITY -> sortedByDescending { it.rarity?.ordinal ?: -1 }
-            }
+        /** Cards without a known rarity come last in both directions. */
+        private fun List<Card>.sortedByRarity(
+            ascending: Comparator<Card>,
+            descending: Boolean,
+        ): List<Card> {
+            val (known, unknown) = partition { it.rarity != null }
+            return known.sortedWith(if (descending) ascending.reversed() else ascending) + unknown
+        }
 
         private fun optionsOf(catalog: CardCatalog) =
             FilterOptions(

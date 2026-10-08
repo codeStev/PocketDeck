@@ -11,6 +11,9 @@
     <string name="collection_filter_rarity">Seltenheit</string>
     <string name="collection_filter_type">Typ</string>
     <string name="collection_filter_clear">Alle zurücksetzen</string>
+    <string name="collection_filter_order">Reihenfolge</string>
+    <string name="collection_order_ascending">Aufsteigend</string>
+    <string name="collection_order_descending">Absteigend</string>
     <string name="collection_sort_number">Nummer</string>
     <string name="collection_sort_name">Name</string>
     <string name="collection_sort_copies">Besitzanzahl</string>

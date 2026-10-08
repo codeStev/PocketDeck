@@ -79,8 +79,16 @@ private fun SortChoices(
 ) {
     Section(R.string.collection_filter_sort) {
         CollectionSort.entries.forEach { sort ->
-            PdFilterChip(stringResource(sort.label()), filter.sort == sort, { onChange(filter.copy(sort = sort)) })
+            PdFilterChip(stringResource(sort.label()), filter.sort == sort, { onChange(filter.sortedBy(sort)) })
         }
+    }
+    Section(R.string.collection_filter_order) {
+        PdFilterChip(stringResource(R.string.collection_order_ascending), !filter.descending, {
+            onChange(filter.copy(descending = false))
+        })
+        PdFilterChip(stringResource(R.string.collection_order_descending), filter.descending, {
+            onChange(filter.copy(descending = true))
+        })
     }
 }
 
