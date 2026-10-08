@@ -67,6 +67,20 @@ class MasterCatalogSourceTest {
         }
 
     @Test
+    fun `carries the packs a card can be obtained from`() =
+        runTest {
+            cards().getValue("a1-001").packs shouldBe listOf("Mewtwo")
+            cards().getValue("a1-219").packs shouldBe listOf("Charizard")
+        }
+
+    @Test
+    fun `a card without packs in the dataset has none`() =
+        runTest {
+            val json = sample.replaceFirst(Regex("\"packs\": \\[\\s*\"Mewtwo\"\\s*],"), "")
+            cards(json).getValue("a1-001").packs shouldBe emptyList()
+        }
+
+    @Test
     fun `carries the attacks of a pokemon with their cost damage and effect`() =
         runTest {
             val vineWhip = (cards().getValue("a1-001") as PokemonCard).attacks.single()

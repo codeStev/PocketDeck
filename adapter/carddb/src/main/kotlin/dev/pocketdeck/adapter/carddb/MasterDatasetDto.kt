@@ -23,6 +23,8 @@ internal data class MasterCardDto(
     val retreatCost: Int? = null,
     val trainerKind: String? = null,
     val gameEntityId: Int? = null,
+    /** The packs (or other sources, such as missions) the card can be obtained from. */
+    val packs: List<String> = emptyList(),
     val attacks: List<AttackDto> = emptyList(),
     val ability: AbilityDto? = null,
     /** The effect text of a trainer card. */

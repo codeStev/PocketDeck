@@ -12,11 +12,15 @@ import dev.pocketdeck.domain.card.TrainerKind
 
 private val TACKLE = Attack("Tackle", "C", 20, null)
 
+/** Real cards all come from somewhere; a catalog where no card has a pack counts as stored by an older version. */
+const val TEST_PACK = "Test Pack"
+
 fun basicPokemon(
     name: String,
     id: String = "T-$name",
     energyType: EnergyType = EnergyType.FIRE,
     gameplayKey: GameplayKey = GameplayKey.of(CardName(name)),
+    packs: List<String> = listOf(TEST_PACK),
 ) = PokemonCard(
     id = CardId(id),
     name = CardName(name),
@@ -26,6 +30,7 @@ fun basicPokemon(
     gameplayKey = gameplayKey,
     gameEntityId = entityIdOf(id),
     attacks = listOf(TACKLE),
+    packs = packs,
 )
 
 fun evolvedPokemon(
@@ -34,6 +39,7 @@ fun evolvedPokemon(
     stage: Stage = Stage.STAGE_1,
     id: String = "T-$name",
     energyType: EnergyType = EnergyType.FIRE,
+    packs: List<String> = listOf(TEST_PACK),
 ) = PokemonCard(
     id = CardId(id),
     name = CardName(name),
@@ -43,13 +49,23 @@ fun evolvedPokemon(
     evolvesFrom = CardName(evolvesFrom),
     gameEntityId = entityIdOf(id),
     attacks = listOf(TACKLE),
+    packs = packs,
 )
 
 fun trainer(
     name: String,
     kind: TrainerKind = TrainerKind.ITEM,
     id: String = "T-$name",
-) = TrainerCard(id = CardId(id), name = CardName(name), kind = kind, gameEntityId = entityIdOf(id))
+    packs: List<String> = listOf(TEST_PACK),
+    effect: String? = null,
+) = TrainerCard(
+    id = CardId(id),
+    name = CardName(name),
+    kind = kind,
+    gameEntityId = entityIdOf(id),
+    packs = packs,
+    effect = effect,
+)
 
 /** A stable stand-in for the number the game gives a card. */
 private fun entityIdOf(id: String) = (id.hashCode() and 0xFFFFF) + 1

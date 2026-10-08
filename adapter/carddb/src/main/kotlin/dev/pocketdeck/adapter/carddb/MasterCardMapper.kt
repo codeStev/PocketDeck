@@ -45,6 +45,7 @@ private fun MasterCardDto.toPokemon(): PokemonCard =
             gameEntityId = gameEntityId,
             attacks = attacks.map { Attack(it.name, it.cost, it.damage, it.effect) },
             ability = ability?.let { Ability(it.name, it.effect) },
+            packs = packs,
         )
     } catch (invalid: InvalidCardData) {
         throw invalid
@@ -62,6 +63,7 @@ private fun MasterCardDto.toTrainer() =
         germanName = CardName(names.de),
         gameEntityId = gameEntityId,
         effect = text,
+        packs = packs,
     )
 
 /** The player's game is usually German, so the German picture matches what they see in the game. */

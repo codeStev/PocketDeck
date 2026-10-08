@@ -74,6 +74,9 @@ class MigrationTest {
                 catalog.cards
                     .single()
                     .germanName.value shouldBe "Charizard ex"
+                // Rows from before packs existed have none, which makes the catalog load again on the next start.
+                catalog.cards.single().packs shouldBe emptyList()
+                catalog.lacksCardDetails shouldBe true
             } finally {
                 database.close()
             }

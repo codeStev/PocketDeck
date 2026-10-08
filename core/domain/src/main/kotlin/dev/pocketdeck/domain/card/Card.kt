@@ -32,6 +32,9 @@ sealed interface Card {
     /** The texts of everything this card does, in English as the dataset has them. */
     val effectTexts: List<String>
 
+    /** Where the card can be obtained: the packs it is drawn from, or other sources such as missions. May be empty. */
+    val packs: List<String>
+
     fun nameIn(language: Language): CardName =
         when (language) {
             Language.ENGLISH -> name
@@ -53,6 +56,7 @@ data class PokemonCard(
     override val gameEntityId: Int? = null,
     val attacks: List<Attack> = emptyList(),
     val ability: Ability? = null,
+    override val packs: List<String> = emptyList(),
 ) : Card {
     override val effectTexts: List<String> get() = attacks.mapNotNull { it.effect } + listOfNotNull(ability?.effect)
 
@@ -81,6 +85,7 @@ data class TrainerCard(
     override val gameEntityId: Int? = null,
     /** What the card says; null when not known. */
     val effect: String? = null,
+    override val packs: List<String> = emptyList(),
 ) : Card {
     override val effectTexts: List<String> get() = listOfNotNull(effect)
 }

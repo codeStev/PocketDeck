@@ -50,6 +50,7 @@ private fun Card.baseEntity(kind: String) =
         retreatCost = null,
         trainerKind = null,
         gameEntityId = gameEntityId,
+        packs = PackCodec.encode(packs),
     )
 
 /** Throws [IllegalStateException] for rows this app version cannot have written (corrupt or newer database). */
@@ -75,6 +76,7 @@ private fun CardEntity.toPokemon() =
         gameEntityId = gameEntityId,
         attacks = AttackCodec.decode(attacks),
         ability = abilityName?.let { Ability(it, abilityEffect.orEmpty()) },
+        packs = PackCodec.decode(packs),
     )
 
 private fun CardEntity.toTrainer() =
@@ -87,6 +89,7 @@ private fun CardEntity.toTrainer() =
         germanName = germanNameOrEnglish(),
         gameEntityId = gameEntityId,
         effect = effectText,
+        packs = PackCodec.decode(packs),
     )
 
 private fun CardEntity.germanNameOrEnglish() = CardName(germanName.ifBlank { name })

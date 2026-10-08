@@ -28,4 +28,20 @@ class CardCatalogTest {
         CardCatalog(listOf(bulbasaur, ivysaur)).size shouldBe 2
         CardCatalog.EMPTY.size shouldBe 0
     }
+
+    @Test
+    fun `a catalog stored before packs existed has to be loaded again`() {
+        val withoutPacks = basicPokemon("Bulbasaur", id = "A1-001", packs = emptyList())
+
+        CardCatalog(listOf(withoutPacks)).lacksCardDetails shouldBe true
+        CardCatalog(listOf(bulbasaur)).lacksCardDetails shouldBe false
+        CardCatalog.EMPTY.lacksCardDetails shouldBe false
+    }
+
+    @Test
+    fun `one card without a pack is fine as long as others have one`() {
+        val promo = basicPokemon("Pikachu", id = "P-A-001", packs = emptyList())
+
+        CardCatalog(listOf(bulbasaur, promo)).lacksCardDetails shouldBe false
+    }
 }

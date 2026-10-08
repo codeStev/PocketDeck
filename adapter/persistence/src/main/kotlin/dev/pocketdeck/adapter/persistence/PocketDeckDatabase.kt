@@ -15,13 +15,14 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
         ProfileEntity::class,
         SavedDeckEntity::class,
     ],
-    version = 7,
+    version = 8,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 6, to = 7),
+        AutoMigration(from = 7, to = 8),
     ],
 )
 internal abstract class PocketDeckDatabase : RoomDatabase() {

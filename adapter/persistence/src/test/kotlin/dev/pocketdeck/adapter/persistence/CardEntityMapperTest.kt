@@ -36,6 +36,7 @@ class CardEntityMapperTest {
                     Attack("Claw", "C", null, null),
                 ),
             ability = Ability("Blaze", "Once during your turn, you may attach a [R] Energy."),
+            packs = listOf("Charizard", "Premium Missions"),
         )
     private val bulbasaur: Card =
         PokemonCard(CardId("a1-001"), CardName("Bulbasaur"), EnergyType.GRASS, Stage.BASIC, hp = 70)
@@ -46,6 +47,7 @@ class CardEntityMapperTest {
             TrainerKind.SUPPORTER,
             GameplayKey("Giovanni#x"),
             gameEntityId = 230,
+            packs = listOf("Mewtwo"),
         )
 
     @Test
@@ -53,6 +55,13 @@ class CardEntityMapperTest {
         listOf(charizard, bulbasaur, giovanni).forEach { card ->
             card.toEntity().toDomain() shouldBe card
         }
+    }
+
+    @Test
+    fun `the packs of a card are kept in order and a card without packs has none`() {
+        charizard.toEntity().toDomain().packs shouldBe listOf("Charizard", "Premium Missions")
+        bulbasaur.toEntity().packs shouldBe null
+        bulbasaur.toEntity().toDomain().packs shouldBe emptyList()
     }
 
     @Test
