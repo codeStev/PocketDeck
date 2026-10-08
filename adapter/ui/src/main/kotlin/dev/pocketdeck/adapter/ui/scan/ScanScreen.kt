@@ -142,7 +142,7 @@ private fun Instructions(
         }
         if (state.automatic) {
             val hint = if (autoScrollEnabled) R.string.scan_automatic_on else R.string.scan_automatic_needs_service
-            Text(stringResource(hint), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         val steps =
             if (state.automatic) {

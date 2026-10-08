@@ -109,6 +109,7 @@ private fun ProviderCard(
                 onValueChange = { actions.onModelChanged(provider, it) },
                 label = { Text(stringResource(R.string.settings_ai_model)) },
                 placeholder = { Text(provider.defaultModel) },
+                supportingText = { Text(stringResource(R.string.settings_ai_model_hint)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )

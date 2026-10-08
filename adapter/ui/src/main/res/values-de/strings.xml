@@ -152,7 +152,8 @@
     <string name="settings_ai_provider_openrouter">OpenRouter</string>
     <string name="settings_ai_provider_openrouter_hint">Ein Schlüssel für viele Modelle, einige kostenlos (mit niedrigen Limits, oft ausgelastet). Schlüssel von openrouter.ai.</string>
     <string name="settings_ai_key">API-Schlüssel</string>
-    <string name="settings_ai_model">Modell (leer = Standard; mehrere, durch Komma getrennt, werden nacheinander versucht)</string>
+    <string name="settings_ai_model">Modell</string>
+    <string name="settings_ai_model_hint">Leer = Standard. Mehrere, durch Komma getrennt, werden nacheinander versucht.</string>
     <string name="settings_ai_earlier">Früher fragen</string>
     <string name="settings_ai_later">Später fragen</string>
     <string name="settings_save">Speichern</string>

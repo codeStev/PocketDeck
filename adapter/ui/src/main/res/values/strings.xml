@@ -152,7 +152,8 @@
     <string name="settings_ai_provider_openrouter">OpenRouter</string>
     <string name="settings_ai_provider_openrouter_hint">One key for many models, some free (their limits are low and they may be busy). Key from openrouter.ai.</string>
     <string name="settings_ai_key">API key</string>
-    <string name="settings_ai_model">Model (empty = default; several, separated by commas, are tried in order)</string>
+    <string name="settings_ai_model">Model</string>
+    <string name="settings_ai_model_hint">Empty = default. Several, separated by commas, are tried in order.</string>
     <string name="settings_ai_earlier">Ask earlier</string>
     <string name="settings_ai_later">Ask later</string>
     <string name="settings_save">Save</string>
