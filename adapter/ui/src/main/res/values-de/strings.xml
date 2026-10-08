@@ -3,7 +3,7 @@
     <string name="collection_title">Meine Sammlung</string>
     <string name="collection_stats">Verschiedene: %1$d / %2$d · Karten insgesamt: %3$d</string>
     <string name="collection_search_hint">Karten suchen</string>
-    <string name="collection_owned_only">Nur vorhandene</string>
+    <string name="collection_owned_only">Nur in Besitz</string>
     <string name="collection_sync">Kartendatenbank neu laden</string>
     <string name="collection_syncing">Kartendatenbank wird geladen…</string>
     <string name="collection_sync_unreachable">Die Kartendatenbank konnte nicht geladen werden: %1$s</string>
@@ -30,6 +30,11 @@
     <string name="trainer_supporter">Unterstützer</string>
     <string name="trainer_tool">Pokémon-Ausrüstung</string>
     <string name="trainer_stadium">Stadion</string>
+    <string name="collection_done">Fertig</string>
+    <plurals name="collection_tile_owned">
+        <item quantity="one">%1$s, %2$d Exemplar</item>
+        <item quantity="other">%1$s, %2$d Exemplare</item>
+    </plurals>
     <string name="collection_copies">×%1$d</string>
     <string name="tab_collection">Sammlung</string>
     <string name="tab_scan">Scannen</string>

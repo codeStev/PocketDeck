@@ -3,49 +3,51 @@ package dev.pocketdeck.adapter.ui.collection
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import dev.codestev.pocketdesign.components.PdArtTile
+import dev.codestev.pocketdesign.components.PdBanner
+import dev.codestev.pocketdesign.components.PdBannerKind
+import dev.codestev.pocketdesign.components.PdDialog
+import dev.codestev.pocketdesign.components.PdFilterChip
+import dev.codestev.pocketdesign.components.PdIconButton
+import dev.codestev.pocketdesign.components.PdSpinner
+import dev.codestev.pocketdesign.components.PdStepper
+import dev.codestev.pocketdesign.components.PdTextField
+import dev.codestev.pocketdesign.icons.PdIcons
+import dev.codestev.pocketdesign.theme.PdSpacing
+import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
+import dev.pocketdeck.adapter.ui.theme.tintKey
 import dev.pocketdeck.application.catalog.CatalogSyncFailure
 import dev.pocketdeck.domain.card.CardId
+import dev.pocketdeck.domain.card.EnergyType
 
-private const val CARD_ASPECT_RATIO = 0.716f
-private const val UNOWNED_ALPHA = 0.35f
-private const val DETAIL_LINES = 2
+private const val GRID_COLUMNS = 3
+private const val MAX_COPIES = 99
+private val DetailArtWidth = 160.dp
 
 @Composable
 fun CollectionScreen(viewModel: CollectionViewModel) {
@@ -61,7 +63,6 @@ fun CollectionScreen(viewModel: CollectionViewModel) {
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CollectionContent(
     state: CollectionUiState,
@@ -71,40 +72,53 @@ internal fun CollectionContent(
     onAdjust: (CardId, Int) -> Unit,
     onSync: () -> Unit,
 ) {
-    // The app's own Scaffold already clears the status bar and the account row, so this one must not add it again.
-    Scaffold(
-        contentWindowInsets = WindowInsets(0),
-        topBar = {
-            TopAppBar(
-                windowInsets = WindowInsets(0),
-                title = { Text(stringResource(R.string.collection_title)) },
-                actions = {
-                    TextButton(onClick = onSync, enabled = state.sync != SyncState.Syncing) {
-                        Text(stringResource(R.string.collection_sync))
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
-            Filters(state, queryText, onQueryChange, onOwnedOnlyChange)
-            SyncBanner(state.sync, onSync)
-            when {
-                state.items.isEmpty() && state.sync == SyncState.Syncing -> {
-                    CenteredProgress()
-                }
+    // Kept by id, so the dialog shows the live number of copies while the player changes them.
+    var openId by rememberSaveable { mutableStateOf<String?>(null) }
+    state.items.firstOrNull { it.id.value == openId }?.let { CardDialog(it, onAdjust) { openId = null } }
+    Column(Modifier.fillMaxSize().padding(horizontal = PdSpacing.space4)) {
+        Title(state.sync, onSync)
+        Filters(state, queryText, onQueryChange, onOwnedOnlyChange)
+        SyncBanner(state.sync, onSync)
+        when {
+            state.items.isEmpty() && state.sync == SyncState.Syncing -> {
+                CenteredProgress()
+            }
 
-                state.items.isEmpty() && state.catalogSize > 0 -> {
-                    CenteredText(
-                        stringResource(R.string.collection_no_results),
-                    )
-                }
+            state.items.isEmpty() && state.catalogSize > 0 -> {
+                CenteredText(
+                    stringResource(R.string.collection_no_results),
+                )
+            }
 
-                else -> {
-                    CardGrid(state.items, onAdjust)
-                }
+            else -> {
+                CardGrid(state.items) { openId = it.id.value }
             }
         }
+    }
+}
+
+@Composable
+private fun Title(
+    sync: SyncState,
+    onSync: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().padding(top = PdSpacing.space2),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            stringResource(R.string.collection_title),
+            style = PocketDesign.typography.titleLg,
+            color = PocketDesign.colors.ink,
+            modifier = Modifier.weight(1f),
+        )
+        PdIconButton(
+            PdIcons.Refresh,
+            stringResource(R.string.collection_sync),
+            onSync,
+            loading = sync == SyncState.Syncing,
+        )
     }
 }
 
@@ -115,29 +129,27 @@ private fun Filters(
     onQueryChange: (String) -> Unit,
     onOwnedOnlyChange: (Boolean) -> Unit,
 ) {
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(
-            value = queryText,
-            onValueChange = onQueryChange,
-            label = { Text(stringResource(R.string.collection_search_hint)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+    Column(verticalArrangement = Arrangement.spacedBy(PdSpacing.space2)) {
+        PdTextField(
+            queryText,
+            onQueryChange,
+            Modifier.fillMaxWidth(),
+            placeholder = stringResource(R.string.collection_search_hint),
+            leadingIcon = PdIcons.Search,
         )
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            FilterChip(
-                selected = state.ownedOnly,
-                onClick = { onOwnedOnlyChange(!state.ownedOnly) },
-                label = { Text(stringResource(R.string.collection_owned_only)) },
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(PdSpacing.space3),
+        ) {
+            PdFilterChip(
+                stringResource(R.string.collection_owned_only),
+                state.ownedOnly,
+                onOwnedOnlyChange,
             )
             Text(
-                text =
-                    stringResource(
-                        R.string.collection_stats,
-                        state.uniqueOwned,
-                        state.catalogSize,
-                        state.totalOwned,
-                    ),
-                style = MaterialTheme.typography.labelLarge,
+                stringResource(R.string.collection_stats, state.uniqueOwned, state.catalogSize, state.totalOwned),
+                style = PocketDesign.typography.bodySm,
+                color = PocketDesign.colors.inkMuted,
             )
         }
     }
@@ -150,27 +162,20 @@ private fun SyncBanner(
 ) {
     when (sync) {
         SyncState.Idle -> {
-            return
+            // Nothing to report.
         }
 
         SyncState.Syncing -> {
-            Text(
-                stringResource(R.string.collection_syncing),
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-            )
-            LinearProgressIndicator(Modifier.fillMaxWidth())
+            PdBanner(stringResource(R.string.collection_syncing), kind = PdBannerKind.Info)
         }
 
         is SyncState.Failed -> {
-            Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = failureText(sync.failure),
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(onClick = onRetry) { Text(stringResource(R.string.collection_retry)) }
-            }
+            PdBanner(
+                failureText(sync.failure),
+                kind = PdBannerKind.Danger,
+                actionLabel = stringResource(R.string.collection_retry),
+                onAction = onRetry,
+            )
         }
     }
 }
@@ -185,98 +190,121 @@ private fun failureText(failure: CatalogSyncFailure): String =
 @Composable
 private fun CardGrid(
     items: List<CardItem>,
-    onAdjust: (CardId, Int) -> Unit,
+    onOpen: (CardItem) -> Unit,
 ) {
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 112.dp),
-        contentPadding =
-            androidx.compose.foundation.layout
-                .PaddingValues(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        columns = GridCells.Fixed(GRID_COLUMNS),
+        contentPadding = PaddingValues(vertical = PdSpacing.space4),
+        horizontalArrangement = Arrangement.spacedBy(PdSpacing.space2),
+        verticalArrangement = Arrangement.spacedBy(PdSpacing.space4),
         modifier = Modifier.fillMaxSize(),
     ) {
-        items(items, key = { it.id.value }) { item -> CardTile(item, onAdjust) }
+        items(items, key = { it.id.value }) { item -> CardTile(item) { onOpen(item) } }
     }
 }
 
+/** The art is the hero; the name sits below, and the details wait in the dialog a tap opens. */
 @Composable
 private fun CardTile(
     item: CardItem,
-    onAdjust: (CardId, Int) -> Unit,
+    onOpen: () -> Unit,
 ) {
-    Card {
-        Column(Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Box(Modifier.fillMaxWidth().aspectRatio(CARD_ASPECT_RATIO)) {
-                AsyncImage(
-                    model = item.artworkUrl,
-                    contentDescription = item.name,
-                    contentScale = ContentScale.Fit,
-                    modifier =
-                        Modifier.fillMaxSize().clip(RoundedCornerShape(6.dp)).alpha(
-                            if (item.copies >
-                                0
-                            ) {
-                                1f
-                            } else {
-                                UNOWNED_ALPHA
-                            },
-                        ),
-                )
-                if (item.copies > 0) CopyBadge(item.copies, Modifier.align(Alignment.TopEnd))
-            }
-            Text(item.name, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                detailText(item.detail),
-                style = MaterialTheme.typography.labelSmall,
-                minLines = DETAIL_LINES,
-                maxLines = DETAIL_LINES,
-                overflow = TextOverflow.Ellipsis,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                FilledTonalIconButton(onClick = { onAdjust(item.id, -1) }, enabled = item.copies > 0) {
-                    Text(
-                        "−",
-                        modifier = Modifier.semanticsLabel(stringResource(R.string.collection_remove_copy, item.name)),
-                    )
-                }
-                FilledTonalIconButton(onClick = { onAdjust(item.id, 1) }) {
-                    Text(
-                        "+",
-                        modifier = Modifier.semanticsLabel(stringResource(R.string.collection_add_copy, item.name)),
-                    )
-                }
-            }
+    Column(verticalArrangement = Arrangement.spacedBy(PdSpacing.space1)) {
+        PdArtTile(
+            tint = PocketDesign.colors.tint(item.detail.tintKey()),
+            contentDescription = tileDescription(item),
+            copies = item.copies,
+            owned = item.copies > 0,
+            onClick = onOpen,
+        ) {
+            Art(item)
         }
-    }
-}
-
-@Composable
-private fun CopyBadge(
-    copies: Int,
-    modifier: Modifier,
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
-        shape = RoundedCornerShape(topEnd = 6.dp, bottomStart = 8.dp),
-        modifier = modifier,
-    ) {
         Text(
-            text = stringResource(R.string.collection_copies, copies),
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            item.name,
+            style = PocketDesign.typography.bodySm,
+            color = PocketDesign.colors.ink,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
 
 @Composable
+private fun tileDescription(item: CardItem) =
+    if (item.copies >
+        0
+    ) {
+        pluralStringResource(R.plurals.collection_tile_owned, item.copies, item.name, item.copies)
+    } else {
+        item.name
+    }
+
+@Composable
+private fun Art(item: CardItem) {
+    AsyncImage(
+        model = item.artworkUrl,
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier.fillMaxSize(),
+    )
+}
+
+private fun CardDetail.tintKey() =
+    when (this) {
+        is CardDetail.OfPokemon -> energy.tintKey()
+        is CardDetail.OfTrainer -> EnergyType.COLORLESS.tintKey()
+    }
+
+@Composable
+private fun CardDialog(
+    item: CardItem,
+    onAdjust: (CardId, Int) -> Unit,
+    onClose: () -> Unit,
+) {
+    PdDialog(
+        title = item.name,
+        onDismissRequest = onClose,
+        confirmText = stringResource(R.string.collection_done),
+        onConfirm = onClose,
+    ) {
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            PdArtTile(
+                tint = PocketDesign.colors.tint(item.detail.tintKey()),
+                contentDescription = item.name,
+                modifier = Modifier.width(DetailArtWidth),
+                owned = item.copies > 0,
+            ) {
+                Art(item)
+            }
+        }
+        Text(
+            detailText(item.detail),
+            style = PocketDesign.typography.body,
+            color = PocketDesign.colors.inkMuted,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            PdStepper(
+                value = item.copies,
+                onValueChange = { onAdjust(item.id, it - item.copies) },
+                range = 0..MAX_COPIES,
+                decrementDescription = stringResource(R.string.collection_remove_copy, item.name),
+                incrementDescription = stringResource(R.string.collection_add_copy, item.name),
+            )
+        }
+    }
+}
+
+@Composable
 private fun CenteredProgress() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        PdSpinner(size = 40.dp)
+    }
 }
 
 @Composable
 private fun CenteredText(text: String) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(text) }
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(text, style = PocketDesign.typography.body, color = PocketDesign.colors.inkMuted)
+    }
 }

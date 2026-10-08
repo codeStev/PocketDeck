@@ -30,6 +30,11 @@
     <string name="trainer_supporter">Supporter</string>
     <string name="trainer_tool">Pokémon Tool</string>
     <string name="trainer_stadium">Stadium</string>
+    <string name="collection_done">Done</string>
+    <plurals name="collection_tile_owned">
+        <item quantity="one">%1$s, %2$d copy</item>
+        <item quantity="other">%1$s, %2$d copies</item>
+    </plurals>
     <string name="collection_copies">×%1$d</string>
     <string name="tab_collection">Collection</string>
     <string name="tab_scan">Scan</string>
