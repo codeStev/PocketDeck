@@ -88,7 +88,7 @@
     </plurals>
     <string name="decks_card_line">%1$d× %2$s</string>
     <string name="decks_card_missing">missing %1$d</string>
-    <string name="decks_code_show">Import code for the game</string>
+    <string name="decks_code_show">Import</string>
     <string name="decks_code_close">Close</string>
     <string name="decks_code_image">Import code of %1$s</string>
     <string name="decks_code_howto">In the game: Cards, Decks, Build New, Scan Code. Scan this code from another device, or save the image and choose Scan Saved Image.</string>
@@ -132,12 +132,15 @@
     <string name="effect_counter_damage">hits back</string>
     <string name="decks_substitute_alike">Both: %1$s</string>
     <string name="decks_with_substitutes">with stand-ins</string>
-    <string name="decks_code_show_substituted">Import code (with stand-ins)</string>
+    <string name="decks_code_show_substituted">Import (with stand-ins)</string>
     <string name="decks_code_contains">This code contains stand-ins:</string>
     <string name="decks_build">Build a deck from my cards</string>
     <string name="decks_building">Building a deck…</string>
     <string name="decks_build_title">Build a deck</string>
     <string name="decks_build_hint">The deck is made only of cards you own. Choose the Pokémon it should be built around, strongest first.</string>
+    <string name="decks_build_around">Or build around a Pokémon</string>
+    <string name="decks_build_use">Build</string>
+    <string name="decks_just_built">New deck: %1$s. It is at the top of the list.</string>
     <string name="decks_build_best">Best deck from my cards</string>
     <string name="decks_build_failed">Your collection is too small to build a deck like that.</string>
     <string name="decks_origin_ai">AI suggestion</string>

@@ -3,19 +3,11 @@ package dev.pocketdeck.adapter.ui.decks
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,10 +19,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dev.codestev.pocketdesign.components.PdMeterCell
+import dev.codestev.pocketdesign.components.PdMeterRow
+import dev.codestev.pocketdesign.components.PdMeterTable
+import dev.codestev.pocketdesign.components.PdSegmentedTabs
+import dev.codestev.pocketdesign.components.PdSpinner
+import dev.codestev.pocketdesign.components.PdTextLink
+import dev.codestev.pocketdesign.theme.PdSpacing
+import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
 import dev.pocketdeck.domain.card.Language
 import dev.pocketdeck.domain.opening.OpeningAnalysis
@@ -81,18 +78,6 @@ object OpeningListing {
     private fun percent(chance: Double) = (chance * PERCENT).roundToInt()
 }
 
-/** The "Opening odds" button of a deck; the table it opens is [OpeningOddsContent]. */
-@Composable
-internal fun OpeningOddsButton(
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    CardOutlinedButton(onToggle, modifier) {
-        Text(stringResource(if (expanded) R.string.decks_opening_hide else R.string.decks_opening_show))
-    }
-}
-
 /** What the player sees under the buttons once the odds are asked for: a spinner while it is worked out, then the table. */
 @Composable
 internal fun OpeningOddsContent(state: OpeningState?) {
@@ -109,107 +94,70 @@ internal fun OpeningOddsContent(state: OpeningState?) {
 
 @Composable
 private fun Loading() {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-        Text(stringResource(R.string.decks_opening_loading), style = MaterialTheme.typography.bodyMedium)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(PdSpacing.space3),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PdSpinner(size = 20.dp, strokeWidth = 2.dp)
+        Text(
+            stringResource(R.string.decks_opening_loading),
+            style = PocketDesign.typography.body,
+            color = PocketDesign.colors.inkMuted,
+        )
     }
 }
 
 @Composable
 private fun OddsTable(odds: OpeningOddsUi) {
     var first by rememberSaveable { mutableStateOf(true) }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.decks_opening_intro), style = MaterialTheme.typography.bodySmall)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(first, { first = true }, { Text(stringResource(R.string.decks_opening_first)) })
-            FilterChip(!first, { first = false }, { Text(stringResource(R.string.decks_opening_second)) })
-        }
-        var showAll by rememberSaveable { mutableStateOf(false) }
-        val rows = if (first) odds.goingFirst else odds.goingSecond
-        TurnHeader()
-        (if (showAll) rows else rows.take(TOP_ROWS)).forEach { PokemonRow(it) }
+    var showAll by rememberSaveable { mutableStateOf(false) }
+    val rows = if (first) odds.goingFirst else odds.goingSecond
+    val shown = if (showAll) rows else rows.take(TOP_ROWS)
+    Column(verticalArrangement = Arrangement.spacedBy(PdSpacing.space3)) {
+        Muted(R.string.decks_opening_intro)
+        PdSegmentedTabs(
+            listOf(stringResource(R.string.decks_opening_first), stringResource(R.string.decks_opening_second)),
+            if (first) 0 else 1,
+            { first = it == 0 },
+            Modifier.fillMaxWidth(),
+        )
+        PdMeterTable(TURNS.map { it.toString() }, shown.flatMap { it.toMeterRows() })
         if (rows.size > TOP_ROWS) {
-            TextButton(onClick = { showAll = !showAll }) {
-                Text(
-                    if (showAll) {
-                        stringResource(R.string.decks_opening_show_fewer)
-                    } else {
-                        pluralStringResource(R.plurals.decks_opening_show_all, rows.size, rows.size)
-                    },
-                )
-            }
-        }
-        Text(stringResource(R.string.decks_opening_note), style = MaterialTheme.typography.bodySmall)
-    }
-}
-
-@Composable
-private fun TurnHeader() {
-    Row(Modifier.fillMaxWidth()) {
-        Text(
-            stringResource(R.string.decks_opening_turn),
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.weight(NAME_WEIGHT),
-        )
-        TURNS.forEach { Cell(it.toString(), MaterialTheme.typography.labelMedium, FontWeight.Normal) }
-    }
-}
-
-@Composable
-private fun PokemonRow(row: OpeningRow) {
-    Column {
-        Row(Modifier.fillMaxWidth()) {
-            Text(row.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(NAME_WEIGHT))
-            row.hasAttacked.forEach { Percent(it, bold = it >= LIKELY_PERCENT) }
-        }
-        row.attacksThatTurn?.let { sustained ->
-            Row(Modifier.fillMaxWidth()) {
-                Text(
-                    stringResource(R.string.decks_opening_each_turn),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(NAME_WEIGHT),
-                )
-                sustained.forEach { Percent(it, bold = false, small = true) }
-            }
-        }
-    }
-}
-
-/** A chance as text with a thin bar under it, so a column of them can be scanned without reading every number. */
-@Composable
-private fun RowScope.Percent(
-    value: Int,
-    bold: Boolean,
-    small: Boolean = false,
-) {
-    Column(Modifier.weight(CELL_WEIGHT).padding(start = 4.dp), horizontalAlignment = Alignment.End) {
-        Text(
-            stringResource(R.string.decks_opening_percent, value),
-            style = if (small) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
-            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
-        )
-        if (!small) {
-            LinearProgressIndicator(
-                progress = { value / PERCENT_FULL },
-                modifier = Modifier.fillMaxWidth().height(BAR_HEIGHT),
-                drawStopIndicator = {},
+            PdTextLink(
+                if (showAll) {
+                    stringResource(R.string.decks_opening_show_fewer)
+                } else {
+                    pluralStringResource(R.plurals.decks_opening_show_all, rows.size, rows.size)
+                },
+                onClick = { showAll = !showAll },
             )
         }
+        Muted(R.string.decks_opening_note)
     }
 }
 
 @Composable
-private fun RowScope.Cell(
-    text: String,
-    style: TextStyle,
-    weight: FontWeight,
-) = Text(text, style = style, fontWeight = weight, textAlign = TextAlign.End, modifier = Modifier.weight(CELL_WEIGHT))
+private fun Muted(text: Int) =
+    Text(stringResource(text), style = PocketDesign.typography.bodySm, color = PocketDesign.colors.inkMuted)
+
+/** A Pokémon's row, followed by a quieter one when its deck drains its own energy and "has attacked" overstates it. */
+@Composable
+private fun OpeningRow.toMeterRows(): List<PdMeterRow> {
+    val ever = hasAttacked.map { cell(it, emphasized = it >= LIKELY_PERCENT) }
+    val sustained = attacksThatTurn?.map { cell(it, emphasized = false) }
+    return listOfNotNull(
+        PdMeterRow(name, ever),
+        sustained?.let { PdMeterRow(stringResource(R.string.decks_opening_each_turn), it) },
+    )
+}
+
+@Composable
+private fun cell(
+    percent: Int,
+    emphasized: Boolean,
+) = PdMeterCell(stringResource(R.string.decks_opening_percent, percent), percent / PERCENT_FULL, emphasized)
 
 private val TURNS = 1..4
-private const val NAME_WEIGHT = 2f
-private const val CELL_WEIGHT = 1f
 private const val LIKELY_PERCENT = 50
 private const val TOP_ROWS = 3
 private const val PERCENT_FULL = 100f
-private val BAR_HEIGHT = 3.dp

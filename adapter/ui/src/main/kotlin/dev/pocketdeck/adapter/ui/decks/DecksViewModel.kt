@@ -66,6 +66,12 @@ sealed interface DeckCodeUi {
     ) : DeckCodeUi
 }
 
+/** The deck the player just asked for. [token] changes with every one, so the screen can react to each build. */
+data class NewDeck(
+    val title: String,
+    val token: Int,
+)
+
 data class DecksUiState(
     val items: List<DeckItem> = emptyList(),
     val refreshing: Boolean = false,
@@ -88,6 +94,8 @@ data class DecksUiState(
     val savedDeckIds: Set<Int> = emptySet(),
     /** False until the first list of suggestions has arrived, so an empty list is not shown as "nothing here" while loading. */
     val loaded: Boolean = false,
+    /** Set when a build or an AI answer has just put a deck at the top of the Generated list. */
+    val newDeck: NewDeck? = null,
 )
 
 /** Shows the suggested decks and refreshes the picture of the competitive field. */
@@ -215,6 +223,17 @@ class DecksViewModel(
         }
     }
 
+    private var newDeckCount = 0
+
+    /** The deck just published is the first item: built decks come before the tournament ones. */
+    private fun announce() =
+        NewDeck(
+            mutableState.value.items
+                .first()
+                .title,
+            ++newDeckCount,
+        )
+
     /** Decks the player asked for come first; they stay until the app closes. */
     private fun publish() {
         shown = builtDecks + suggestions
@@ -237,12 +256,20 @@ class DecksViewModel(
             return
         }
         viewModelScope.launch {
-            mutableState.update { it.copy(centrepieces = null, asking = true, notice = null, noticeDetail = null) }
+            mutableState.update {
+                it.copy(
+                    centrepieces = null,
+                    asking = true,
+                    notice = null,
+                    noticeDetail = null,
+                    newDeck = null,
+                )
+            }
             when (val outcome = ai.ask(wish?.trim()?.takeIf { it.isNotEmpty() })) {
                 is Outcome.Success -> {
                     builtDecks = (listOf(outcome.value) + builtDecks).take(MAX_BUILT_DECKS)
                     publish()
-                    mutableState.update { it.copy(asking = false) }
+                    mutableState.update { it.copy(asking = false, newDeck = announce()) }
                 }
 
                 is Outcome.Failure -> {
@@ -276,13 +303,13 @@ class DecksViewModel(
     /** Builds a deck around the chosen Pokémon, or the best one the collection allows if none is chosen. */
     fun onBuild(centrepieceId: String?) {
         viewModelScope.launch {
-            mutableState.update { it.copy(centrepieces = null, building = true, notice = null) }
+            mutableState.update { it.copy(centrepieces = null, building = true, notice = null, newDeck = null) }
             val focus = DeckFocus(core = centrepieceId?.let(centres::get))
             when (val outcome = buildDeck(focus)) {
                 is Outcome.Success -> {
                     builtDecks = (listOf(outcome.value) + builtDecks).take(MAX_BUILT_DECKS)
                     publish()
-                    mutableState.update { it.copy(building = false) }
+                    mutableState.update { it.copy(building = false, newDeck = announce()) }
                 }
 
                 is Outcome.Failure -> {

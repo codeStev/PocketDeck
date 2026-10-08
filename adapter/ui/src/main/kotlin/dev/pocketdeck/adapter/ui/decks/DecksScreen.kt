@@ -1,6 +1,5 @@
 package dev.pocketdeck.adapter.ui.decks
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,32 +9,32 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Tab
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.codestev.pocketdesign.components.PdBanner
+import dev.codestev.pocketdesign.components.PdBannerKind
+import dev.codestev.pocketdesign.components.PdButton
+import dev.codestev.pocketdesign.components.PdButtonStyle
+import dev.codestev.pocketdesign.components.PdDialog
+import dev.codestev.pocketdesign.components.PdIconButton
+import dev.codestev.pocketdesign.components.PdSegmentedTabs
+import dev.codestev.pocketdesign.components.PdTextField
+import dev.codestev.pocketdesign.icons.PdIcons
+import dev.codestev.pocketdesign.theme.PdSpacing
+import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
 import dev.pocketdeck.adapter.ui.chase.ChaseDialog
 import dev.pocketdeck.adapter.ui.chase.ChaseViewModel
-import dev.pocketdeck.domain.deck.SuggestionOrigin
 
 /** What the player can do on the decks screen. */
 internal class DecksActions(
@@ -101,22 +100,29 @@ internal fun DecksContent(
     state.code?.let { DeckCodeDialog(it, actions.onCloseCode) }
     state.centrepieces?.let { BuilderDialog(it, state.aiConfigured, actions) }
     state.savedDialog?.let { SavedDeckDialogs(it, actions) }
+    val labels = DeckKind.entries.map { stringResource(it.tabLabel()) }
     Column(Modifier.fillMaxSize()) {
-        PrimaryTabRow(selectedTabIndex = kind.ordinal) {
-            DeckKind.entries.forEach { entry ->
-                Tab(
-                    selected = kind == entry,
-                    onClick = { kind = entry },
-                    text = { Text(stringResource(entry.tabLabel())) },
-                )
-            }
-        }
+        PdSegmentedTabs(
+            labels,
+            kind.ordinal,
+            { kind = DeckKind.entries[it] },
+            Modifier.fillMaxWidth().padding(horizontal = PdSpacing.space4),
+        )
         ActionBar(kind, state, actions)
         val items = if (kind == DeckKind.SAVED) state.saved else state.items.ofKind(kind)
+        val listState = rememberLazyListState()
+        // A deck the player just asked for is shown, not left for them to find: go to its tab and to the top.
+        LaunchedEffect(state.newDeck?.token) {
+            if (state.newDeck != null) {
+                kind = DeckKind.GENERATED
+                listState.scrollToItem(0)
+            }
+        }
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(horizontal = PdSpacing.space4, vertical = PdSpacing.space2),
+            verticalArrangement = Arrangement.spacedBy(PdSpacing.space4),
         ) {
             item { Header(kind, state, items.isEmpty()) }
             items(items, key = { it.key }) { item ->
@@ -144,17 +150,39 @@ private fun Header(
     state: DecksUiState,
     empty: Boolean,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(PdSpacing.space3)) {
         when (kind) {
-            DeckKind.TOURNAMENT -> TournamentHeader(state, empty)
-            DeckKind.GENERATED -> GeneratedHeader(state, empty)
-            DeckKind.SAVED -> SavedHeader(empty)
+            DeckKind.TOURNAMENT -> {
+                Intro(R.string.decks_intro_tournament)
+                if (empty && state.loaded && !state.refreshing) Hint(R.string.decks_empty_tournament)
+            }
+
+            DeckKind.GENERATED -> {
+                Intro(R.string.decks_intro_generated)
+                if (empty && state.loaded && !state.building && !state.asking) Hint(R.string.decks_empty_generated)
+            }
+
+            DeckKind.SAVED -> {
+                Intro(R.string.decks_intro_saved)
+                if (empty) Hint(R.string.decks_empty_saved)
+            }
+        }
+        state.newDeck?.takeIf { kind == DeckKind.GENERATED }?.let {
+            PdBanner(stringResource(R.string.decks_just_built, it.title), kind = PdBannerKind.Success)
         }
         state.notice?.takeIf { DeckKind.of(it) == kind }?.let {
-            Text(noticeText(it, state.noticeDetail), color = MaterialTheme.colorScheme.error)
+            val severity = if (it == DecksNotice.RATE_LIMITED) PdBannerKind.Warning else PdBannerKind.Danger
+            PdBanner(noticeText(it, state.noticeDetail), kind = severity)
         }
     }
 }
+
+@Composable
+private fun Intro(text: Int) =
+    Text(stringResource(text), style = PocketDesign.typography.body, color = PocketDesign.colors.inkMuted)
+
+@Composable
+private fun Hint(text: Int) = PdBanner(stringResource(text), kind = PdBannerKind.Info)
 
 /** The actions of a tab stay in view while its list scrolls. */
 @Composable
@@ -163,69 +191,52 @@ private fun ActionBar(
     state: DecksUiState,
     actions: DecksActions,
 ) {
+    val modifier = Modifier.fillMaxWidth().padding(horizontal = PdSpacing.space4, vertical = PdSpacing.space3)
     when (kind) {
         DeckKind.TOURNAMENT -> {
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier,
+                horizontalArrangement = Arrangement.spacedBy(PdSpacing.space2),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                OutlinedButton(
-                    onClick = actions.onRefresh,
-                    enabled = !state.refreshing,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(stringResource(if (state.refreshing) R.string.decks_refreshing else R.string.decks_refresh))
-                }
-                OutlinedButton(onClick = actions.onOpenChase, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.chase_open))
-                }
+                PdButton(
+                    stringResource(R.string.chase_open),
+                    actions.onOpenChase,
+                    Modifier.weight(1f),
+                    style = PdButtonStyle.Secondary,
+                    leadingIcon = PdIcons.Target,
+                )
+                // An icon is enough: the tab already says "tournament decks". The label is for screen readers.
+                PdIconButton(
+                    PdIcons.Refresh,
+                    stringResource(if (state.refreshing) R.string.decks_refreshing else R.string.decks_refresh),
+                    actions.onRefresh,
+                    loading = state.refreshing,
+                )
             }
         }
 
         DeckKind.GENERATED -> {
-            Button(
-                onClick = actions.onOpenBuilder,
+            val label =
+                when {
+                    state.asking -> R.string.decks_asking
+                    state.building -> R.string.decks_building
+                    else -> R.string.decks_build
+                }
+            PdButton(
+                stringResource(label),
+                actions.onOpenBuilder,
+                modifier,
                 enabled = !(state.building || state.asking),
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            ) {
-                val label =
-                    when {
-                        state.asking -> R.string.decks_asking
-                        state.building -> R.string.decks_building
-                        else -> R.string.decks_build
-                    }
-                Text(stringResource(label))
-            }
+                loading = state.building || state.asking,
+                leadingIcon = PdIcons.Plus,
+            )
         }
 
         DeckKind.SAVED -> {
             // Kept decks only have per-deck actions.
         }
     }
-}
-
-@Composable
-private fun TournamentHeader(
-    state: DecksUiState,
-    empty: Boolean,
-) {
-    Text(stringResource(R.string.decks_intro_tournament), style = MaterialTheme.typography.bodyMedium)
-    if (empty && state.loaded && !state.refreshing) Text(stringResource(R.string.decks_empty_tournament))
-}
-
-@Composable
-private fun SavedHeader(empty: Boolean) {
-    Text(stringResource(R.string.decks_intro_saved), style = MaterialTheme.typography.bodyMedium)
-    if (empty) Text(stringResource(R.string.decks_empty_saved))
-}
-
-@Composable
-private fun GeneratedHeader(
-    state: DecksUiState,
-    empty: Boolean,
-) {
-    Text(stringResource(R.string.decks_intro_generated), style = MaterialTheme.typography.bodyMedium)
-    if (empty && state.loaded && !state.building && !state.asking) Text(stringResource(R.string.decks_empty_generated))
 }
 
 @Composable
@@ -249,156 +260,6 @@ private fun noticeText(
     }
 }
 
-/** What a deck card shows besides its deck: the opening odds, if asked for, and whether the deck is already kept. */
-private class DeckCardState(
-    val opening: OpeningState?,
-    val kept: Boolean,
-)
-
-@Composable
-private fun DeckCard(
-    item: DeckItem,
-    kind: DeckKind,
-    card: DeckCardState,
-    actions: DecksActions,
-) {
-    var expanded by rememberSaveable(item.key) { mutableStateOf(false) }
-    var showOdds by rememberSaveable(item.deckId) { mutableStateOf(false) }
-    Card(
-        Modifier.fillMaxWidth().clickable { expanded = !expanded },
-        colors = CardDefaults.cardColors(containerColor = containerColor(item.origin)),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            val title =
-                if (item.substitutes.isEmpty()) {
-                    item.title
-                } else {
-                    "${item.title} · ${stringResource(R.string.decks_with_substitutes)}"
-                }
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(originText(item.origin), style = MaterialTheme.typography.labelMedium)
-            BuildStatus(item)
-            Text(stringResource(R.string.decks_owned, item.ownedPercent))
-            LinearProgressIndicator(progress = { item.ownedPercent / PERCENT_FULL }, modifier = Modifier.fillMaxWidth())
-            if (item.substitutes.isNotEmpty()) {
-                Text(
-                    pluralStringResource(R.plurals.decks_substituted, item.substituteCopies, item.substituteCopies),
-                    color = MaterialTheme.colorScheme.tertiary,
-                )
-                item.substitutes.forEach { SubstituteText(it) }
-            }
-            item.rationale?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-            Text(
-                stringResource(if (expanded) R.string.decks_tap_collapse else R.string.decks_tap_expand),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (expanded) item.cards.forEach { CardLine(it) }
-            val showCode =
-                if (item.substitutes.isEmpty()) R.string.decks_code_show else R.string.decks_code_show_substituted
-            Button(onClick = { actions.onShowCode(item.key) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(showCode))
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                OpeningOddsButton(
-                    expanded = showOdds,
-                    onToggle = {
-                        showOdds = !showOdds
-                        if (showOdds) actions.onShowOpening(item.deckId)
-                    },
-                    modifier = Modifier.weight(1f),
-                )
-                if (kind != DeckKind.SAVED) {
-                    CardOutlinedButton({ actions.onSave(item.key) }, Modifier.weight(1f), enabled = !card.kept) {
-                        Text(stringResource(if (card.kept) R.string.decks_saved_done else R.string.decks_save))
-                    }
-                }
-            }
-            if (showOdds) OpeningOddsContent(card.opening)
-            if (kind == DeckKind.SAVED) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    CardOutlinedButton({ actions.onRenameSaved(item) }, Modifier.weight(1f)) {
-                        Text(stringResource(R.string.decks_rename))
-                    }
-                    CardOutlinedButton({ actions.onDeleteSaved(item) }, Modifier.weight(1f)) {
-                        Text(stringResource(R.string.decks_delete))
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** The answer the player looks for first: can I build this deck, or what is missing. */
-@Composable
-private fun BuildStatus(item: DeckItem) {
-    if (item.missingCopies == 0) {
-        Text(
-            stringResource(R.string.decks_buildable),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-        )
-    } else {
-        Text(
-            pluralStringResource(R.plurals.decks_missing, item.missingCopies, item.missingCopies),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.error,
-        )
-    }
-}
-
-/** Tournament decks keep the plain card; what the builder or an AI made is tinted, so the two are never mixed up. */
-@Composable
-private fun containerColor(origin: SuggestionOrigin) =
-    when (origin) {
-        SuggestionOrigin.META -> MaterialTheme.colorScheme.surfaceVariant
-        SuggestionOrigin.HEURISTIC -> MaterialTheme.colorScheme.tertiaryContainer
-        SuggestionOrigin.AI -> MaterialTheme.colorScheme.secondaryContainer
-    }
-
-@Composable
-private fun originText(origin: SuggestionOrigin) =
-    stringResource(
-        when (origin) {
-            SuggestionOrigin.META -> R.string.decks_origin_meta
-            SuggestionOrigin.HEURISTIC -> R.string.decks_origin_heuristic
-            SuggestionOrigin.AI -> R.string.decks_origin_ai
-        },
-    )
-
-@Composable
-private fun SubstituteText(line: SubstituteLine) {
-    val effects = line.effects.map { stringResource(it.label()) }.joinToString(", ")
-    Column {
-        Text(
-            stringResource(R.string.decks_substitute_line, line.copies, line.replacement, line.original),
-            color = MaterialTheme.colorScheme.tertiary,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        if (effects.isNotEmpty()) {
-            Text(
-                stringResource(R.string.decks_substitute_alike, effects),
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-    }
-}
-
-@Composable
-private fun CardLine(line: DeckCardLine) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(stringResource(R.string.decks_card_line, line.copies, line.name))
-        if (line.missingCopies > 0) {
-            Text(
-                stringResource(R.string.decks_card_missing, line.missingCopies),
-                color = MaterialTheme.colorScheme.error,
-            )
-        }
-    }
-}
-
-private const val PERCENT_FULL = 100f
-
 @Composable
 private fun SavedDeckDialogs(
     dialog: SavedDeckDialog,
@@ -407,34 +268,26 @@ private fun SavedDeckDialogs(
     when (dialog) {
         is SavedDeckDialog.Rename -> {
             var title by rememberSaveable(dialog.id) { mutableStateOf(dialog.title) }
-            AlertDialog(
+            PdDialog(
+                title = stringResource(R.string.decks_rename),
                 onDismissRequest = actions.onSavedDialogDismissed,
-                title = { Text(stringResource(R.string.decks_rename)) },
-                text = { OutlinedTextField(value = title, onValueChange = { title = it }, singleLine = true) },
-                confirmButton = {
-                    TextButton(
-                        onClick = { actions.onRenamed(title) },
-                    ) { Text(stringResource(R.string.decks_rename_save)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = actions.onSavedDialogDismissed) { Text(stringResource(R.string.decks_cancel)) }
-                },
-            )
+                confirmText = stringResource(R.string.decks_rename_save),
+                onConfirm = { actions.onRenamed(title) },
+                dismissText = stringResource(R.string.decks_cancel),
+            ) {
+                PdTextField(title, { title = it }, Modifier.fillMaxWidth())
+            }
         }
 
         is SavedDeckDialog.ConfirmDelete -> {
-            AlertDialog(
+            PdDialog(
+                title = stringResource(R.string.decks_delete_title, dialog.title),
                 onDismissRequest = actions.onSavedDialogDismissed,
-                title = { Text(stringResource(R.string.decks_delete_title, dialog.title)) },
-                confirmButton = {
-                    TextButton(
-                        onClick = actions.onDeleteConfirmed,
-                    ) { Text(stringResource(R.string.decks_delete)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = actions.onSavedDialogDismissed) { Text(stringResource(R.string.decks_cancel)) }
-                },
-            )
+                confirmText = stringResource(R.string.decks_delete),
+                onConfirm = actions.onDeleteConfirmed,
+                dismissText = stringResource(R.string.decks_cancel),
+                destructive = true,
+            ) {}
         }
     }
 }

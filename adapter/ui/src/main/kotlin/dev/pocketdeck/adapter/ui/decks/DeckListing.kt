@@ -1,10 +1,14 @@
 package dev.pocketdeck.adapter.ui.decks
 
 import dev.pocketdeck.application.savedeck.KeptDeck
+import dev.pocketdeck.domain.card.CardName
 import dev.pocketdeck.domain.card.EffectTag
+import dev.pocketdeck.domain.card.EnergyType
 import dev.pocketdeck.domain.card.GameplayKey
 import dev.pocketdeck.domain.card.Language
+import dev.pocketdeck.domain.card.PokemonCard
 import dev.pocketdeck.domain.deck.Deck
+import dev.pocketdeck.domain.deck.DeckEntry
 import dev.pocketdeck.domain.deck.DeckSuggestion
 import dev.pocketdeck.domain.deck.SuggestionOrigin
 
@@ -25,6 +29,14 @@ data class SubstituteLine(
     val effects: List<EffectTag> = emptyList(),
 )
 
+/** A key Pokémon of a deck: its picture and the type that tints the deck. */
+data class DeckHero(
+    val artworkUrl: String?,
+    val type: EnergyType,
+)
+
+const val MAX_HEROES = 3
+
 /** A suggested deck as shown in the list. */
 data class DeckItem(
     val key: String,
@@ -41,6 +53,8 @@ data class DeckItem(
     val savedId: Long? = null,
     /** Identifies the cards of the deck, whatever list it is in and whichever prints it uses; see [DeckListing.deckIdOf]. */
     val deckId: Int = 0,
+    /** The deck's key Pokémon, most important first (at most [MAX_HEROES]): their art is the deck's picture. */
+    val heroes: List<DeckHero> = emptyList(),
 ) {
     val substituteCopies: Int get() = substitutes.sumOf { it.copies }
 }
@@ -88,6 +102,7 @@ object DeckListing {
                         missingCopies = missing[key] ?: 0,
                     )
                 }.sortedByDescending { it.missingCopies > 0 }
+        val heroes = heroesOf(suggestion)
         return DeckItem(
             key = "${suggestion.title}#$index",
             title = suggestion.centrepiece?.nameIn(language)?.value ?: suggestion.title,
@@ -98,6 +113,7 @@ object DeckListing {
             cards = lines,
             rationale = suggestion.rationale,
             deckId = deckIdOf(suggestion.deck),
+            heroes = heroes,
             substitutes =
                 suggestion.substitutions.map {
                     SubstituteLine(
@@ -108,6 +124,33 @@ object DeckListing {
                     )
                 },
         )
+    }
+
+    /**
+     * One Pokémon per evolution line, the centrepiece first, then the rest by ex, stage and copies. A mixed deck such as
+     * "Mega Gardevoir ex + Mega Diancie ex" shows each of its lines, not three cards of one.
+     */
+    private fun heroesOf(suggestion: DeckSuggestion): List<DeckHero> {
+        val pokemon = suggestion.deck.entries.filter { it.card is PokemonCard }
+        val byName = pokemon.associateBy { it.card.name }
+
+        fun rootOf(entry: DeckEntry): CardName {
+            var current = entry.card as PokemonCard
+            while (true) {
+                current = (current.evolvesFrom?.let { byName[it]?.card } as? PokemonCard) ?: return current.name
+            }
+        }
+        val ranked =
+            pokemon.sortedWith(
+                compareByDescending<DeckEntry> { it.card.id == suggestion.centrepiece?.id }
+                    .thenByDescending { (it.card as PokemonCard).isEx }
+                    .thenByDescending { (it.card as PokemonCard).stage }
+                    .thenByDescending { it.copies },
+            )
+        return ranked
+            .distinctBy(::rootOf)
+            .take(MAX_HEROES)
+            .map { DeckHero(it.card.artwork?.value, (it.card as PokemonCard).energyType) }
     }
 
     private const val PERCENT = 100
