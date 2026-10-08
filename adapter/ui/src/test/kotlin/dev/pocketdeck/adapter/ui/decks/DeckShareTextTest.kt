@@ -11,6 +11,7 @@ class DeckShareTextTest {
             energy = "Energy",
             importCode = "Import code:",
             noCode = "No import code.",
+            scanHint = "Scan in the game",
             footer = "Made with PocketDeck",
         )
     private val deck =

@@ -204,8 +204,10 @@ New way of driving the app => new driving adapter calling inbound ports.
   ids skipped) and only replaces after confirmation; it saves the old collection as the scan backup, so "Restore the collection from
   before the last scan" undoes it. The system file picker (`CreateDocument`, `OpenDocument`) is driven from `CollectionFilesSection`.
 - Sharing a deck (`decks/DeckShare.kt`, `DeckShareLauncher.kt`): the share icon on every deck card opens a menu, "as text" (title, Pokémon,
-  trainers, energy, the import code if the game can take the deck, a footer with the repository link) or "as image" (the same list and
-  the import QR on white, pure black QR; written to `cache/shared/deck.png` and handed over through the library's own `FileProvider`,
+  trainers, energy, the import code if the game can take the deck, a footer with the repository link) or "as image" (a band in the light tint of
+  the deck's type with the key cards fanned out and the PocketDeck wordmark, Fredoka title, the list, the import QR on a white
+  panel (pure black QR), an accent footer with the repository link; the key cards are loaded through Coil, and a card that cannot
+  be loaded is left out; written to `cache/shared/deck.png` and handed over through the library's own `FileProvider`,
   authority `<applicationId>.files`). `DecksViewModel.onShare` hands a `ShareRequest` to the screen, which opens the share sheet.
 - Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).
 

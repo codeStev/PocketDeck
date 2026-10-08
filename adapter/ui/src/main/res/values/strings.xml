@@ -347,4 +347,5 @@
     <string name="share_import_code">Import code:</string>
     <string name="share_no_code">No import code: the game does not know every card of this deck.</string>
     <string name="share_footer">Made with PocketDeck, an unofficial fan tool</string>
+    <string name="share_scan_hint">Scan in the game: Cards, Decks, Build New, Scan Code</string>
 </resources>
