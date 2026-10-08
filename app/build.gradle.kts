@@ -9,18 +9,23 @@ plugins {
 // major*1_000_000 + minor*10_000 + patch*100 + (pre-release number, or 99 for a final release).
 // So 1.0.0-rc.1 < 1.0.0-rc.2 < 1.0.0, and a patch can ship up to 98 pre-releases.
 val semver = Regex("""(\d+)\.(\d+)\.(\d+)(?:-[A-Za-z]+\.(\d+))?""")
-val baseVersion =
-    Properties().apply { rootProject.file("version.properties").inputStream().use(::load) }.getProperty("version")
+
+fun versionCodeOf(version: String): Int {
+    val (major, minor, patch, pre) =
+        checkNotNull(semver.matchEntire(version)) { "'$version' is not MAJOR.MINOR.PATCH[-pre.N]" }.destructured
+    return major.toInt() * 1_000_000 + minor.toInt() * 10_000 + patch.toInt() * 100 + (pre.toIntOrNull() ?: 99)
+}
+
+val versionFile = Properties().apply { rootProject.file("version.properties").inputStream().use(::load) }
+val baseVersion = versionFile.getProperty("version")
 val appVersion = providers.gradleProperty("pocketdeck.rc").orNull?.let { "$baseVersion-rc.$it" } ?: baseVersion
-val versionParts =
-    checkNotNull(
-        semver.matchEntire(appVersion),
-    ) { "version.properties: '$appVersion' is not MAJOR.MINOR.PATCH[-pre.N]" }
-        .destructured
-val appVersionCode =
-    versionParts.let { (major, minor, patch, pre) ->
-        major.toInt() * 1_000_000 + minor.toInt() * 10_000 + patch.toInt() * 100 + (pre.toIntOrNull() ?: 99)
-    }
+val appVersionCode = versionCodeOf(appVersion)
+
+// version.properties also states the code of the release itself, for tools that cannot run Gradle (F-Droid's update checker);
+// a version bump that forgets it would publish a wrong code.
+check(versionFile.getProperty("versionCode") == versionCodeOf(baseVersion).toString()) {
+    "version.properties: versionCode must be ${versionCodeOf(baseVersion)} for version $baseVersion"
+}
 
 android {
     namespace = "dev.pocketdeck"
