@@ -15,16 +15,28 @@ fi
 
 mkdir -p "$dir"
 chmod 700 "$dir"
-keytool -genkeypair -v -keystore "$keystore" -alias "$alias_name" -keyalg RSA -keysize 4096 -validity 10000
 
-read -r -s -p "Store password (the one you just chose): " store_password; echo
-read -r -s -p "Key password (the same if you pressed Enter at keytool): " key_password; echo
+# Asked here, not by keytool: a pasted password with a trailing space or newline made keytool's own "re-enter" prompt fail.
+# Stray whitespace is stripped and the password is handed over through the environment, so it never shows in the process list.
+read -r -s -p "Choose the key password (used for the store and the key; paste is fine): " password; echo
+read -r -s -p "Again: " again; echo
+password="$(printf '%s' "$password" | tr -d '[:space:]')"
+again="$(printf '%s' "$again" | tr -d '[:space:]')"
+if [ "$password" != "$again" ] || [ "${#password}" -lt 6 ]; then
+  echo "The two entries differ, or the password has fewer than 6 characters. Nothing was created." >&2
+  exit 1
+fi
+
+export POCKETDECK_KEY_PASSWORD="$password"
+keytool -genkeypair -v -keystore "$keystore" -alias "$alias_name" -keyalg RSA -keysize 4096 -validity 10000 \
+  -storepass:env POCKETDECK_KEY_PASSWORD -keypass:env POCKETDECK_KEY_PASSWORD
 
 umask 077
 cat > "$dir/signing.properties" <<PROPS
 storeFile=$keystore
-storePassword=$store_password
+storePassword=$password
 keyAlias=$alias_name
-keyPassword=$key_password
+keyPassword=$password
 PROPS
 echo "Wrote $dir/signing.properties. Build a signed release with: ./gradlew :app:assembleRelease"
+echo "Back up $keystore and the password together, off this machine."
