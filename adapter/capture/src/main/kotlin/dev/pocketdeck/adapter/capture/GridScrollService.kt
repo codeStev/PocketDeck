@@ -106,7 +106,14 @@ class AccessibilityGridScroller : GridScroller {
 }
 
 object AutoScroll {
-    fun isEnabled(context: Context): Boolean {
+    /**
+     * True only while the service is switched on and Android has really connected it. The setting alone is not enough:
+     * after the app is updated the service can stay listed as on without being bound until it is toggled off and on,
+     * and every swipe then fails with "auto-scroll is off" although the switch looks on.
+     */
+    fun isEnabled(context: Context): Boolean = isSwitchedOn(context) && GridScrollService.instance != null
+
+    private fun isSwitchedOn(context: Context): Boolean {
         val enabled = Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
         val ours = ComponentName(context, GridScrollService::class.java).flattenToString()
         return enabled?.split(':')?.any { it.equals(ours, ignoreCase = true) } == true

@@ -61,6 +61,7 @@ class MainActivity : ComponentActivity() {
     private var reviewRequests by mutableIntStateOf(0)
     private var reviewIsComplete = false
     private var autoScrollEnabled by mutableStateOf(false)
+
     private var pendingAutomatic = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -141,6 +142,8 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // The player may just have switched the accessibility service on or off in the system settings.
         autoScrollEnabled = AutoScroll.isEnabled(this)
+        // Android connects a service that was just switched on a moment after we return here.
+        window.decorView.postDelayed({ autoScrollEnabled = AutoScroll.isEnabled(this) }, SERVICE_CONNECT_WAIT_MILLIS)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -167,6 +170,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private companion object {
+        const val SERVICE_CONNECT_WAIT_MILLIS = 1_000L
         const val GAME_PACKAGE = "jp.pokemon.pokemontcgp"
     }
 }
