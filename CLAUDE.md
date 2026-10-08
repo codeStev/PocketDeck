@@ -234,5 +234,10 @@ New way of driving the app => new driving adapter calling inbound ports.
 - Not modelled yet: Professor Sada, Lusamine, Miraidon ex's switch-and-move, Rainbow Cave, Pokémon tools (balloons), energy doubling,
   conditional free retreats, damage scaling (Mega Burst's 50 per energy counts as ready, not as damage), abilities
   that draw or search, anything about the opponent. "Can attack" ignores damage, knock-outs and retreat from Active by the opponent.
+- Checked on 1,009 live Limitless decklists (2026-10-08): the odds are plausible for the top archetypes (Mewtwo ex Gardevoir,
+  Mega Rayquaza, Suicune ex Baxcalibur, ...), the self-draining Mega Rayquaza ex shows the gap between "has attacked" and "attacks
+  that turn", and What to chase puts the staples first (X Speed finishes 210 of the lists a collection lacking promos could
+  almost complete). It exposed one bug: a third of the lists record no energy, and the guess used Dragon (no such energy) so
+  Dragon decks never attacked; `EnergyInference` now reads the energy from the attack costs.
 - Assumptions to recheck against the game: the zone picks uniformly among the deck's types; the Basic guarantee is modelled as
   dealing again until the hand has one; policy is greedy (attach where it makes an attack payable, favour the focus line).

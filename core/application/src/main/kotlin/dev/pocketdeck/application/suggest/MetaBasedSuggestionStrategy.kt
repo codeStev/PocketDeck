@@ -8,6 +8,7 @@ import dev.pocketdeck.domain.deck.DeckEntry
 import dev.pocketdeck.domain.deck.DeckSubstituter
 import dev.pocketdeck.domain.deck.DeckSuggestion
 import dev.pocketdeck.domain.deck.DeckValidator
+import dev.pocketdeck.domain.deck.EnergyInference
 import dev.pocketdeck.domain.deck.SuggestionOrigin
 import dev.pocketdeck.domain.meta.Archetype
 import dev.pocketdeck.domain.meta.MetaDecklist
@@ -86,19 +87,9 @@ class MetaBasedSuggestionStrategy(
                 val card = context.catalog[entry.cardId] ?: return null
                 DeckEntry(card, entry.copies)
             }
-        val energy = list.energyTypes.ifEmpty { energyOf(entries) }
+        val energy = list.energyTypes.ifEmpty { EnergyInference.of(entries) }
         return Deck(entries, energy)
     }
-
-    private fun energyOf(entries: List<DeckEntry>): Set<EnergyType> =
-        entries
-            .map { it.card }
-            .filterIsInstance<PokemonCard>()
-            .map { it.energyType }
-            .filter { it != EnergyType.COLORLESS }
-            .toSet()
-            .take(Deck.MAX_ENERGY_TYPES)
-            .toSet()
 
     private companion object {
         const val MAX_ARCHETYPES = 12
