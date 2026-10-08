@@ -1,11 +1,12 @@
 name: CI
 
-# Every change is checked before it reaches develop or main (pull requests) and after (pushes).
+# Every change is checked before it reaches develop or main (pull requests); pushes to develop, release and hotfix branches
+# also build a release candidate.
 on:
   pull_request:
     branches: [develop, main]
   push:
-    branches: [develop]
+    branches: [develop, 'release/**', 'hotfix/**']
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -29,8 +30,8 @@ jobs:
         run: ./gradlew :app:assembleRelease
 
   release-candidate:
-    # Every change that reaches develop is a new release candidate of the next version: 1.0.0-rc.N, N = commits on develop
-    # since main. Signed with the release key (same app id, so testers update in place) and kept as a workflow artifact.
+    # Every change that reaches develop, a release or a hotfix branch is a new release candidate of that branch's version: 1.0.0-rc.N,
+    # N = commits on the branch since main. Signed with the release key (same app id, so testers update in place) and kept as a workflow artifact.
     if: github.event_name == 'push'
     needs: check
     runs-on: ubuntu-latest
