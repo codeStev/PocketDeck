@@ -57,6 +57,13 @@ New way of driving the app => new driving adapter calling inbound ports.
   emulator connected, every `adb` call needs `-s <serial>` (`emulator-5554`; the phone is the `192.168.2.96:<port>` one), or it
   hits the wrong device. The game itself does not render on these emulators (Unity graphics init fails with the software GPU, draws
   garbage with `-gpu host`), so scan frames cannot be recorded there.
+- UI tests (`adapter/ui/src/androidTest`, Compose semantics, `ScreensTest`): the screens' `*Content` composables are started with made-up
+  data and checked for their key controls, their callbacks and the banners (rate limit, auto-scroll service missing); every
+  clickable control must have a non-blank text or description (`assertEveryControlIsLabelled`, verified to fail on an empty
+  description). They run on an emulator: `./gradlew :adapter:ui:assembleDebugAndroidTest`, then
+  `adb -s emulator-5554 install -r -t adapter/ui/build/outputs/apk/androidTest/debug/ui-debug-androidTest.apk` and
+  `adb -s emulator-5554 shell am instrument -w dev.pocketdeck.adapter.ui.test/androidx.test.runner.AndroidJUnitRunner`.
+  They are not part of `./gradlew check` (it has no device); a JVM route needs Robolectric next to JUnit 5 and was not tried.
 - Never send `adb shell input` events unless the same command first checks that `dev.pocketdeck` has window focus.
 
 ## Data tools (Python, `tools/*`; stdlib + numpy + Pillow; each has `python3 -m unittest discover -s tests -t .`)
