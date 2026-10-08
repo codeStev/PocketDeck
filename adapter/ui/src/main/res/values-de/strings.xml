@@ -317,4 +317,25 @@
     <string name="about_tour">Willkommenstour erneut zeigen</string>
     <string name="collection_empty_hint">Deine Sammlung ist leer. Scanne deine Karten, um zu sehen, was du besitzt.</string>
     <string name="collection_empty_action">Scannen</string>
+    <string name="files_title">Deine Daten</string>
+    <string name="files_hint">Speichere die Sammlung des aktiven Kontos in einer Datei oder ersetze sie durch eine gespeicherte Datei. Exportiere vor einer Neuinstallation oder einem Handywechsel.</string>
+    <string name="files_export_json">JSON exportieren</string>
+    <string name="files_export_csv">CSV exportieren</string>
+    <string name="files_import">Aus Datei importieren</string>
+    <string name="files_replace_title">Sammlung von %1$s ersetzen?</string>
+    <string name="files_replace_text">Verschiedene Karten jetzt: %1$d\nVerschiedene Karten in der Datei: %2$d\nExemplare in der Datei: %3$d\n\nDer Import ersetzt die Sammlung.</string>
+    <plurals name="files_unknown_cards">
+        <item quantity="one">%1$d Karte aus der Datei ist in der Kartendatenbank dieser Version nicht enthalten und wird übersprungen.</item>
+        <item quantity="other">%1$d Karten aus der Datei sind in der Kartendatenbank dieser Version nicht enthalten und werden übersprungen.</item>
+    </plurals>
+    <string name="files_replace_undo">Du kannst das im Tab Scannen mit „Sammlung von vor dem letzten Scan wiederherstellen“ rückgängig machen.</string>
+    <string name="files_replace_confirm">Ersetzen</string>
+    <string name="files_exported">Gespeichert: %1$s.</string>
+    <string name="files_export_failed">Die Datei konnte nicht gespeichert werden.</string>
+    <string name="files_imported">Sammlung ersetzt. Verschiedene Karten: %1$d.</string>
+    <string name="files_read_failed">Die Datei konnte nicht gelesen werden.</string>
+    <string name="files_not_a_collection">Das ist keine PocketDeck-Sammlungsdatei (JSON oder CSV mit den Spalten id und copies).</string>
+    <string name="files_newer_version">Diese Datei stammt aus einer neueren PocketDeck-Version. Aktualisiere die App, um sie zu lesen.</string>
+    <string name="files_nothing_recognised">Keine Karte dieser Datei ist dieser Version bekannt, daher wurde nichts geändert.</string>
+    <string name="files_dismiss">OK</string>
 </resources>

@@ -197,6 +197,12 @@ New way of driving the app => new driving adapter calling inbound ports.
   through string resources in composables (`CardDetail` -> `detailText`), never as hardcoded English words. Notices are `PdBanner`s
   (a rate limit is a warning, `MetaSourceFailure.RateLimited`). Screens are checked with `adb exec-out screencap` (no input needed);
   any tap first checks that `dev.pocketdeck` has window focus. The window has no system title bar (`Theme.PocketDeck`).
+- Collection files (Settings > "Your data"): `ExportCollectionService` / `ReadCollectionFileService` / `ReplaceCollectionService`
+  (application, `exchange/`) use the outbound port `CollectionFileCodec`, implemented by `:adapter:exchange`
+  (`JsonCsvCollectionFileCodec`: JSON with `format: pocketdeck-collection` and a `version`, or CSV `id,name,copies` with a UTF-8 BOM; CSV
+  is read with a comma or a semicolon, only `id` and `copies` are needed). Import first shows a preview (cards now, in the file, unknown
+  ids skipped) and only replaces after confirmation; it saves the old collection as the scan backup, so "Restore the collection from
+  before the last scan" undoes it. The system file picker (`CreateDocument`, `OpenDocument`) is driven from `CollectionFilesSection`.
 - Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).
 
 ## Design system (`:designsystem`, package `dev.codestev.pocketdesign`)

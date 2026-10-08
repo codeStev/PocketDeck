@@ -29,6 +29,7 @@ import dev.pocketdeck.adapter.ui.PocketDeckApp
 import dev.pocketdeck.adapter.ui.chase.ChaseViewModel
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
+import dev.pocketdeck.adapter.ui.files.CollectionFilesViewModel
 import dev.pocketdeck.adapter.ui.profile.ProfilesViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
 import dev.pocketdeck.adapter.ui.settings.AboutActions
@@ -63,6 +64,9 @@ class MainActivity : ComponentActivity() {
     lateinit var profilesViewModelFactory: ProfilesViewModel.Factory
 
     @Inject
+    lateinit var filesViewModelFactory: CollectionFilesViewModel.Factory
+
+    @Inject
     lateinit var welcomeViewModelFactory: WelcomeViewModel.Factory
 
     private var selectedTab by mutableStateOf(AppTab.COLLECTION)
@@ -91,6 +95,7 @@ class MainActivity : ComponentActivity() {
                     viewModel<ScanViewModel>(key = "scan-${language.name}", factory = scanViewModelFactory)
                 val settingsViewModel = viewModel<SettingsViewModel>(factory = settingsViewModelFactory)
                 val profilesViewModel = viewModel<ProfilesViewModel>(factory = profilesViewModelFactory)
+                val filesViewModel = viewModel<CollectionFilesViewModel>(factory = filesViewModelFactory)
                 val welcomeViewModel = viewModel<WelcomeViewModel>(factory = welcomeViewModelFactory)
                 val welcome by welcomeViewModel.state.collectAsStateWithLifecycle()
                 var tourRequested by rememberSaveable { mutableStateOf(false) }
@@ -137,6 +142,7 @@ class MainActivity : ComponentActivity() {
                     chaseViewModel = chaseViewModel,
                     scanViewModel = scanViewModel,
                     settingsViewModel = settingsViewModel,
+                    filesViewModel = filesViewModel,
                     profilesViewModel = profilesViewModel,
                     selectedTab = selectedTab,
                     onTabSelected = { selectedTab = it },

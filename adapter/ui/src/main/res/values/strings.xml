@@ -317,4 +317,25 @@
     <string name="about_tour">Show the welcome tour again</string>
     <string name="collection_empty_hint">Your collection is empty. Scan your cards to see what you own.</string>
     <string name="collection_empty_action">Scan</string>
+    <string name="files_title">Your data</string>
+    <string name="files_hint">Save the collection of the active account to a file, or replace it with a saved file. Export before you reinstall the app or change phones.</string>
+    <string name="files_export_json">Export JSON</string>
+    <string name="files_export_csv">Export CSV</string>
+    <string name="files_import">Import from file</string>
+    <string name="files_replace_title">Replace the collection of %1$s?</string>
+    <string name="files_replace_text">Different cards now: %1$d\nDifferent cards in the file: %2$d\nCopies in the file: %3$d\n\nImporting replaces the collection.</string>
+    <plurals name="files_unknown_cards">
+        <item quantity="one">%1$d card in the file is not in this version\'s card database and is skipped.</item>
+        <item quantity="other">%1$d cards in the file are not in this version\'s card database and are skipped.</item>
+    </plurals>
+    <string name="files_replace_undo">You can undo this on the Scan tab with \"Restore the collection from before the last scan\".</string>
+    <string name="files_replace_confirm">Replace</string>
+    <string name="files_exported">Saved %1$s.</string>
+    <string name="files_export_failed">The file could not be saved.</string>
+    <string name="files_imported">Collection replaced. Different cards: %1$d.</string>
+    <string name="files_read_failed">The file could not be read.</string>
+    <string name="files_not_a_collection">This is not a PocketDeck collection file (JSON, or CSV with the columns id and copies).</string>
+    <string name="files_newer_version">This file is from a newer version of PocketDeck. Update the app to read it.</string>
+    <string name="files_nothing_recognised">None of the cards in this file is known to this version, so nothing was changed.</string>
+    <string name="files_dismiss">OK</string>
 </resources>

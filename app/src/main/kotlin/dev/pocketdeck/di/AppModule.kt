@@ -9,6 +9,7 @@ import dagger.hilt.components.SingletonComponent
 import dev.pocketdeck.LogAdvisorDiagnostics
 import dev.pocketdeck.LogScanDiagnostics
 import dev.pocketdeck.adapter.carddb.MasterCatalogSource
+import dev.pocketdeck.adapter.exchange.JsonCsvCollectionFileCodec
 import dev.pocketdeck.adapter.limitless.LimitlessMetaDecklistSource
 import dev.pocketdeck.adapter.llm.AnthropicDeckAdvisor
 import dev.pocketdeck.adapter.llm.AnthropicModelCatalog
@@ -30,6 +31,7 @@ import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.AiAssistant
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
 import dev.pocketdeck.adapter.ui.decks.SavedDecks
+import dev.pocketdeck.adapter.ui.files.CollectionFilesViewModel
 import dev.pocketdeck.adapter.ui.profile.ProfilesViewModel
 import dev.pocketdeck.adapter.ui.scan.ConsentAccess
 import dev.pocketdeck.adapter.ui.scan.ScanViewModel
@@ -70,6 +72,10 @@ import dev.pocketdeck.application.consent.GrantConsentService
 import dev.pocketdeck.application.consent.ObserveConsentService
 import dev.pocketdeck.application.deckcode.ExportDeckCode
 import dev.pocketdeck.application.deckcode.ExportDeckCodeService
+import dev.pocketdeck.application.exchange.CollectionFileCodec
+import dev.pocketdeck.application.exchange.ExportCollectionService
+import dev.pocketdeck.application.exchange.ReadCollectionFileService
+import dev.pocketdeck.application.exchange.ReplaceCollectionService
 import dev.pocketdeck.application.meta.InMemoryMetaSnapshotRepository
 import dev.pocketdeck.application.meta.MetaDecklistSource
 import dev.pocketdeck.application.meta.MetaSnapshotRepository
@@ -438,6 +444,22 @@ object AppModule {
         restorePrevious,
         language,
         ConsentAccess(ObserveConsentService(consent), GrantConsentService(consent)),
+    )
+
+    @Provides
+    fun collectionFileCodec(): CollectionFileCodec = JsonCsvCollectionFileCodec()
+
+    @Provides
+    fun filesViewModelFactory(
+        collections: CollectionRepository,
+        catalogs: CardCatalogRepository,
+        profiles: ProfileRepository,
+        backup: CollectionBackup,
+        codec: CollectionFileCodec,
+    ) = CollectionFilesViewModel.Factory(
+        ExportCollectionService(collections, catalogs, profiles, codec, Clock.systemUTC()),
+        ReadCollectionFileService(codec, catalogs, collections, profiles),
+        ReplaceCollectionService(collections, backup),
     )
 
     @Provides

@@ -34,16 +34,20 @@ import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
 import dev.pocketdeck.adapter.ui.about.AboutPanel
+import dev.pocketdeck.adapter.ui.files.CollectionFilesSection
+import dev.pocketdeck.adapter.ui.files.CollectionFilesViewModel
 import dev.pocketdeck.application.advice.AdvisorProvider
 
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
+    files: CollectionFilesViewModel,
     about: AboutActions,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     SettingsContent(
         state,
+        files,
         about,
         SettingsActions(
             viewModel::onKeyChanged,
@@ -74,6 +78,7 @@ internal class SettingsActions(
 @Composable
 internal fun SettingsContent(
     state: SettingsUiState,
+    files: CollectionFilesViewModel,
     about: AboutActions,
     actions: SettingsActions,
 ) {
@@ -94,6 +99,7 @@ internal fun SettingsContent(
         )
         LanguageSection()
         AiSection(state, actions)
+        CollectionFilesSection(files)
         val aboutTitle = stringResource(R.string.settings_about)
         val aboutValue = stringResource(R.string.settings_about_value, about.versionName)
         PdRowGroup {

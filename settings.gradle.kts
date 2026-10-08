@@ -29,6 +29,7 @@ include(
     ":adapter:persistence",
     ":adapter:carddb",
     ":adapter:limitless",
+    ":adapter:exchange",
     ":adapter:llm",
     ":adapter:recognition",
     ":designsystem",

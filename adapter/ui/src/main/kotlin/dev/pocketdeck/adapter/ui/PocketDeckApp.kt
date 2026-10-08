@@ -21,6 +21,7 @@ import dev.pocketdeck.adapter.ui.collection.CollectionScreen
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
 import dev.pocketdeck.adapter.ui.decks.DecksScreen
 import dev.pocketdeck.adapter.ui.decks.DecksViewModel
+import dev.pocketdeck.adapter.ui.files.CollectionFilesViewModel
 import dev.pocketdeck.adapter.ui.profile.ProfileSwitcher
 import dev.pocketdeck.adapter.ui.profile.ProfilesViewModel
 import dev.pocketdeck.adapter.ui.scan.ScanScreen
@@ -39,6 +40,7 @@ fun PocketDeckApp(
     chaseViewModel: ChaseViewModel,
     scanViewModel: ScanViewModel,
     settingsViewModel: SettingsViewModel,
+    filesViewModel: CollectionFilesViewModel,
     profilesViewModel: ProfilesViewModel,
     selectedTab: AppTab,
     onTabSelected: (AppTab) -> Unit,
@@ -72,7 +74,7 @@ fun PocketDeckApp(
                 }
 
                 AppTab.SETTINGS -> {
-                    SettingsScreen(settingsViewModel, about)
+                    SettingsScreen(settingsViewModel, filesViewModel, about)
                 }
             }
         }
