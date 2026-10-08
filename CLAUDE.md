@@ -121,6 +121,12 @@ New way of driving the app => new driving adapter calling inbound ports.
   45% and 53%. Weights (`CardRatings`: 6.0 for lines and trainers) were picked on that measure; going higher gave little.
   Rerun such a measure before changing the rating rules (a throwaway JVM test in `:adapter:carddb` reading the real
   master dataset worked well; it needs live decklists and a copy of the collection).
+- Opening odds in the builder were tried and rejected (2026-10-08, 40 live archetypes, same leave-one-out measure, collection =
+  the user's cards + the tested deck): choosing among the builder's energy options by the strongest attackers' chance to attack by
+  turn 3 drops the recovery from 47% to 27% automatically (and changes nothing around a chosen Pokémon, where the energy is fixed). The
+  odds favour decks with cheap attackers, which is not what strong players play. Two things the measure showed: the builder's `rating`
+  is capped at 1, so many energy options tie and the first in energy order wins; and ordering by the uncapped strength is worse
+  (36.6%). Odds stay an explanation shown on each deck, not a ranking input. Do not retry without a better quality proxy.
 - AI advisor (`:adapter:llm`): `AskAiForDeckService` (application) asks a `DeckAdvisor`, never trusts the answer (unknown ids,
   cards not owned, legality, selectable energy are checked) and sends problems back for up to 3 attempts.
   `AdvicePromptWriter` (application) writes the prompt once for every provider; `ConfiguredDeckAdvisor` tries the providers
