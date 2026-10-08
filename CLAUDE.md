@@ -236,6 +236,9 @@ New way of driving the app => new driving adapter calling inbound ports.
   through the tour and all tabs, fails on a crash; refuses any serial that is not `emulator-*`. A release candidate needs it green.
 - Libraries' licences: `scripts/licence-scan.py` (run after `assembleRelease`, also a CI step) reads every POM in the release classpath and fails on a missing
   or unfit licence; `KNOWN_EXACT` pins the three libraries whose POM has none.
+- Store metadata: `fastlane/metadata/android/<locale>/` (title, short and full description, `changelogs/<versionCode>.txt`) is the one source for the
+  listing; the release workflow copies it into the F-Droid repository's metadata, so `fdroid/metadata/<id>.yml` holds only links, licence and
+  anti-features. Add `changelogs/<versionCode>.txt` (<= 500 bytes) in both languages with every release; texts must not claim anything untrue.
 - Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).
 
 ## Design system (`:designsystem`, package `dev.codestev.pocketdesign`)

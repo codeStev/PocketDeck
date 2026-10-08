@@ -96,6 +96,9 @@ jobs:
           cp -r pages/repo/. work/repo/ 2>/dev/null || true
           cp new/*.apk work/repo/
           cp -r fdroid/metadata work/metadata
+          # The localized listing (title, descriptions, changelog) is the same fastlane folder the app repository carries.
+          mkdir -p work/metadata/io.github.codestev.pocketdeck
+          cp -r fastlane/metadata/android/. work/metadata/io.github.codestev.pocketdeck/
           echo "$KEYSTORE_BASE64" | base64 -d > work/keystore.jks
           # fdroid signs the index with the SDK's apksigner and has no default for where it is.
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)

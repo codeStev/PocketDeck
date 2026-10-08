@@ -1,0 +1,22 @@
+PocketDeck ist ein inoffizieller Begleiter für Pokémon TCG Pocket. Die App liest deine Sammlung vom Bildschirm „Meine Karten“ des Spiels und schlägt dir kompetitive Decks vor, die du mit deinen Karten bauen kannst.
+
+<b>Scannen</b>
+Scrolle durch „Meine Karten“ (3 Karten pro Reihe), während PocketDeck den Bildschirm liest, oder lass das optionale Auto-Scrollen das Wischen übernehmen. Die App sagt dir, wenn das Spiel nicht auf der Kartenliste ist, und zeigt, wo sie unsicher ist, damit du korrigieren kannst.
+
+<b>Sammlung</b>
+Suchen, nach Erweiterung, Seltenheit und Typ filtern, nach Nummer, Name, Anzahl oder Seltenheit sortieren und Anzahlen von Hand anpassen. Mehrere Accounts nebeneinander. Sammlung als JSON oder CSV exportieren und importieren.
+
+<b>Decks</b>
+• Aktuelle Turnier-Decks, sortiert danach, wie gut du sie bauen kannst, mit Ersatzkarten für fehlende
+• Aus deinen eigenen Karten gebaute Decks, mit Startwahrscheinlichkeiten für jedes Deck
+• „Was jagen?“: die Karten, die die meisten Turnier-Decks vervollständigen würden
+• Optionale Vorschläge eines KI-Dienstes deiner Wahl (dein eigener Claude- oder OpenRouter-Schlüssel)
+• Per QR-Code ins Spiel importieren und ein Deck als Text oder Bild teilen
+
+<b>Privat von Grund auf</b>
+Kein Konto, keine Analyse, kein Server von uns. Sammlung, Decks und Einstellungen bleiben auf deinem Handy. Die App lädt nur Turnierlisten und Kartenbilder herunter und sendet nur dann Daten an einen KI-Dienst, wenn du einen Schlüssel einträgst.
+
+<b>Auto-Scrollen</b>
+Optional und aus, bis du zustimmst. Es nutzt einen Android-Bedienungshilfe-Dienst nur, um die Kartenliste während eines Scans zu wischen, und liest nichts vom Bildschirm. Eingaben in einem Spiel zu automatisieren kann gegen dessen Bedingungen verstoßen; du nutzt es auf eigenes Risiko.
+
+Inoffizielles Fan-Tool, nicht verbunden mit oder gebilligt von The Pokémon Company, Nintendo, Creatures, GAME FREAK oder DeNA. Pokémon, Pokémon TCG Pocket, Kartennamen und Artwork gehören ihren Eigentümern. Mit KI-Unterstützung entwickelt.

@@ -1,0 +1,22 @@
+PocketDeck is an unofficial companion for Pokémon TCG Pocket. It reads your collection from the game's My Cards screen and suggests competitive decks you can build with the cards you own.
+
+<b>Scan</b>
+Scroll through My Cards (3 cards per row) while PocketDeck reads the screen, or let the optional auto-scroll do the swiping. It tells you when the game is not on its card list, and shows what it is unsure about so you can correct it.
+
+<b>Collection</b>
+Search, filter by set, rarity and type, sort by number, name, copies or rarity, and adjust counts by hand. Run several accounts side by side. Export and import your collection as JSON or CSV.
+
+<b>Decks</b>
+• Recent tournament decks ranked by how well you can build them, with stand-ins for missing cards
+• Decks built from your own cards, with opening odds for each deck
+• "What to chase": the cards that would finish the most tournament decks
+• Optional suggestions from an AI service of your choice (your own Claude or OpenRouter key)
+• Import into the game with a QR code, and share a deck as text or as an image
+
+<b>Private by design</b>
+No account, no analytics, no server of ours. Your collection, decks and settings stay on your phone. The app only downloads tournament lists and card images, and sends data to an AI service only if you add a key.
+
+<b>Auto-scroll</b>
+Optional and off until you agree. It uses an Android accessibility service only to swipe the card list while a scan runs and reads nothing on the screen. Automating input in a game may go against the game's terms, so you use it at your own risk.
+
+Unofficial fan tool, not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA. Pokémon, Pokémon TCG Pocket, card names and artwork belong to their owners. Built with AI assistance.
