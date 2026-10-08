@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Two cards, one behind the other (the collection), the front one with a dot (the scan). Inside the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M48,68h-10a4,4 0 0 1 -4,-4v-28a4,4 0 0 1 4,-4h18a4,4 0 0 1 4,4v4"
+        android:strokeWidth="3.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M52,40h18a4,4 0 0 1 4,4v28a4,4 0 0 1 -4,4h-18a4,4 0 0 1 -4,-4v-28a4,4 0 0 1 4,-4z" />
+    <path
+        android:fillColor="#CC3518"
+        android:pathData="M61,53a5,5 0 1 0 0.001 0z" />
+</vector>
