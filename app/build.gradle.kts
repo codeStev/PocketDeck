@@ -30,7 +30,7 @@ check(versionFile.getProperty("versionCode") == versionCodeOf(baseVersion).toStr
 android {
     namespace = "dev.pocketdeck"
     defaultConfig {
-        applicationId = "dev.pocketdeck"
+        applicationId = "io.github.codestev.pocketdeck"
         versionCode = appVersionCode
         versionName = appVersion
         // A test copy of a release build can sit next to the real app: -Ppocketdeck.idSuffix=.rc

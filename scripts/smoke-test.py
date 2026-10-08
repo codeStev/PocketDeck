@@ -8,7 +8,8 @@ running app shows, and the unit tests never run the minified code.
 Emulators only: it taps blindly through the screen, which must never happen on a phone with the game on it."""
 import argparse, re, subprocess, sys, time, xml.etree.ElementTree as ET
 
-PACKAGE = "dev.pocketdeck"
+PACKAGE = "io.github.codestev.pocketdeck"
+MAIN_ACTIVITY = "dev.pocketdeck.MainActivity"  # named in full: the class lives in the code namespace, not the application ID
 TABS = ["Collection", "Decks", "Scan", "Settings"]
 TOUR_BUTTONS = ["I understand", "Next"]  # the last page asks for "I understand", the others have "Next"
 
@@ -50,7 +51,7 @@ def main():
 
     adb(args.serial, "install", "-r", args.apk)
     adb(args.serial, "logcat", "-c")
-    adb(args.serial, "shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
+    adb(args.serial, "shell", "am", "start", "-n", f"{PACKAGE}/{MAIN_ACTIVITY}")
     time.sleep(8)
     get_through_the_tour(args.serial)
     missing = []

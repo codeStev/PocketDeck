@@ -33,7 +33,7 @@ the AI requests or a scan; open those once on a release candidate by hand (see t
 
 ## Try a release build next to the real app
 `./gradlew :app:assembleRelease -Ppocketdeck.signWithDebugKey=true -Ppocketdeck.idSuffix=.rc` builds "PocketDeck RC"
-(`dev.pocketdeck.rc`) with its own data, so it can be installed beside the real app. R8 breaks things at run time
+(`io.github.codestev.pocketdeck.rc`) with its own data, so it can be installed beside the real app. R8 breaks things at run time
 (reflection, serialization, Room, Hilt), so open every tab once: Collection, Decks (both tabs, tournament refresh, build, an
 AI request), Scan, Settings (picker). **A release signed with the release key cannot update an install signed with the
 debug key**; Android demands an uninstall first, which deletes the collection (rescan afterwards). Debug builds stay usable

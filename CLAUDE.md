@@ -3,6 +3,11 @@
 Android app: scans the user's Pokémon TCG Pocket collection (screen capture + image recognition) and
 suggests competitive decks buildable from owned cards. Personal/sideload use.
 
+## Application ID
+`io.github.codestev.pocketdeck` (chosen before the first release; it cannot change afterwards without a new app that cannot update the old). The code namespace stays
+`dev.pocketdeck` (and `dev.codestev.pocketdesign` for the library); do not confuse the two: `adb` commands take the application ID, class names and instrumentation
+runners (`dev.pocketdeck.adapter.ui.test`) the namespace.
+
 ## Architecture: Hexagonal (Ports & Adapters) — non-negotiable
 Dependency rule: `core:domain` <- `core:application` <- `adapter:*` <- `app`.
 
@@ -64,7 +69,7 @@ New way of driving the app => new driving adapter calling inbound ports.
   `adb -s emulator-5554 install -r -t adapter/ui/build/outputs/apk/androidTest/debug/ui-debug-androidTest.apk` and
   `adb -s emulator-5554 shell am instrument -w dev.pocketdeck.adapter.ui.test/androidx.test.runner.AndroidJUnitRunner`.
   They are not part of `./gradlew check` (it has no device); a JVM route needs Robolectric next to JUnit 5 and was not tried.
-- Never send `adb shell input` events unless the same command first checks that `dev.pocketdeck` has window focus.
+- Never send `adb shell input` events unless the same command first checks that `io.github.codestev.pocketdeck` has window focus.
 
 ## Data tools (Python, `tools/*`; stdlib + numpy + Pillow; each has `python3 -m unittest discover -s tests -t .`)
 - `tools/master_dataset/build_master.py` merges English v5 (gameplay data), TCGdex German (names, artwork), PokeAPI species
@@ -207,7 +212,7 @@ New way of driving the app => new driving adapter calling inbound ports.
   tab's actions are pinned above its list (`ActionBar`); empty-state texts wait for `DecksUiState.loaded`. Domain enums are shown
   through string resources in composables (`CardDetail` -> `detailText`), never as hardcoded English words. Notices are `PdBanner`s
   (a rate limit is a warning, `MetaSourceFailure.RateLimited`). Screens are checked with `adb exec-out screencap` (no input needed);
-  any tap first checks that `dev.pocketdeck` has window focus. The window has no system title bar (`Theme.PocketDeck`).
+  any tap first checks that `io.github.codestev.pocketdeck` has window focus. The window has no system title bar (`Theme.PocketDeck`).
 - Collection files (Settings > "Your data"): `ExportCollectionService` / `ReadCollectionFileService` / `ReplaceCollectionService`
   (application, `exchange/`) use the outbound port `CollectionFileCodec`, implemented by `:adapter:exchange`
   (`JsonCsvCollectionFileCodec`: JSON with `format: pocketdeck-collection` and a `version`, or CSV `id,name,copies` with a UTF-8 BOM; CSV
@@ -245,7 +250,7 @@ New way of driving the app => new driving adapter calling inbound ports.
   any graphic below 3:1 in either theme.
 - Fonts Fredoka and Nunito are bundled (variable TTF, SIL OFL, `designsystem/licenses/`), so it works offline.
 - The catalog (`CatalogActivity`, debug builds only) shows every token and component in light and dark:
-  `adb shell am start -n dev.pocketdeck/dev.codestev.pocketdesign.catalog.CatalogActivity`. Add every new component to it.
+  `adb shell am start -n io.github.codestev.pocketdeck/dev.codestev.pocketdesign.catalog.CatalogActivity`. Add every new component to it.
 - Migrated to the library: shell (floating nav, account top bar), Decks, Collection, Scan, Chase, Builder, Settings and their
   dialogs, the scan overlay (plain Views with the brand's dark-theme values, since `:adapter:capture` may not use the library),
   the notification accent and the adaptive launcher icon (accent background, two cards with a dot, monochrome for themed icons).
