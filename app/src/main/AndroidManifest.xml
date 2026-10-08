@@ -20,7 +20,7 @@
         android:localeConfig="@xml/locales_config"
         tools:targetApi="33"
         android:label="${appLabel}"
-        android:theme="@android:style/Theme.DeviceDefault.DayNight">
+        android:theme="@style/Theme.PocketDeck">
         <activity
             android:name=".MainActivity"
             android:exported="true">

@@ -1,22 +1,21 @@
 package dev.pocketdeck.adapter.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.codestev.pocketdesign.components.PdFloatingNav
+import dev.codestev.pocketdesign.components.PdNavTab
+import dev.codestev.pocketdesign.icons.PdIcons
+import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.chase.ChaseViewModel
 import dev.pocketdeck.adapter.ui.collection.CollectionScreen
 import dev.pocketdeck.adapter.ui.collection.CollectionViewModel
@@ -48,34 +47,7 @@ fun PocketDeckApp(
 ) {
     Scaffold(
         topBar = { ProfileSwitcher(profilesViewModel) },
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = selectedTab == AppTab.COLLECTION,
-                    onClick = { onTabSelected(AppTab.COLLECTION) },
-                    icon = { Icon(Icons.Filled.AccountBox, contentDescription = null) },
-                    label = { Text(stringResource(R.string.tab_collection)) },
-                )
-                NavigationBarItem(
-                    selected = selectedTab == AppTab.DECKS,
-                    onClick = { onTabSelected(AppTab.DECKS) },
-                    icon = { Icon(Icons.Filled.Star, contentDescription = null) },
-                    label = { Text(stringResource(R.string.tab_decks)) },
-                )
-                NavigationBarItem(
-                    selected = selectedTab == AppTab.SCAN,
-                    onClick = { onTabSelected(AppTab.SCAN) },
-                    icon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    label = { Text(stringResource(R.string.tab_scan)) },
-                )
-                NavigationBarItem(
-                    selected = selectedTab == AppTab.SETTINGS,
-                    onClick = { onTabSelected(AppTab.SETTINGS) },
-                    icon = { Icon(Icons.Filled.Settings, contentDescription = null) },
-                    label = { Text(stringResource(R.string.tab_settings)) },
-                )
-            }
-        },
+        bottomBar = { FloatingTabs(selectedTab, onTabSelected) },
     ) { padding ->
         Box(Modifier.padding(padding)) {
             when (selectedTab) {
@@ -120,4 +92,23 @@ private fun ScanTab(
             ?.name
             ?.value
     ScanScreen(scanViewModel, accountName, autoScrollEnabled, onOpenAccessibilitySettings, onStartScan)
+}
+
+/** Each tab owns a colour from the brand, so the player learns "green is scan" without reading. */
+@Composable
+private fun FloatingTabs(
+    selected: AppTab,
+    onSelected: (AppTab) -> Unit,
+) {
+    val colors = PocketDesign.colors
+    val tabs =
+        listOf(
+            PdNavTab(stringResource(R.string.tab_collection), PdIcons.Collection, colors.accent),
+            PdNavTab(stringResource(R.string.tab_decks), PdIcons.Decks, colors.tint("blue").strong),
+            PdNavTab(stringResource(R.string.tab_scan), PdIcons.Scan, colors.tint("green").strong),
+            PdNavTab(stringResource(R.string.tab_settings), PdIcons.Settings, colors.tint("steel").strong),
+        )
+    Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp), contentAlignment = Alignment.Center) {
+        PdFloatingNav(tabs, AppTab.entries.indexOf(selected), { onSelected(AppTab.entries[it]) })
+    }
 }

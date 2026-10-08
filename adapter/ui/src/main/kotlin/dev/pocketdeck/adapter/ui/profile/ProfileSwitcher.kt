@@ -1,28 +1,25 @@
 package dev.pocketdeck.adapter.ui.profile
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.codestev.pocketdesign.components.PdDialog
+import dev.codestev.pocketdesign.components.PdTextField
+import dev.codestev.pocketdesign.components.PdTopBar
+import dev.codestev.pocketdesign.icons.PdIcons
+import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
 import dev.pocketdeck.application.profile.ProfileNameProblem
 import dev.pocketdeck.domain.profile.Profiles
@@ -45,13 +42,12 @@ private fun ProfileBar(
     viewModel: ProfilesViewModel,
 ) {
     var open by remember { mutableStateOf(false) }
-    Row(
-        Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(stringResource(R.string.profile_account), style = MaterialTheme.typography.labelLarge)
-        TextButton(onClick = { open = true }) { Text(profiles.active.name.value + " ▾") }
+    Box(Modifier.statusBarsPadding()) {
+        PdTopBar(
+            tag = profiles.active.name.value,
+            onTagClick = { open = true },
+            tagTrailingIcon = PdIcons.ChevronDown,
+        )
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             profiles.all.forEach { profile ->
                 DropdownMenuItem(
@@ -105,17 +101,20 @@ private fun ProfileDialogs(
         }
 
         is ProfileDialog.ConfirmDelete -> {
-            AlertDialog(
+            PdDialog(
+                title = stringResource(R.string.profile_delete_title, dialog.profile.name.value),
                 onDismissRequest = viewModel::onDialogDismissed,
-                title = { Text(stringResource(R.string.profile_delete_title, dialog.profile.name.value)) },
-                text = { Text(stringResource(R.string.profile_delete_hint)) },
-                confirmButton = {
-                    TextButton(onClick = viewModel::onDeleteConfirmed) { Text(stringResource(R.string.profile_delete)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = viewModel::onDialogDismissed) { Text(stringResource(R.string.profile_cancel)) }
-                },
-            )
+                confirmText = stringResource(R.string.profile_delete),
+                onConfirm = viewModel::onDeleteConfirmed,
+                dismissText = stringResource(R.string.profile_cancel),
+                destructive = true,
+            ) {
+                Text(
+                    stringResource(R.string.profile_delete_hint),
+                    style = PocketDesign.typography.body,
+                    color = PocketDesign.colors.ink,
+                )
+            }
         }
     }
 }
@@ -128,26 +127,22 @@ private fun NameDialog(
     viewModel: ProfilesViewModel,
 ) {
     var name by remember { mutableStateOf(initial) }
-    AlertDialog(
+    PdDialog(
+        title = stringResource(title),
         onDismissRequest = viewModel::onDialogDismissed,
-        title = { Text(stringResource(title)) },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                singleLine = true,
-                label = { Text(stringResource(R.string.profile_name)) },
-                isError = problem != null,
-                supportingText = problem?.let { { Text(stringResource(it.message())) } },
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = { viewModel.onNameSubmitted(name) }) { Text(stringResource(R.string.profile_save)) }
-        },
-        dismissButton = {
-            TextButton(onClick = viewModel::onDialogDismissed) { Text(stringResource(R.string.profile_cancel)) }
-        },
-    )
+        confirmText = stringResource(R.string.profile_save),
+        onConfirm = { viewModel.onNameSubmitted(name) },
+        dismissText = stringResource(R.string.profile_cancel),
+    ) {
+        PdTextField(
+            name,
+            { name = it },
+            Modifier.fillMaxWidth(),
+            placeholder = stringResource(R.string.profile_name),
+            isError = problem != null,
+            supportingText = problem?.let { stringResource(it.message()) },
+        )
+    }
 }
 
 private fun ProfileNameProblem.message() =
