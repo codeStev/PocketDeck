@@ -97,6 +97,8 @@ jobs:
           cp new/*.apk work/repo/
           cp -r fdroid/metadata work/metadata
           echo "$KEYSTORE_BASE64" | base64 -d > work/keystore.jks
+          # fdroid signs the index with the SDK's apksigner and has no default for where it is.
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           cat > work/config.yml <<CONFIG
           repo_url: https://codestev.github.io/PocketDeck/repo
           repo_name: PocketDeck
@@ -105,6 +107,7 @@ jobs:
           keystore: keystore.jks
           keystorepass: $KEYSTORE_PASSWORD
           keypass: $KEYSTORE_PASSWORD
+          apksigner: $APKSIGNER
           CONFIG
           chmod 600 work/config.yml
           (cd work && fdroid update)
