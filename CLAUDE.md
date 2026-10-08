@@ -231,9 +231,16 @@ New way of driving the app => new driving adapter calling inbound ports.
   the discard pile, move energy between Pokémon, own switches, retreat discounts), `AttackEffectReader` (energy an attack discards
   from itself). Measured on the master dataset: most texts left unread target the opponent or need damage/knock-out tracking. A text that is not fully understood gives null: the card is simply
   not credited with the effect.
-- Not modelled yet: Professor Sada, Lusamine, Miraidon ex's switch-and-move, Rainbow Cave, Pokémon tools (balloons), energy doubling,
-  conditional free retreats, damage scaling (Mega Burst's 50 per energy counts as ready, not as damage), abilities
-  that draw or search, anything about the opponent. "Can attack" ignores damage, knock-outs and retreat from Active by the opponent.
+- Standing effects (`PassiveEffectReader`, measured on 1,009 live decklists: every opening-relevant text of the lists is read now):
+  Stadiums (Fragrant Forest fetches a Basic each turn, Hiking Trail draws up to 3, Rainbow Cave rerolls a useless zone energy, Peculiar
+  Plaza lowers [P] retreat), Tools that lower retreat (Small Balloon, Inflatable Boat; put on the Active Pokémon when a retreat is planned),
+  bench aura (Bombirdier), abilities that draw or fetch at the start or end of every turn (Suicune ex, Entei ex, Meloetta), doubled energy
+  (Serperior), Miraidon ex (swap in and take all energy, only when the deck is built around it), Eevee (evolves at once while Active) and
+  Mythical Slab.
+- Not modelled yet: Professor Sada and Lusamine (they need the "Ancient" / "Ultra Beast" traits, which the dataset lacks, and Lusamine
+  the opponent's points), Caterpie's evolve-at-the-end-of-the-opponent's-turn, damage scaling (Mega Burst's 50 per energy counts as
+  ready, not as damage), healing, damage boosts and anything about the opponent. "Can attack" ignores damage, knock-outs and retreat from
+  Active by the opponent.
 - Checked on 1,009 live Limitless decklists (2026-10-08): the odds are plausible for the top archetypes (Mewtwo ex Gardevoir,
   Mega Rayquaza, Suicune ex Baxcalibur, ...), the self-draining Mega Rayquaza ex shows the gap between "has attacked" and "attacks
   that turn", and What to chase puts the staples first (X Speed finishes 210 of the lists a collection lacking promos could

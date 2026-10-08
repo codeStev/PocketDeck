@@ -37,6 +37,11 @@ internal class OpeningGame(
     private var retreated = false
     private var retreatDiscount = 0
 
+    /** The Stadium in play (one at a time) and the turns its once-per-turn actions were last used. */
+    private var stadium: OpeningEffect.Stadium? = null
+    private var stadiumUsedOnTurn = -1
+    private var zoneRerolledOnTurn = -1
+
     /** Cards that are playable by now: trainers once held, Pokémon once on the board (evolutions only after evolving). */
     val playable = mutableSetOf<GameplayKey>()
 
@@ -62,12 +67,15 @@ internal class OpeningGame(
         retreatDiscount = 0
         attackedNow.clear()
         flow.draw(1)
+        everyTurn(TurnMoment.START_OF_TURN)
         if (zone == null) zone = plan.energyTypes.randomOrNull(random)
     }
 
     /** Does every move that is free and helps, until nothing more changes. */
     fun settle() {
-        while (placeBasics() || evolve() || useAbilities() || playItem()) {
+        while (placeBasics() || evolve() || useAbilities() || playItem() || playTool() || playStadium() ||
+            useStadium()
+        ) {
             // each pass can open the next: a searched Basic can be placed, a placed Basic can be evolved
         }
     }
@@ -81,8 +89,9 @@ internal class OpeningGame(
 
     /** Attaches the Energy Zone's energy (once per turn), unless the first player's first turn forbids it. */
     fun attachZoneEnergy() {
-        val type = zone ?: return
         if (turn == 1 && !order.getsEnergyOnFirstTurn) return
+        rerollUselessEnergy()
+        val type = zone ?: return
         val slot = (if (needsRetreatFunding()) board.active else chooseSlot(listOf(type), null)) ?: return
         slot.energy += type
         zone = null
@@ -100,6 +109,8 @@ internal class OpeningGame(
         if (!attackReady()) useTurnEndingEffect()
         attack()
         if (turn == 1) board.all.forEach(::useFirstTurnAbility)
+        everyTurn(TurnMoment.END_OF_TURN)
+        drawUpToStadiumHandSize()
     }
 
     private fun onTaken(card: Card) {
@@ -121,8 +132,9 @@ internal class OpeningGame(
                     .filter { isBasic(it) }
                     .minWithOrNull(SETUP_ORDER) ?: break
             flow.hand.remove(basic)
-            board.put(basic, turn)
+            val slot = board.put(basic, turn)
             playable += basic.gameplayKey
+            if (turn >= 1) switchInAndTakeEnergy(slot)
             placed = true
         }
         return placed
@@ -142,8 +154,7 @@ internal class OpeningGame(
 
     /** The first player does not evolve on their first turn; nobody evolves a Pokémon that arrived or evolved this turn. */
     private fun evolve(): Boolean {
-        if (turn == 1 && !order.canEvolveOnFirstTurn) return false
-        for (slot in board.all.filter { it.changedOnTurn < turn }.sortedBy { if (isFocus(it)) 0 else 1 }) {
+        for (slot in board.all.filter(::mayEvolve).sortedBy { if (isFocus(it)) 0 else 1 }) {
             val next =
                 flow.hand.filterIsInstance<PokemonCard>().firstOrNull { it.evolvesFrom == slot.card.name } ?: continue
             flow.hand.remove(next)
@@ -151,6 +162,12 @@ internal class OpeningGame(
             return true
         }
         return false
+    }
+
+    /** Eevee's ability lets it evolve straight away while it is Active; everyone else waits a turn, and the first player two. */
+    private fun mayEvolve(slot: InPlay): Boolean {
+        if (plan.effectOf(slot.card) == OpeningEffect.EvolvesAtOnce && board.isActive(slot)) return true
+        return slot.changedOnTurn < turn && (turn != 1 || order.canEvolveOnFirstTurn)
     }
 
     private fun evolveInto(
@@ -187,13 +204,25 @@ internal class OpeningGame(
     private fun isUseful(effect: OpeningEffect): Boolean =
         when (effect) {
             is OpeningEffect.Draw, is OpeningEffect.LookAtTop -> !flow.isLibraryEmpty
+
             is OpeningEffect.Search -> flow.libraryHas(effect.filter)
+
             is OpeningEffect.ShuffleHandAndDraw -> flow.hand.size - 1 <= SHUFFLE_HAND_LIMIT
+
             OpeningEffect.RareCandy -> candyTarget() != null
+
             is OpeningEffect.EvolveFromDeck -> deckEvolution(effect) != null
+
             is OpeningEffect.MoveEnergy -> movesFor(effect, null) != null
+
             is OpeningEffect.AttachEnergy -> !effect.endsTurn && canAttach(effect)
+
             is OpeningEffect.SwitchOwn, is OpeningEffect.RetreatDiscount, OpeningEffect.FreeRetreat -> false
+
+            is OpeningEffect.EveryTurn, is OpeningEffect.Stadium, is OpeningEffect.RetreatTool,
+            is OpeningEffect.RetreatAura, is OpeningEffect.DoubleEnergy, OpeningEffect.SwitchInAndTakeEnergy,
+            OpeningEffect.EvolvesAtOnce,
+            -> false
         }
 
     private fun play(
@@ -201,6 +230,10 @@ internal class OpeningGame(
         effect: OpeningEffect,
     ) {
         flow.hand.remove(card)
+        apply(effect)
+    }
+
+    private fun apply(effect: OpeningEffect) {
         when (effect) {
             is OpeningEffect.Draw -> {
                 flow.draw(effect.count)
@@ -238,6 +271,13 @@ internal class OpeningGame(
 
             is OpeningEffect.SwitchOwn, is OpeningEffect.RetreatDiscount, OpeningEffect.FreeRetreat -> {
                 // played only by promote(), which decides when a switch or a discount is worth it
+            }
+
+            is OpeningEffect.EveryTurn, is OpeningEffect.Stadium, is OpeningEffect.RetreatTool,
+            is OpeningEffect.RetreatAura, is OpeningEffect.DoubleEnergy, OpeningEffect.SwitchInAndTakeEnergy,
+            OpeningEffect.EvolvesAtOnce,
+            -> {
+                // standing effects: they act through their own moves (playTool, playStadium, everyTurn, ...)
             }
         }
     }
@@ -459,14 +499,107 @@ internal class OpeningGame(
     ): Int =
         when {
             payable(slot, type) && !payable(slot, null) -> 2
-            AttackCost.helps(slot.card.attacks, slot.energy, type) -> 1
+            AttackCost.helps(slot.card.attacks, counted(slot), type) -> 1
             else -> 0
         }
 
     private fun payable(
         slot: InPlay,
         extra: EnergyType?,
-    ): Boolean = slot.card.attacks.any { AttackCost.canPay(it.cost, slot.energy + listOfNotNull(extra)) }
+    ): Boolean = slot.card.attacks.any { AttackCost.canPay(it.cost, counted(slot, extra)) }
+
+    /** The energy that pays for attacks: with Serperior in play each [G] on a [G] Pokémon is two. */
+    private fun counted(
+        slot: InPlay,
+        extra: EnergyType? = null,
+    ): List<EnergyType> {
+        val attached = slot.energy + listOfNotNull(extra)
+        val doubled = board.all.firstNotNullOfOrNull { (plan.effectOf(it.card) as? OpeningEffect.DoubleEnergy)?.type }
+        if (doubled == null || slot.card.energyType != doubled) return attached
+        return attached.flatMap { if (it == doubled) listOf(it, it) else listOf(it) }
+    }
+
+    // --- tools, stadiums and abilities that keep working ---
+
+    /** A retreat-cheapening Tool goes on the Active Pokémon, the one the deck wants to retreat, when a retreat is planned. */
+    private fun playTool(): Boolean {
+        if (promotionGoal() == null) return false
+        val active = board.active?.takeIf { it.tool == null } ?: return false
+        val card =
+            flow.hand.firstOrNull { tool ->
+                tool is TrainerCard && tool.kind == TrainerKind.TOOL &&
+                    (plan.effectOf(tool) as? OpeningEffect.RetreatTool)?.wearer?.matches(active.card) == true
+            } ?: return false
+        flow.hand.remove(card)
+        active.tool = plan.effectOf(card) as OpeningEffect.RetreatTool
+        return true
+    }
+
+    /** The first Stadium that is worth having goes into play; one stays until the game ends. */
+    private fun playStadium(): Boolean {
+        if (stadium != null) return false
+        val card =
+            flow.hand.firstOrNull {
+                it is TrainerCard && it.kind == TrainerKind.STADIUM &&
+                    (plan.effectOf(it) as? OpeningEffect.Stadium)?.let(::worthPlaying) == true
+            } ?: return false
+        flow.hand.remove(card)
+        stadium = plan.effectOf(card) as OpeningEffect.Stadium
+        return true
+    }
+
+    private fun worthPlaying(stadium: OpeningEffect.Stadium): Boolean =
+        when (val rule = stadium.rule) {
+            StadiumRule.RerollEnergyZone -> plan.energyTypes.size > 1
+            is StadiumRule.LowerRetreat -> board.all.any { rule.filter.matches(it.card) }
+            is StadiumRule.OncePerTurn, is StadiumRule.DrawUpTo -> true
+        }
+
+    private fun useStadium(): Boolean {
+        val rule = stadium?.rule as? StadiumRule.OncePerTurn ?: return false
+        if (stadiumUsedOnTurn == turn || !isUseful(rule.effect)) return false
+        stadiumUsedOnTurn = turn
+        apply(rule.effect)
+        return true
+    }
+
+    private fun drawUpToStadiumHandSize() {
+        val rule = stadium?.rule as? StadiumRule.DrawUpTo ?: return
+        flow.draw((rule.handSize - flow.hand.size).coerceAtLeast(0))
+    }
+
+    /** Rainbow Cave: an energy no Pokémon can use is thrown away once per turn, and the next one is produced. */
+    private fun rerollUselessEnergy() {
+        val type = zone ?: return
+        if (stadium?.rule != StadiumRule.RerollEnergyZone || zoneRerolledOnTurn == turn) return
+        if (plan.energyTypes.size < 2 || board.all.any { benefit(it, type) > 0 }) return
+        zoneRerolledOnTurn = turn
+        zone = plan.energyTypes.random(random)
+    }
+
+    /** Abilities that draw or fetch at the start or end of every turn, while their Pokémon stands where the text says. */
+    private fun everyTurn(moment: TurnMoment) {
+        for (slot in board.all) {
+            val effect = plan.effectOf(slot.card) as? OpeningEffect.EveryTurn ?: continue
+            if (effect.moment == moment && placementAllows(effect.placement, slot) && isUseful(effect.action)) {
+                apply(effect.action)
+            }
+        }
+    }
+
+    /** Miraidon ex, put onto the Bench: swap into the Active Spot and take every energy, when the deck is built around it. */
+    private fun switchInAndTakeEnergy(slot: InPlay) {
+        if (plan.effectOf(slot.card) != OpeningEffect.SwitchInAndTakeEnergy || !isFocus(slot) ||
+            board.isActive(slot)
+        ) {
+            return
+        }
+        board.swapActiveWith(slot)
+        board.all.filter { it !== slot }.forEach { other ->
+            slot.energy += other.energy
+            other.energy.clear()
+        }
+    }
 
     // --- active spot ---
 
@@ -523,8 +656,28 @@ internal class OpeningGame(
 
     private fun retreatCost(slot: InPlay): Int {
         val free = board.all.any { plan.effectOf(it.card) == OpeningEffect.FreeRetreat }
-        return if (free) 0 else (slot.card.retreatCost - retreatDiscount).coerceAtLeast(0)
+        val lower = retreatDiscount + toolDiscount(slot) + stadiumDiscount(slot) + auraDiscount(slot)
+        return if (free) 0 else (slot.card.retreatCost - lower).coerceAtLeast(0)
     }
+
+    /** A Tool only works on the kind of Pokémon it names: a Basic's balloon is dead weight once it has evolved. */
+    private fun toolDiscount(slot: InPlay): Int = slot.tool?.takeIf { it.wearer.matches(slot.card) }?.amount ?: 0
+
+    private fun stadiumDiscount(slot: InPlay): Int =
+        (stadium?.rule as? StadiumRule.LowerRetreat)?.takeIf { it.filter.matches(slot.card) }?.amount ?: 0
+
+    private fun auraDiscount(slot: InPlay): Int =
+        if (!board.isActive(slot)) {
+            0
+        } else {
+            board.bench.sumOf {
+                (plan.effectOf(it.card) as? OpeningEffect.RetreatAura)
+                    ?.takeIf { aura ->
+                        aura.active.matches(slot.card)
+                    }?.amount
+                    ?: 0
+            }
+        }
 
     /** Pays the Retreat Cost with the Active Pokémon's own energy (it goes to the discard pile) and swaps [goal] in. */
     private fun retreat(goal: InPlay) {
@@ -574,7 +727,7 @@ internal class OpeningGame(
         if (turnEnded || (turn == 1 && !order.canAttackOnFirstTurn)) return
         val chosen =
             slot.card.attacks
-                .filter { AttackCost.canPay(it.cost, slot.energy) }
+                .filter { AttackCost.canPay(it.cost, counted(slot)) }
                 .maxByOrNull { it.damage ?: 0 }
                 ?: return
         val key = slot.card.gameplayKey

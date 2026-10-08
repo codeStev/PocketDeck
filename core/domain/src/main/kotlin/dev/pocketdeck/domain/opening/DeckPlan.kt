@@ -27,7 +27,10 @@ internal class DeckPlan(
     val energyTypes: List<EnergyType> = deck.energyTypes.sortedBy { it.ordinal }
 
     private val effects: Map<GameplayKey, OpeningEffect?> =
-        distinct.associate { it.gameplayKey to (HandEffectReader.of(it) ?: BoardEffectReader.of(it)) }
+        distinct.associate {
+            it.gameplayKey to
+                (HandEffectReader.of(it) ?: BoardEffectReader.of(it) ?: PassiveEffectReader.of(it))
+        }
 
     private val discards: Map<Attack, EnergyDiscard?> =
         pokemon.flatMap { it.attacks }.distinct().associateWith(AttackEffectReader::read)

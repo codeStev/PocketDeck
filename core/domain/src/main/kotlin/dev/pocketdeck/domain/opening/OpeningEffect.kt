@@ -19,6 +19,31 @@ enum class AbilityTrigger { ON_DEMAND, ON_EVOLVE, END_OF_FIRST_TURN }
 /** Where an ability's Pokémon must be for the ability to work. */
 enum class Placement { ANYWHERE, ACTIVE, BENCH }
 
+/** When a "beginning/end of your turn" ability fires. */
+enum class TurnMoment { START_OF_TURN, END_OF_TURN }
+
+/** What a Stadium does while it is in play; it works for both players, the simulation only plays its own side. */
+sealed interface StadiumRule {
+    /** Once during each player's turn the player may do [effect] (a search or a draw). */
+    data class OncePerTurn(
+        val effect: OpeningEffect,
+    ) : StadiumRule
+
+    /** At the end of the player's turn they draw until they hold [handSize] cards. */
+    data class DrawUpTo(
+        val handSize: Int,
+    ) : StadiumRule
+
+    /** Once per turn the player may throw away the energy waiting in the Energy Zone, and the next one is produced. */
+    data object RerollEnergyZone : StadiumRule
+
+    /** Every Pokémon matching [filter] has its Retreat Cost lowered by [amount]. */
+    data class LowerRetreat(
+        val filter: CardFilter,
+        val amount: Int,
+    ) : StadiumRule
+}
+
 /** Where attached energy comes from: the Energy Zone creates it, the discard pile gives back what was discarded. */
 enum class EnergySource { ENERGY_ZONE, DISCARD_PILE }
 
@@ -105,4 +130,42 @@ sealed interface OpeningEffect {
 
     /** The Active Pokémon retreats without paying. */
     data object FreeRetreat : OpeningEffect
+
+    /**
+     * An ability that draws or searches at the [moment] of every turn, while its Pokémon stands at [placement]
+     * (Suicune ex draws at the end of the turn it is Active, Meloetta fetches a [P] Pokémon at the start).
+     */
+    data class EveryTurn(
+        val moment: TurnMoment,
+        val action: OpeningEffect,
+        val placement: Placement,
+    ) : OpeningEffect
+
+    /** A Stadium: played from the hand, then in play (one at a time) until the game ends. */
+    data class Stadium(
+        val rule: StadiumRule,
+    ) : OpeningEffect
+
+    /** A Pokémon Tool that lowers the Retreat Cost of the Pokémon matching [wearer] it is attached to. */
+    data class RetreatTool(
+        val wearer: CardFilter,
+        val amount: Int,
+    ) : OpeningEffect
+
+    /** While its Pokémon is on the Bench, the Active Pokémon matching [active] retreats [amount] cheaper (Bombirdier). */
+    data class RetreatAura(
+        val active: CardFilter,
+        val amount: Int,
+    ) : OpeningEffect
+
+    /** Each [type] energy on a [type] Pokémon counts as two (Serperior). It does not stack. */
+    data class DoubleEnergy(
+        val type: EnergyType,
+    ) : OpeningEffect
+
+    /** When put onto the Bench this Pokémon may swap with the Active one and take all energy in play (Miraidon ex). */
+    data object SwitchInAndTakeEnergy : OpeningEffect
+
+    /** While this Pokémon is Active it can evolve in the first turn and in the turn it was put into play (Eevee). */
+    data object EvolvesAtOnce : OpeningEffect
 }

@@ -27,6 +27,11 @@ object HandEffectReader {
         Regex(
             "^look at the top (\\d+) cards of your deck\\. put all (.+) you find there into your hand\\. shuffle the other cards back into your deck$",
         )
+    private val lookAtTopCard =
+        Regex(
+            "^look at the top card of your deck\\. if that card is an? (.+), put it into your hand\\. " +
+                "if it is not an? .+, put it on the bottom of your deck$",
+        )
     private val eachPlayerShuffles =
         Regex("^each player shuffles the cards in their hand into their deck, then draws that many cards$")
     private val copycat =
@@ -43,7 +48,7 @@ object HandEffectReader {
                 .trimEnd('.')
         val plain = normalized.lowercase()
         return readDraw(plain) ?: readSearch(normalized, plain) ?: readLookAtTop(normalized, plain)
-            ?: readEvolveFromDeck(normalized, plain) ?: readOther(plain)
+            ?: readLookAtTopCard(normalized, plain) ?: readEvolveFromDeck(normalized, plain) ?: readOther(plain)
     }
 
     private fun readDraw(plain: String) =
@@ -91,6 +96,16 @@ object HandEffectReader {
         val match = lookAtTop.matchEntire(plain) ?: return null
         val filter = CardFilterReader.read(original.substring(match.groups[2]!!.range)) ?: return null
         return OpeningEffect.LookAtTop(match.groupValues[1].toInt(), filter)
+    }
+
+    /** Mythical Slab: the top card is kept if it matches and goes to the bottom otherwise, which is as good as a reshuffle. */
+    private fun readLookAtTopCard(
+        original: String,
+        plain: String,
+    ): OpeningEffect? {
+        val match = lookAtTopCard.matchEntire(plain) ?: return null
+        val filter = CardFilterReader.read(original.substring(match.groups[1]!!.range)) ?: return null
+        return OpeningEffect.LookAtTop(1, filter)
     }
 
     private fun readOther(plain: String): OpeningEffect? =

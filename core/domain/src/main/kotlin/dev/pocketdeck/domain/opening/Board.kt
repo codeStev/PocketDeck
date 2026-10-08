@@ -9,6 +9,8 @@ internal class InPlay(
     var changedOnTurn: Int,
     val energy: MutableList<EnergyType> = mutableListOf(),
     var abilityUsedOnTurn: Int = -1,
+    /** The Pokémon Tool attached, if any; only tools that lower the Retreat Cost are played. */
+    var tool: OpeningEffect.RetreatTool? = null,
 )
 
 /** The Active Spot and the Bench. Only the Active Pokémon attacks; the first Pokémon put down becomes Active. */
