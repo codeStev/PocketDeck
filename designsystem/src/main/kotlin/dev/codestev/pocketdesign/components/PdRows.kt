@@ -133,10 +133,12 @@ fun PdTextLink(
     Row(
         modifier =
             modifier.then(
-                if (onClick !=
-                    null
-                ) {
-                    Modifier.pdClickable(PocketDesign.shapes.pill, onClick)
+                // A soft corner, not a pill: when the text wraps at a large font a pill would clip its first letters.
+                if (onClick != null) {
+                    Modifier
+                        .heightIn(min = PdSpacing.minTouchTarget)
+                        .pdClickable(PocketDesign.shapes.sm, onClick)
+                        .padding(horizontal = PdSpacing.space1)
                 } else {
                     Modifier
                 },
@@ -146,6 +148,7 @@ fun PdTextLink(
     ) {
         Text(
             text,
+            Modifier.weight(1f, fill = false),
             style = PocketDesign.typography.titleSm.copy(fontSize = 14.sp, lineHeight = 20.sp),
             color = colors.accent,
         )

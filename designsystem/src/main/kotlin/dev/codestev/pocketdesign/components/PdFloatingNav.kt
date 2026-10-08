@@ -91,11 +91,13 @@ private fun NavTab(
                 tint = if (selected) colors.surfaceCard else tab.color,
             )
         }
-        Text(
-            tab.label,
-            style = PocketDesign.typography.titleSm.copy(fontSize = 11.sp, lineHeight = 14.sp),
-            color = if (selected) colors.ink else colors.inkMuted,
-            maxLines = 1,
-        )
+        PdCapFontScale {
+            Text(
+                tab.label,
+                style = PocketDesign.typography.titleSm.copy(fontSize = 11.sp, lineHeight = 14.sp),
+                color = if (selected) colors.ink else colors.inkMuted,
+                maxLines = 1,
+            )
+        }
     }
 }

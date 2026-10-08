@@ -3,6 +3,8 @@ package dev.pocketdeck.adapter.ui.collection
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -139,6 +141,7 @@ private fun Title(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Filters(
     state: CollectionUiState,
@@ -154,9 +157,11 @@ private fun Filters(
             placeholder = stringResource(R.string.collection_search_hint),
             leadingIcon = PdIcons.Search,
         )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+        // Wraps: at the largest system font the counts do not fit next to the chip and move below it.
+        FlowRow(
+            verticalArrangement = Arrangement.Center,
             horizontalArrangement = Arrangement.spacedBy(PdSpacing.space3),
+            itemVerticalAlignment = Alignment.CenterVertically,
         ) {
             PdFilterChip(
                 stringResource(R.string.collection_owned_only),

@@ -68,12 +68,14 @@ private fun RowScope.Segment(
                 ).padding(horizontal = PdSpacing.space3),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            label,
-            style = PocketDesign.typography.titleSm.copy(fontSize = 14.sp, lineHeight = 20.sp),
-            color = if (selected) colors.ink else colors.inkMuted,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-        )
+        PdCapFontScale {
+            Text(
+                label,
+                style = PocketDesign.typography.titleSm.copy(fontSize = 14.sp, lineHeight = 20.sp),
+                color = if (selected) colors.ink else colors.inkMuted,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+        }
     }
 }
