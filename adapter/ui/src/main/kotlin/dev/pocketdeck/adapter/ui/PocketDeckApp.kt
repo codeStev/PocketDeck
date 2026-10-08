@@ -2,6 +2,12 @@ package dev.pocketdeck.adapter.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -47,25 +53,25 @@ fun PocketDeckApp(
                 NavigationBarItem(
                     selected = selectedTab == AppTab.COLLECTION,
                     onClick = { onTabSelected(AppTab.COLLECTION) },
-                    icon = {},
+                    icon = { Icon(Icons.Filled.AccountBox, contentDescription = null) },
                     label = { Text(stringResource(R.string.tab_collection)) },
                 )
                 NavigationBarItem(
                     selected = selectedTab == AppTab.DECKS,
                     onClick = { onTabSelected(AppTab.DECKS) },
-                    icon = {},
+                    icon = { Icon(Icons.Filled.Star, contentDescription = null) },
                     label = { Text(stringResource(R.string.tab_decks)) },
                 )
                 NavigationBarItem(
                     selected = selectedTab == AppTab.SCAN,
                     onClick = { onTabSelected(AppTab.SCAN) },
-                    icon = {},
+                    icon = { Icon(Icons.Filled.Search, contentDescription = null) },
                     label = { Text(stringResource(R.string.tab_scan)) },
                 )
                 NavigationBarItem(
                     selected = selectedTab == AppTab.SETTINGS,
                     onClick = { onTabSelected(AppTab.SETTINGS) },
-                    icon = {},
+                    icon = { Icon(Icons.Filled.Settings, contentDescription = null) },
                     label = { Text(stringResource(R.string.tab_settings)) },
                 )
             }
