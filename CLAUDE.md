@@ -14,6 +14,10 @@ Dependency rule: `core:domain` <- `core:application` <- `adapter:*` <- `app`.
 - `:app` — composition root only (Hilt wiring). No business logic.
 - `:architecture-test` — Konsist tests enforcing the rules above. They run in `./gradlew check`.
 
+- `:designsystem` — the reusable Compose design system (package `dev.codestev.pocketdesign`). It depends on nothing of this
+  project and no adapter but `:adapter:ui` may use it (both enforced by Konsist). The app's look is supplied to it as a
+  brand (`PdBrand`).
+
 New external capability => new outbound port in `core:application` + new adapter module.
 New way of driving the app => new driving adapter calling inbound ports.
 
@@ -174,12 +178,29 @@ New way of driving the app => new driving adapter calling inbound ports.
   stored by an older version (`CardCatalog.lacksCardDetails`). `RankCardsToChase` (application) feeds the dialog opened from the
   Tournament tab (`adapter/ui/chase`). Not yet measured on real decklists; stand-ins (`DeckSubstituter`) are ignored.
 - UI conventions (reviewed on the real phone, 2026-10): tasks that are too big for a dialog box (chase list, deck builder) use
-  `components/FullScreenPanel`; secondary actions on deck cards use `CardOutlinedButton` (the default outline vanishes on the tinted
-  cards) and each card has one filled primary button; a tab's actions are pinned above its list (`ActionBar`); empty-state texts wait
-  for `DecksUiState.loaded`. Domain enums are shown through string resources in composables (`CardDetail` -> `detailText`), never as
-  hardcoded English words. A nested `Scaffold` must pass `WindowInsets(0)` or the status bar is cleared twice. Screens are checked
-  with `adb exec-out screencap` (no input needed); any tap first checks that `dev.pocketdeck` has window focus.
+  `PdFullScreenPanel`; each deck card has one filled primary button (import code), everything else is a small secondary button; a
+  tab's actions are pinned above its list (`ActionBar`); empty-state texts wait for `DecksUiState.loaded`. Domain enums are shown
+  through string resources in composables (`CardDetail` -> `detailText`), never as hardcoded English words. Notices are `PdBanner`s
+  (a rate limit is a warning, `MetaSourceFailure.RateLimited`). Screens are checked with `adb exec-out screencap` (no input needed);
+  any tap first checks that `dev.pocketdeck` has window focus. The window has no system title bar (`Theme.PocketDeck`).
 - Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).
+
+## Design system (`:designsystem`, package `dev.codestev.pocketdesign`)
+- Reusable and brand-agnostic: tokens (`PdColors` with categorical `tints` looked up by key, `PdTypography`, `PdShapes`,
+  `PdSpacing`, `PdMotion`), the theme (`PocketDesignTheme(brand, darkTheme)`, read tokens through `PocketDesign.colors` etc.;
+  it also configures Material 3 underneath; no dynamic colour) and `Pd*` components. Components take all text and content
+  descriptions as parameters and never use a literal colour. `SignalBrand` is the reference brand (orange-red accent, ten
+  tints named by hue); PocketDeck maps its Pokémon types onto those tint keys in `:adapter:ui`, never in the library.
+- Design source of truth: the two private Claude artifacts (design system and screens, see memory `design-system-artifact`);
+  local copies in `.claude/ds` and `.claude/canvas`. Change tokens there and in `SignalBrand` together.
+- Light is the default theme, dark is designed. `PdColorContrastTest` fails the build if any text pair drops below 4.5:1 or
+  any graphic below 3:1 in either theme.
+- Fonts Fredoka and Nunito are bundled (variable TTF, SIL OFL, `designsystem/licenses/`), so it works offline.
+- The catalog (`CatalogActivity`, debug builds only) shows every token and component in light and dark:
+  `adb shell am start -n dev.pocketdeck/dev.codestev.pocketdesign.catalog.CatalogActivity`. Add every new component to it.
+- Migrated to the library: shell (floating nav, account top bar), Decks, Collection, Scan, Chase, Builder, Settings and their
+  dialogs, the scan overlay (plain Views with the brand's dark-theme values, since `:adapter:capture` may not use the library),
+  the notification accent and the adaptive launcher icon (accent background, two cards with a dot, monochrome for themed icons).
 
 ## How a game starts (measured with the user, 2026; the opening model follows it)
 - Turn 0 (setup): each player has 5 cards; the game forces a Basic into the starting hand (no mulligans). The first player lays out
