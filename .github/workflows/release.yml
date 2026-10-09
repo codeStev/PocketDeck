@@ -102,16 +102,23 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 -d > work/keystore.jks
           # fdroid signs the index with the SDK's apksigner and has no default for where it is.
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
-          cat > work/config.yml <<CONFIG
-          repo_url: https://codestev.github.io/PocketDeck/repo
-          repo_name: PocketDeck
-          repo_description: Releases of PocketDeck, an unofficial companion for Pokémon TCG Pocket.
-          repo_keyalias: $KEY_ALIAS
-          keystore: keystore.jks
-          keystorepass: $KEYSTORE_PASSWORD
-          keypass: $KEYSTORE_PASSWORD
-          apksigner: $APKSIGNER
-          CONFIG
+          export APKSIGNER
+          python3 - > work/config.yml <<'PY'
+          import json, os
+          values = {
+              "repo_url": "https://codestev.github.io/PocketDeck/repo",
+              "repo_name": "PocketDeck",
+              "repo_description": "Releases of PocketDeck, an unofficial companion for Pokémon TCG Pocket.",
+              "repo_keyalias": os.environ["KEY_ALIAS"],
+              "keystore": "keystore.jks",
+              "keystorepass": os.environ["KEYSTORE_PASSWORD"],
+              "keypass": os.environ["KEYSTORE_PASSWORD"],
+              "apksigner": os.environ["APKSIGNER"],
+          }
+          # A JSON string is a valid YAML scalar: a password that starts with @ or contains quotes or # survives, which a bare value does not.
+          for key, value in values.items():
+              print(f"{key}: {json.dumps(value, ensure_ascii=False)}")
+          PY
           chmod 600 work/config.yml
           (cd work && fdroid update)
           mkdir -p pages/repo
