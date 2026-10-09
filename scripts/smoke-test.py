@@ -33,12 +33,20 @@ def visible_labels(serial):
         return []
 
 
+def dismiss_system_dialog(serial, labels):
+    """A hosted emulator is slow enough for Android to show "System UI isn't responding"; "Wait" keeps the process and clears the dialog."""
+    if any("isn't responding" in label for label in labels) and "Wait" in labels:
+        tap(serial, "Wait")
+
+
 def wait_for(serial, labels, seconds):
     """Waits until one of [labels] is on screen; a cold start on a slow emulator takes a while. Returns whether it appeared."""
     deadline = time.time() + seconds
     while time.time() < deadline:
-        if any(label in visible_labels(serial) for label in labels):
+        on_screen = visible_labels(serial)
+        if any(label in on_screen for label in labels):
             return True
+        dismiss_system_dialog(serial, on_screen)
         time.sleep(3)
     return False
 
