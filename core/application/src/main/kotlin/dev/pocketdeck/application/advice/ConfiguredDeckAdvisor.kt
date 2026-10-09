@@ -5,8 +5,13 @@ import kotlin.time.TimeSource
 
 /** What a provider needs to be called on the player's behalf. */
 data class ProviderAccess(
+    /** Empty for a server of the player's own that needs none. */
     val apiKey: String,
     val model: String,
+    /** The server's address, for a provider the player runs themselves; null for the others. */
+    val address: String? = null,
+    /** Whether an unencrypted http:// address may be used. */
+    val plainHttpAllowed: Boolean = false,
 )
 
 /** Outbound port: one AI service. The player's key and model come with every call, so the service keeps no settings. */
@@ -31,7 +36,7 @@ class ConfiguredDeckAdvisor(
         val current = settings.current()
         val usable = current.usable().filter { it in providers }
         if (usable.isEmpty()) {
-            diagnostics.note("No AI service has a key; nothing to ask")
+            diagnostics.note("No AI service is set up; nothing to ask")
             return Outcome.Failure(AdvisorFailure.MissingKey)
         }
         val prompt = AdvicePromptWriter.write(request)
@@ -42,9 +47,10 @@ class ConfiguredDeckAdvisor(
         )
         var firstFailure: AdvisorFailure? = null
         for (provider in usable) {
-            val key = requireNotNull(current.keyOf(provider))
+            val key = current.keyOf(provider).orEmpty()
             for (model in current.modelsToTry(provider)) {
-                val outcome = ask(provider, ProviderAccess(key, model), request)
+                val access = ProviderAccess(key, model, current.addressOf(provider), current.plainHttpAllowed)
+                val outcome = ask(provider, access, request)
                 if (outcome is Outcome.Success) return outcome
                 val failure = (outcome as Outcome.Failure).reason
                 firstFailure = firstFailure ?: failure

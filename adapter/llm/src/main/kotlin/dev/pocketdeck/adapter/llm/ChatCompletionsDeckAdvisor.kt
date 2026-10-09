@@ -14,6 +14,7 @@ import dev.pocketdeck.application.advice.describe
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -25,23 +26,40 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 
+/** The services that speak the OpenAI chat completions API, and where they differ from each other. */
+enum class ChatDialect(
+    /** The service's address; null when the player gives it (their own server). */
+    val baseUrl: String?,
+) {
+    OPENROUTER("https://openrouter.ai/api/v1"),
+    OPENAI("https://api.openai.com/v1"),
+    OWN_SERVER(null),
+}
+
 /**
- * Asks any model on OpenRouter through its OpenAI-style chat completions API; the free ones included. A model that
- * supports tools hands the deck in as a function call; one that does not may write it out as text, which is read too.
+ * Asks a model through the OpenAI-style chat completions API: OpenRouter (the free models included), OpenAI, or a server of
+ * the player's own such as Ollama or LM Studio. A model that supports tools hands the deck in as a function call; one that
+ * does not may write it out as text, which is read too.
  */
-class OpenRouterDeckAdvisor(
+class ChatCompletionsDeckAdvisor(
     private val client: HttpClient,
-    private val baseUrl: String = "https://openrouter.ai/api/v1",
+    private val dialect: ChatDialect,
+    private val baseUrl: String? = dialect.baseUrl,
     private val diagnostics: AdvisorDiagnostics = AdvisorDiagnostics.NONE,
 ) : ProviderDeckAdvisor {
     override suspend fun advise(
         request: AdviceRequest,
         access: ProviderAccess,
-    ): Outcome<DeckAdvice, AdvisorFailure> =
-        when (
+    ): Outcome<DeckAdvice, AdvisorFailure> {
+        val address =
+            (baseUrl ?: access.address)?.trimEnd('/') ?: return Outcome.Failure(AdvisorFailure.Rejected(NO_ADDRESS))
+        if (address.startsWith("http://", ignoreCase = true) && !access.plainHttpAllowed) {
+            return Outcome.Failure(AdvisorFailure.Rejected(PLAIN_HTTP_OFF))
+        }
+        return when (
             val reply =
                 client.postJson(
-                    "$baseUrl/chat/completions",
+                    "$address/chat/completions",
                     headers(access),
                     body(request, access),
                     diagnostics,
@@ -51,9 +69,14 @@ class OpenRouterDeckAdvisor(
             is Reply.Failed -> Outcome.Failure(reply.failure)
             is Reply.Answer -> read(reply.json)
         }
+    }
 
-    private fun headers(access: ProviderAccess) =
-        mapOf("Authorization" to "Bearer ${access.apiKey}", "X-Title" to APP_NAME)
+    /** A server of the player's own often has no key; sending an empty bearer token would be rejected by some. */
+    private fun headers(access: ProviderAccess): Map<String, String> =
+        buildMap {
+            if (access.apiKey.isNotBlank()) put("Authorization", "Bearer ${access.apiKey}")
+            if (dialect == ChatDialect.OPENROUTER) put("X-Title", APP_NAME)
+        }
 
     private fun body(
         request: AdviceRequest,
@@ -62,13 +85,16 @@ class OpenRouterDeckAdvisor(
         val prompt = AdvicePromptWriter.write(request)
         return buildJsonObject {
             put("model", access.model)
-            put("max_tokens", MAX_TOKENS)
-            // A thinking model spends most of its room on thinking; this keeps that short so the deck still fits.
-            putJsonObject("reasoning") { put("effort", "low") }
+            // OpenAI's newer models refuse max_tokens; the others know only that name.
+            put(if (dialect == ChatDialect.OPENAI) "max_completion_tokens" else "max_tokens", MAX_TOKENS)
+            putThinkingLimit(access.model)
             putJsonArray("tools") { add(tool()) }
-            putJsonObject("tool_choice") {
-                put("type", "function")
-                putJsonObject("function") { put("name", AdviceFormat.TOOL_NAME) }
+            // Local runtimes differ in what they accept here; without it they still answer, and a text answer is read too.
+            if (dialect != ChatDialect.OWN_SERVER) {
+                putJsonObject("tool_choice") {
+                    put("type", "function")
+                    putJsonObject("function") { put("name", AdviceFormat.TOOL_NAME) }
+                }
             }
             put(
                 "messages",
@@ -78,6 +104,14 @@ class OpenRouterDeckAdvisor(
                     request.feedback,
                 ),
             )
+        }
+    }
+
+    /** A thinking model spends most of its room on thinking; this keeps that short so the deck still fits. */
+    private fun JsonObjectBuilder.putThinkingLimit(model: String) {
+        when {
+            dialect == ChatDialect.OPENROUTER -> putJsonObject("reasoning") { put("effort", "low") }
+            dialect == ChatDialect.OPENAI && REASONING_MODEL.containsMatchIn(model) -> put("reasoning_effort", "low")
         }
     }
 
@@ -216,6 +250,9 @@ class OpenRouterDeckAdvisor(
 
     private companion object {
         const val APP_NAME = "PocketDeck"
+        const val NO_ADDRESS = "No server address is set"
+        const val PLAIN_HTTP_OFF = "The address starts with http://; switch on plain http in Settings or use https"
+        val REASONING_MODEL = Regex("^(gpt-5|o\\d)")
         const val PREVIEW_LENGTH = 400
         const val MAX_TOKENS = 12_000
         const val UNAUTHORIZED = 401

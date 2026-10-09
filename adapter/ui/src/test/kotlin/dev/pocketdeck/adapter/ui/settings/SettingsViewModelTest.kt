@@ -12,6 +12,7 @@ import dev.pocketdeck.application.advice.ObserveAdvisorSettingsService
 import dev.pocketdeck.application.advice.SaveAdvisorSettingsService
 import dev.pocketdeck.application.advice.Thinking
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -135,8 +136,7 @@ class SettingsViewModelTest {
                 .first() shouldBe first
 
             viewModel.onMove(first, 1)
-            viewModel.state.value.form.order
-                .last() shouldBe first
+            viewModel.state.value.form.order[1] shouldBe first
         }
 
     @Test
@@ -275,5 +275,56 @@ class SettingsViewModelTest {
             viewModel.onToggleModel(AdvisorProvider.ANTHROPIC, "claude-haiku-4-5-20251001")
             viewModel.state.value.form.models
                 .containsKey(AdvisorProvider.ANTHROPIC) shouldBe false
+        }
+
+    @Test
+    fun `saving keeps the address of the player's own server and the plain http choice`() =
+        runTest(dispatcher) {
+            val store = FakeStore()
+            val viewModel = viewModel(store)
+            advanceUntilIdle()
+            viewModel.onAddressChanged(AdvisorProvider.OWN_SERVER, " http://pc:11434/v1/ ")
+            viewModel.onModelChanged(AdvisorProvider.OWN_SERVER, "llama3.1")
+            viewModel.onPlainHttpChanged(true)
+
+            viewModel.onSave()
+            advanceUntilIdle()
+
+            store.current().addressOf(AdvisorProvider.OWN_SERVER) shouldBe "http://pc:11434/v1"
+            store.current().plainHttpAllowed shouldBe true
+            store.current().usable() shouldBe listOf(AdvisorProvider.OWN_SERVER)
+            viewModel.state.value.form
+                .isReady(AdvisorProvider.OWN_SERVER) shouldBe true
+        }
+
+    @Test
+    fun `the model picker hands the typed address to the catalog and refuses plain http until it is allowed`() =
+        runTest(dispatcher) {
+            val requests = mutableListOf<ModelRequest>()
+            val viewModel =
+                viewModel(
+                    models =
+                        ListSuitableModels {
+                            requests += it
+                            Outcome.Success(listOf(model("qwen3")))
+                        },
+                )
+            advanceUntilIdle()
+            viewModel.onAddressChanged(AdvisorProvider.OWN_SERVER, "http://pc:1234/v1")
+
+            viewModel.onOpenModelPicker(AdvisorProvider.OWN_SERVER)
+            advanceUntilIdle()
+            val refused =
+                viewModel.state.value.modelPicker!!
+                    .content
+            viewModel.onPlainHttpChanged(true)
+            viewModel.onOpenModelPicker(AdvisorProvider.OWN_SERVER)
+            advanceUntilIdle()
+
+            refused.shouldBeInstanceOf<ModelPickerContent.Failed>()
+            requests.single().address shouldBe "http://pc:1234/v1"
+            viewModel.state.value.modelPicker!!
+                .content
+                .shouldBeInstanceOf<ModelPickerContent.Loaded>()
         }
 }

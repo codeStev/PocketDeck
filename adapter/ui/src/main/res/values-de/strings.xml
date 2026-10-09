@@ -189,10 +189,10 @@
     <string name="settings_ai_provider_openrouter">OpenRouter</string>
     <string name="settings_ai_provider_openrouter_hint">Ein Schlüssel für viele Modelle, einige kostenlos (mit niedrigen Limits, oft ausgelastet). Schlüssel von openrouter.ai.</string>
     <string name="settings_ai_key">API-Schlüssel</string>
-    <string name="settings_ai_model">Modell</string>
-    <string name="settings_ai_model_hint">Leer = Standard. Mehrere, durch Komma getrennt, werden nacheinander versucht.</string>
-    <string name="settings_ai_earlier">Früher fragen</string>
-    <string name="settings_ai_later">Später fragen</string>
+    <string name="settings_ai_model">Modelle</string>
+    <string name="settings_ai_model_hint">Von oben nach unten probiert, bis eines ein Deck liefert.</string>
+    <string name="settings_ai_provider_earlier">%1$s früher fragen</string>
+    <string name="settings_ai_provider_later">%1$s später fragen</string>
     <string name="settings_save">Speichern</string>
     <string name="decks_ai_needs_key">Füge zuerst in den Einstellungen einen Schlüssel für einen KI-Dienst hinzu.</string>
     <string name="decks_ai_invalid_key">Der KI-Dienst hat deinen Schlüssel nicht akzeptiert. Prüfe ihn in den KI-Einstellungen.</string>
@@ -203,6 +203,37 @@
     <string name="decks_ai_no_valid_deck">Die KI konnte aus deinen Karten kein gültiges Deck bauen. Letztes Problem: %1$s</string>
     <string name="tab_settings">Einstellungen</string>
     <string name="settings_title">Einstellungen</string>
+    <string name="settings_unsaved">Ungespeicherte Änderungen</string>
+    <string name="settings_ai_model_default_used">Kein Modell gewählt, deshalb gilt der Standard (%1$s).</string>
+    <string name="settings_ai_model_remove">%1$s entfernen</string>
+    <string name="settings_ai_model_up">%1$s nach oben</string>
+    <string name="settings_ai_model_down">%1$s nach unten</string>
+    <string name="settings_ai_model_add">Hinzufügen</string>
+    <string name="settings_ai_model_add_placeholder">Modell per Name hinzufügen</string>
+    <string name="settings_ai_models_fold">Modelle einklappen</string>
+    <string name="settings_ai_models_unfold">Modelle ausklappen</string>
+    <string name="settings_ai_provider_openai">OpenAI</string>
+    <string name="settings_ai_provider_openai_hint">GPT-Modelle von OpenAI; kostet Geld pro Anfrage. Schlüssel von platform.openai.com.</string>
+    <string name="settings_ai_provider_own">Eigener Server (OpenAI-kompatibel)</string>
+    <string name="settings_ai_provider_own_hint">Ollama, LM Studio oder ein anderer Server mit OpenAI-Schnittstelle, auf deinem Rechner oder in deinem Netz. Deine Karten gehen nur an diesen Server. Wähle ein Modell, das er hat; ein Schlüssel ist nur nötig, wenn dein Server einen verlangt. Lokale Modelle können Minuten für ein Deck brauchen.</string>
+    <string name="settings_ai_key_optional">API-Schlüssel (optional)</string>
+    <string name="settings_ai_address">Serveradresse</string>
+    <string name="settings_ai_address_hint">Endet auf /v1, zum Beispiel http://192.168.2.5:11434/v1 (Ollama) oder :1234/v1 (LM Studio).</string>
+    <string name="settings_ai_plain_http">Unverschlüsseltes http erlauben</string>
+    <string name="settings_ai_plain_http_hint">Die meisten Server im eigenen Netz haben keine Verschlüsselung. Wer in diesem Netz mitliest, sieht alles, was an sie gesendet wird, auch den Schlüssel.</string>
+    <string name="settings_ai_browse_openai">OpenAI-Modelle wählen</string>
+    <string name="settings_ai_browse_own">Modelle des Servers wählen</string>
+    <string name="settings_ai_models_title_openai">OpenAI-Modelle</string>
+    <string name="settings_ai_models_hint_openai">Die Chat-Modelle, die dein Schlüssel nutzen kann. Tippe zum Auswählen; die Modelle werden in der gewählten Reihenfolge probiert.</string>
+    <string name="settings_ai_models_title_own">Modelle des Servers</string>
+    <string name="settings_ai_models_hint_own">Die Modelle, die dein Server meldet. Tippe zum Auswählen; sie werden in der gewählten Reihenfolge probiert. Gib zuerst die Adresse ein.</string>
+    <string name="settings_ai_status_ready">Bereit</string>
+    <string name="settings_ai_status_off">Nicht eingerichtet</string>
+    <string name="settings_ai_provider_fold">Einstellungen einklappen</string>
+    <string name="settings_ai_provider_unfold">Einstellungen ausklappen</string>
+    <string name="settings_ai_model_none_own">Noch kein Modell. Füge eines per Name hinzu oder wähle vom Server.</string>
+    <string name="settings_ai_cost_warning">Kostenwarnung: Eine Deck-Anfrage sendet deine ganze Kartenliste, bei einer großen Sammlung etwa 22.000 Tokens, und eine Anfrage kann sie mehrmals senden. Ist die Antwort kein gültiges Deck, geht sie zur Korrektur zurück (bis zu 3 Versuche). Scheitert ein Modell oder liefert es kein Deck, wird zusätzlich das nächste Modell oder der nächste Dienst deiner Liste gefragt. Ein kostenpflichtiger Dienst berechnet jedes dieser Mal. Trage nur wenige Modelle ein, bevorzuge kostenlose oder günstige und lege bei deinem Anbieter ein Ausgabenlimit fest. Kostenlose Modelle haben niedrige Limits und sind oft ausgelastet.</string>
+    <string name="decks_ai_cost_note">Eine Anfrage kann deine Kartenliste (bei einer großen Sammlung etwa 22.000 Tokens) bis zu dreimal senden, und bei jedem weiteren Modell erneut, wenn eines scheitert. Kostenpflichtige Dienste berechnen jedes Mal.</string>
     <string name="settings_saved">Gespeichert.</string>
     <string name="settings_ai_browse_models">OpenRouter-Modelle wählen</string>
     <string name="settings_ai_models_title">OpenRouter-Modelle</string>
@@ -211,7 +242,7 @@
     <string name="settings_ai_models_title_claude">Claude-Modelle</string>
     <string name="settings_ai_models_hint_claude">Die Claude-Modelle, die dein Schlüssel nutzen kann, neueste zuerst. Tippe eines an, um es zu wählen; tippe erneut, um zum Standard zurückzukehren.</string>
     <string name="settings_ai_models_include_paid">Kostenpflichtige Modelle einbeziehen</string>
-    <string name="settings_ai_models_paid_note">Kostenpflichtige Modelle werden deinem OpenRouter-Konto berechnet. Eine Deck-Anfrage sendet etwa 30.000 Tokens; der angezeigte Preis gilt für ein Deck.</string>
+    <string name="settings_ai_models_paid_note">Kostenpflichtige Modelle werden deinem OpenRouter-Konto berechnet. Eine Deck-Anfrage sendet etwa 22.000 Tokens; der angezeigte Preis gilt für ein Deck.</string>
     <string name="settings_ai_models_search">Modelle suchen</string>
     <string name="settings_ai_models_chosen">Gewählt</string>
     <string name="settings_ai_models_default">Standard</string>
@@ -381,4 +412,8 @@
     <string name="about_diagnostics_title">Diagnose kopieren?</string>
     <string name="about_diagnostics_text">Kopiert werden die App-Version, die Android-Version, das Gerätemodell, die Bildschirmgröße, die Sprache, der Zustand des automatischen Scrollens und der Berechtigungen sowie die letzten Zeilen, die die App zu Scans und KI-Anfragen geschrieben hat. Sie enthält keine API-Schlüssel, keine Sammlung und keine Kartennamen. Es wird nichts gesendet; du fügst sie selbst ein.</string>
     <string name="about_diagnostics_copied">Kopiert. Füge sie in deine Problemmeldung ein.</string>
+    <plurals name="settings_ai_models_more">
+        <item quantity="one">+%1$d weiteres</item>
+        <item quantity="other">+%1$d weitere</item>
+    </plurals>
 </resources>

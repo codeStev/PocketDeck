@@ -274,7 +274,8 @@ class ScreensTest {
                         ExportedFile("a.json", FileFormat.JSON, "")
                     }, { Outcome.Failure(ImportFailure.NotACollectionFile) }, {})
                 }
-            val actions = SettingsActions({ _, _ -> }, { _, _ -> }, { _, _ -> }, {}, {}, { _, _ -> }, {}, {})
+            val actions =
+                SettingsActions({ _, _ -> }, { _, _ -> }, { _, _ -> }, {}, {}, { _, _ -> }, {}, {}, { _, _ -> }, {})
             PocketDeckTheme {
                 SettingsContent(
                     SettingsUiState(),

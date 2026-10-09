@@ -166,6 +166,32 @@ class ConfiguredDeckAdvisorTest {
     }
 
     @Test
+    fun `a server of the player's own needs an address and a model but no key`() {
+        val address = AdvisorSettings().withAddress(AdvisorProvider.OWN_SERVER, " http://pc:11434/v1/ ")
+        val ready = address.withModel(AdvisorProvider.OWN_SERVER, "llama3.1")
+
+        address.usable() shouldBe emptyList()
+        ready.usable() shouldBe listOf(AdvisorProvider.OWN_SERVER)
+        ready.addressOf(AdvisorProvider.OWN_SERVER) shouldBe "http://pc:11434/v1"
+        ready.withAddress(AdvisorProvider.OWN_SERVER, " ").usable() shouldBe emptyList()
+    }
+
+    @Test
+    fun `asks the player's own server with its address, an empty key and the plain http choice`() =
+        runTest {
+            val own = Recording(Outcome.Success(advice))
+            val ready =
+                AdvisorSettings()
+                    .withAddress(AdvisorProvider.OWN_SERVER, "http://pc:1234/v1")
+                    .withModel(AdvisorProvider.OWN_SERVER, "qwen3")
+                    .withPlainHttpAllowed(true)
+
+            ConfiguredDeckAdvisor(FakeStore(ready), mapOf(AdvisorProvider.OWN_SERVER to own)).advise(request)
+
+            own.accesses.single() shouldBe ProviderAccess("", "qwen3", "http://pc:1234/v1", plainHttpAllowed = true)
+        }
+
+    @Test
     fun `removing a key makes the provider unusable again`() {
         val s = settings(AdvisorProvider.ANTHROPIC to "a").withKey(AdvisorProvider.ANTHROPIC, null)
 

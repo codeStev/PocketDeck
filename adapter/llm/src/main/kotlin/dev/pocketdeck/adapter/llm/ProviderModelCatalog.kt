@@ -13,6 +13,7 @@ class ProviderModelCatalog(
     override suspend fun available(
         provider: AdvisorProvider,
         apiKey: String?,
+        address: String?,
     ): Outcome<List<ListedModel>, AdvisorFailure> =
-        catalogs[provider]?.available(provider, apiKey) ?: Outcome.Success(emptyList())
+        catalogs[provider]?.available(provider, apiKey, address) ?: Outcome.Success(emptyList())
 }

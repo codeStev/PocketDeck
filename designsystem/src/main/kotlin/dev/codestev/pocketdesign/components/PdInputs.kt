@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -64,6 +65,7 @@ fun PdTextField(
     enabled: Boolean = true,
     singleLine: Boolean = true,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     val colors = PocketDesign.colors
@@ -85,6 +87,7 @@ fun PdTextField(
             textStyle = PocketDesign.typography.titleSm.copy(color = colors.ink),
             cursorBrush = SolidColor(colors.accent),
             keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions,
             visualTransformation = visualTransformation,
             interactionSource = source,
             decorationBox = { inner ->

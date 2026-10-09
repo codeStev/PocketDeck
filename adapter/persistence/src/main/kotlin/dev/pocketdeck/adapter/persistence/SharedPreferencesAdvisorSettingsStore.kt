@@ -42,7 +42,9 @@ class SharedPreferencesAdvisorSettingsStore internal constructor(
             AdvisorProvider.entries.forEach { provider ->
                 settings.keyOf(provider)?.let { editor.putString(KEY_PREFIX + provider.name, secrets.seal(it)) }
                 settings.chosenModelOf(provider)?.let { editor.putString(MODEL_PREFIX + provider.name, it) }
+                settings.addressOf(provider)?.let { editor.putString(ADDRESS_PREFIX + provider.name, it) }
             }
+            editor.putBoolean(PLAIN_HTTP, settings.plainHttpAllowed)
             editor.commit()
         }
         state.value = settings
@@ -56,10 +58,16 @@ class SharedPreferencesAdvisorSettingsStore internal constructor(
                         name
                 }
             }
-        return AdvisorProvider.entries.fold(AdvisorSettings().withOrder(order.orEmpty())) { settings, provider ->
+        val start =
+            AdvisorSettings()
+                .withOrder(
+                    order.orEmpty(),
+                ).withPlainHttpAllowed(preferences.getBoolean(PLAIN_HTTP, false))
+        return AdvisorProvider.entries.fold(start) { settings, provider ->
             settings
                 .withKey(provider, preferences.getString(KEY_PREFIX + provider.name, null)?.let(secrets::open))
                 .withModel(provider, preferences.getString(MODEL_PREFIX + provider.name, null))
+                .withAddress(provider, preferences.getString(ADDRESS_PREFIX + provider.name, null))
         }
     }
 
@@ -82,6 +90,8 @@ class SharedPreferencesAdvisorSettingsStore internal constructor(
         const val ORDER = "order"
         const val KEY_PREFIX = "key_"
         const val MODEL_PREFIX = "model_"
+        const val ADDRESS_PREFIX = "address_"
+        const val PLAIN_HTTP = "plain_http"
         const val SEPARATOR = ","
     }
 }

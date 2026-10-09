@@ -14,7 +14,9 @@ import dev.pocketdeck.adapter.limitless.LimitlessMetaDecklistSource
 import dev.pocketdeck.adapter.limitless.LimitlessSettings
 import dev.pocketdeck.adapter.llm.AnthropicDeckAdvisor
 import dev.pocketdeck.adapter.llm.AnthropicModelCatalog
-import dev.pocketdeck.adapter.llm.OpenRouterDeckAdvisor
+import dev.pocketdeck.adapter.llm.ChatCompletionsDeckAdvisor
+import dev.pocketdeck.adapter.llm.ChatDialect
+import dev.pocketdeck.adapter.llm.OpenAiStyleModelCatalog
 import dev.pocketdeck.adapter.llm.OpenRouterModelCatalog
 import dev.pocketdeck.adapter.llm.ProviderModelCatalog
 import dev.pocketdeck.adapter.persistence.PocketDeckDatabases
@@ -305,7 +307,12 @@ object AppModule {
             settings,
             mapOf(
                 AdvisorProvider.ANTHROPIC to AnthropicDeckAdvisor(client, diagnostics = diagnostics),
-                AdvisorProvider.OPENROUTER to OpenRouterDeckAdvisor(client, diagnostics = diagnostics),
+                AdvisorProvider.OPENROUTER to
+                    ChatCompletionsDeckAdvisor(client, ChatDialect.OPENROUTER, diagnostics = diagnostics),
+                AdvisorProvider.OPENAI to
+                    ChatCompletionsDeckAdvisor(client, ChatDialect.OPENAI, diagnostics = diagnostics),
+                AdvisorProvider.OWN_SERVER to
+                    ChatCompletionsDeckAdvisor(client, ChatDialect.OWN_SERVER, diagnostics = diagnostics),
             ),
             diagnostics,
         )
@@ -331,6 +338,8 @@ object AppModule {
             mapOf(
                 AdvisorProvider.ANTHROPIC to AnthropicModelCatalog(client),
                 AdvisorProvider.OPENROUTER to OpenRouterModelCatalog(client),
+                AdvisorProvider.OPENAI to OpenAiStyleModelCatalog(client),
+                AdvisorProvider.OWN_SERVER to OpenAiStyleModelCatalog(client),
             ),
         )
 

@@ -100,6 +100,11 @@ private fun AskAiSection(
                 Modifier.fillMaxWidth(),
                 placeholder = stringResource(R.string.decks_ai_wish),
             )
+            Text(
+                stringResource(R.string.decks_ai_cost_note),
+                style = PocketDesign.typography.bodySm,
+                color = PocketDesign.colors.inkMuted,
+            )
             if (aiConfigured) {
                 PdButton(
                     stringResource(R.string.decks_ai_ask),

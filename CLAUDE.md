@@ -152,8 +152,18 @@ New way of driving the app => new driving adapter calling inbound ports.
   cards not owned, legality, selectable energy are checked) and sends problems back for up to 3 attempts.
   `AdvicePromptWriter` (application) writes the prompt once for every provider; `ConfiguredDeckAdvisor` tries the providers
   the player set up in their order and falls back when one is busy. `AnthropicDeckAdvisor` (Messages API, forced tool call,
-  prompt caching on the collection) and `OpenRouterDeckAdvisor` (chat completions, function call or JSON in text; the
-  free `openrouter/free` router is the default model, models are editable). Keys live in
+  prompt caching on the collection) and `ChatCompletionsDeckAdvisor` (one class, `ChatDialect` OPENROUTER / OPENAI / OWN_SERVER; chat completions, function call or JSON in text; the
+  free `openrouter/free` router is the default model, models are editable).
+  `AdvisorProvider.OPENAI` (api.openai.com, `max_completion_tokens`, `reasoning_effort: low` for gpt-5/o-models) and `OWN_SERVER` (one provider for
+  Ollama, LM Studio and any OpenAI-compatible runtime: the player types the address (no presets: the host is theirs), the key is optional, there is no default model, no
+  `tool_choice` is sent because runtimes differ and a text answer is read too). A provider is usable with a key; OWN_SERVER with an address and a
+  model. Plain `http://` needs two things: the platform allows cleartext (`res/xml/network_security_config.xml`, a LAN IP cannot be listed) and the
+  player's switch "Allow plain http" (`AdvisorSettings.plainHttpAllowed`), which `ChatCompletionsDeckAdvisor` and the model picker enforce. OpenAI
+  and OWN_SERVER model lists come from `GET {base}/models` (`OpenAiStyleModelCatalog`, shown as listed: no tools/context metadata). Settings > AI
+  shows each provider as a card that folds; the model list per provider folds too (collapsed by default, first model shown), can be reordered with
+  arrows, and the sections of the Settings page are separated by dividers. API keys are sealed with the Android Keystore (`enc1:`), so a copy of
+  `advisor_settings.xml` is not a backup of a key (see memory `keystore-sealed-api-keys`). Not tested against the real OpenAI or a real Ollama/LM Studio
+  yet (mock engines only). Keys live in
   `SharedPreferencesAdvisorSettingsStore` (private storage, no backup). The user has tested the advisor against the
   real services on their phone (as of 2026-10-08); the automated tests still use mock engines only.
 - Settings live in their own tab (`adapter/ui/settings`: `SettingsViewModel` + `SettingsScreen`); "AI" is the first section
@@ -175,7 +185,7 @@ New way of driving the app => new driving adapter calling inbound ports.
   `AnthropicModelCatalog` (`GET /v1/models`, needs the key, which the picker takes from the form as typed, saved or not).
   `ListSuitableModelsService` (application) keeps models with tools and >= 100k context, drops the `openrouter/` routers and sorts
   models that answer directly before ones that think first. OpenRouter lists free models only until the player switches on "Include
-  paid models" (then free first, and a paid model needs a stated price; each shows the price and `ModelCost.perDeck`, about 30,000
+  paid models" (then free first, and a paid model needs a stated price; each shows the price and `ModelCost.perDeck`, about 22,000
   tokens in and 3,000 out); several OpenRouter models are chosen in order, a Claude model is chosen alone (tap again = default).
   A model whose `reasoning` metadata has no `default_enabled` counts as thinking first (cohere north-mini-code and nemotron-lightning
   reported nothing and still thought for minutes); only an explicit `default_enabled: false` or no reasoning support counts as direct.
