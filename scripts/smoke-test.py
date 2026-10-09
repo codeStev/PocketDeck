@@ -11,6 +11,8 @@ import argparse, re, subprocess, sys, time, xml.etree.ElementTree as ET
 PACKAGE = "io.github.codestev.pocketdeck"
 MAIN_ACTIVITY = "dev.pocketdeck.MainActivity"  # named in full: the class lives in the code namespace, not the application ID
 TABS = ["Collection", "Decks", "Scan", "Settings"]
+STARTUP_SECONDS = 150
+TAB_SECONDS = 60
 TOUR_BUTTONS = ["I understand", "Next"]  # the last page asks for "I understand", the others have "Next"
 
 
@@ -21,6 +23,24 @@ def adb(serial, *args, check=True):
 def screen_nodes(serial):
     adb(serial, "shell", "uiautomator", "dump", "/sdcard/ui.xml")
     return ET.fromstring(adb(serial, "exec-out", "cat", "/sdcard/ui.xml")).iter("node")
+
+
+def visible_labels(serial):
+    """Every text and description on the screen; empty while uiautomator cannot read it (the app is still starting)."""
+    try:
+        return [t for n in screen_nodes(serial) for t in (n.get("text"), n.get("content-desc")) if t]
+    except ET.ParseError:
+        return []
+
+
+def wait_for(serial, labels, seconds):
+    """Waits until one of [labels] is on screen; a cold start on a slow emulator takes a while. Returns whether it appeared."""
+    deadline = time.time() + seconds
+    while time.time() < deadline:
+        if any(label in visible_labels(serial) for label in labels):
+            return True
+        time.sleep(3)
+    return False
 
 
 def tap(serial, label):
@@ -35,10 +55,9 @@ def tap(serial, label):
 
 def get_through_the_tour(serial):
     for _ in range(8):
-        if any(tap(serial, button) for button in TOUR_BUTTONS):
-            time.sleep(1)
-        else:
+        if not any(tap(serial, button) for button in TOUR_BUTTONS):
             return
+        time.sleep(1)
 
 
 def main():
@@ -52,11 +71,12 @@ def main():
     adb(args.serial, "install", "-r", args.apk)
     adb(args.serial, "logcat", "-c")
     adb(args.serial, "shell", "am", "start", "-n", f"{PACKAGE}/{MAIN_ACTIVITY}")
-    time.sleep(8)
+    if not wait_for(args.serial, TOUR_BUTTONS + TABS, STARTUP_SECONDS):
+        sys.exit("SMOKE TEST FAILED\nnothing of the app appeared in time; screen: " + ", ".join(visible_labels(args.serial)))
     get_through_the_tour(args.serial)
     missing = []
     for tab in TABS:
-        if tap(args.serial, tab):
+        if wait_for(args.serial, [tab], TAB_SECONDS) and tap(args.serial, tab):
             time.sleep(3)
         else:
             missing.append(tab)
@@ -69,7 +89,7 @@ def main():
     if not alive:
         problems.append("the app is not running at the end")
     if missing:
-        problems.append("tabs not found on screen: " + ", ".join(missing))
+        problems.append("tabs not found on screen: " + ", ".join(missing) + "\nthe screen shows: " + ", ".join(visible_labels(args.serial)))
     if problems:
         sys.exit("SMOKE TEST FAILED\n" + "\n".join(problems))
     print(f"Smoke test passed: started, tour done, {len(TABS)} tabs opened, no crash.")
