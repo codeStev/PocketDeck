@@ -1,0 +1,1 @@
+First public release: scan your collection, filter and sort it, get tournament, built and AI-suggested decks with opening odds, share decks as text or image, export and import your collection.

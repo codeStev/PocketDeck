@@ -1,0 +1,1 @@
+Erste öffentliche Version: Sammlung scannen, filtern und sortieren, Turnier-, gebaute und KI-Decks mit Startwahrscheinlichkeiten, Decks als Text oder Bild teilen, Sammlung exportieren und importieren.

@@ -1,5 +1,7 @@
 package dev.codestev.pocketdesign.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +17,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -35,6 +42,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.codestev.pocketdesign.icons.PdIcons
+import dev.codestev.pocketdesign.theme.PdMotion
 import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PocketDesign
 
@@ -237,8 +245,12 @@ private fun MeterTrack(
     height: Dp,
 ) {
     val shape = PocketDesign.shapes.pill
+    // A bar grows from empty when it first appears and then follows its value.
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { shown = true }
+    val drawn by animateFloatAsState(if (shown) fraction else 0f, tween(PdMotion.ENTER_MILLIS), label = "meter")
     Box(Modifier.fillMaxWidth().height(height).background(PocketDesign.colors.surfaceSunken, shape)) {
-        if (fraction > 0f) Box(Modifier.fillMaxWidth(fraction).height(height).background(tint, shape))
+        if (drawn > 0f) Box(Modifier.fillMaxWidth(drawn).height(height).background(tint, shape))
     }
 }
 

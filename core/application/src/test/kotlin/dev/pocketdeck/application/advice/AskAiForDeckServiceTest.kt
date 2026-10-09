@@ -4,6 +4,7 @@ import dev.pocketdeck.application.Outcome
 import dev.pocketdeck.application.fakes.InMemoryCardCatalogRepository
 import dev.pocketdeck.application.fakes.InMemoryCollectionRepository
 import dev.pocketdeck.application.meta.InMemoryMetaSnapshotRepository
+import dev.pocketdeck.domain.basicPokemon
 import dev.pocketdeck.domain.card.Card
 import dev.pocketdeck.domain.card.CardCatalog
 import dev.pocketdeck.domain.card.EnergyType
@@ -172,15 +173,60 @@ class AskAiForDeckServiceTest {
         }
 
     @Test
-    fun `gives up after three wrong answers and reports the last problems`() =
+    fun `gives up after three wrong answers when not even the player's own cards make a legal deck`() =
         runTest {
             val wrong = validAdvice.copy(entries = validAdvice.entries.take(2))
             val advisor = ScriptedAdvisor(listOf(Outcome.Success(wrong)))
+            val tooLittle = CardCollection.EMPTY.withCopies(charmander.id, 1)
 
-            val outcome = service(advisor).invoke(null)
+            val outcome = service(advisor, tooLittle).invoke(null)
 
             (outcome as Outcome.Failure).reason.javaClass shouldBe AskAiFailure.NoValidDeck::class.java
             advisor.requests.size shouldBe 3
+        }
+
+    @Test
+    fun `builds the deck from the owned cards when the advisor keeps asking for cards the player lacks`() =
+        runTest {
+            val extras = listOf(basicPokemon("Vulpix"), basicPokemon("Growlithe"))
+            val bigger = CardCatalog(cards + extras)
+            val owned =
+                (cards + extras)
+                    .fold(CardCollection.EMPTY) { collection, card -> collection.withCopies(card.id, 2) }
+                    .withCopies(magmar.id, 0)
+            val advisor = ScriptedAdvisor(listOf(Outcome.Success(validAdvice)))
+
+            val outcome =
+                AskAiForDeckService(
+                    InMemoryCardCatalogRepository(bigger),
+                    InMemoryCollectionRepository(owned),
+                    InMemoryMetaSnapshotRepository(),
+                    advisor,
+                ).invoke(null)
+
+            val suggestion = (outcome as Outcome.Success).value
+            advisor.requests.size shouldBe 3
+            suggestion.deck.size shouldBe 20
+            suggestion.completeness.isBuildable shouldBe true
+            suggestion.deck.entries.none { it.card.id == magmar.id } shouldBe true
+            suggestion.rationale!! shouldContain "not in your collection"
+        }
+
+    @Test
+    fun `tells the advisor which owned cards it can use instead`() =
+        runTest {
+            val ownsOneMagmar = ownedAll().withCopies(magmar.id, 1)
+            val withoutPotion = validAdvice.copy(entries = validAdvice.entries.filter { it.id != potion.id.value })
+            val advisor = ScriptedAdvisor(listOf(Outcome.Success(withoutPotion), Outcome.Success(validAdvice)))
+
+            service(advisor, ownsOneMagmar).invoke(null)
+
+            advisor.requests
+                .last()
+                .feedback
+                .first()
+                .problems
+                .any { "Only the player's own cards" in it && "(copies still free)" in it } shouldBe true
         }
 
     @Test

@@ -286,4 +286,18 @@ class ScanSessionTest {
             )
         }
     }
+
+    @Test
+    fun `several empty frames in a row say the screen looks wrong, one seen card clears it`() {
+        var session = ScanSession.start()
+        repeat(ScanSession.EMPTY_FRAMES_BEFORE_WARNING - 1) { session = session.observe(emptyList()) }
+        session.screenLooksWrong shouldBe false
+
+        session = session.observe(emptyList())
+        session.screenLooksWrong shouldBe true
+
+        session = session.observe(listOf(seen(pikachu, 1, 0.9)))
+        session.screenLooksWrong shouldBe false
+        session.framesWithoutCardsInARow shouldBe 0
+    }
 }

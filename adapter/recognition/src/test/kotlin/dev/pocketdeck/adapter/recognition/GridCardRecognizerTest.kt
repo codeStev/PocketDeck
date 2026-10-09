@@ -3,6 +3,7 @@ package dev.pocketdeck.adapter.recognition
 import dev.pocketdeck.application.scan.ScreenFrame
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.scan.TileRecognition
+import io.kotest.assertions.withClue
 import io.kotest.matchers.doubles.shouldBeGreaterThan
 import io.kotest.matchers.doubles.shouldBeLessThan
 import io.kotest.matchers.shouldBe
@@ -40,6 +41,25 @@ class GridCardRecognizerTest {
             val recognitions = recognizer().recognize(screenshot)
 
             recognitions.map { it.cardId } shouldBe expectedIds
+        }
+
+    @Test
+    fun `identifies the same cards on a phone with another screen resolution`() =
+        runTest {
+            // The screenshot is 1080 px wide. Other phones capture 720 px (HD+) or 1440 px (QHD+) of the same screen.
+            listOf(0.667, 0.75, 1.333).forEach { factor ->
+                val recognitions = recognizer().recognize(TestImages.scaled(screenshot, factor))
+
+                withClue("scaled by $factor") { recognitions.map { it.cardId } shouldBe expectedIds }
+            }
+        }
+
+    @Test
+    fun `recognises nothing on a screen that is not the card list`() =
+        runTest {
+            val homeScreen = TestImages.solid(screenshot.width, screenshot.height, 0xFF1B2B3B.toInt())
+
+            recognizer().recognize(homeScreen) shouldBe emptyList()
         }
 
     @Test

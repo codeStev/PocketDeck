@@ -22,3 +22,10 @@ OkHttp, kotlinx.coroutines, all under the Apache License 2.0 (ZXing: Apache 2.0)
 Fonts bundled in the design system (`designsystem/src/main/res/font/`, licences in `designsystem/licenses/`): Fredoka
 (Copyright 2016 The Fredoka Project Authors) and Nunito (Copyright 2014 The Nunito Project Authors), both under the SIL
 Open Font License 1.1.
+
+Material of the game's owners that the repository contains, for recognising cards on screen and nothing else:
+- `app/src/main/assets/card_index.bin`: a 48x28 grayscale thumbnail fingerprint of the illustration of every card, built by
+  `tools/card_index`. It is not usable as card art.
+- `adapter/recognition/src/test/resources/*.png`: a few screenshots of the game's My Cards screen and one card illustration, used as
+  fixtures by the recognition tests.
+These remain the property of their owners. If an owner objects, they will be removed and replaced by synthetic stand-ins.

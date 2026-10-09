@@ -20,7 +20,13 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.io.File
 import java.io.IOException
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 class LimitlessMetaDecklistSourceTest {
     private val tournaments =
@@ -38,6 +44,12 @@ class LimitlessMetaDecklistSourceTest {
             |{"name":"b","placing":2,"record":null,"deck":null,"decklist":null}]
         """.trimMargin()
 
+    private val now = Instant.parse("2026-10-08T12:00:00Z")
+    private val clock = SettableClock(now)
+
+    @TempDir
+    lateinit var cacheDirectory: File
+
     private fun source(
         handler: MockRequestHandleScope.(HttpRequestData) -> HttpResponseData,
     ): LimitlessMetaDecklistSource {
@@ -45,7 +57,15 @@ class LimitlessMetaDecklistSourceTest {
             HttpClient(MockEngine { request -> handler(request) }) {
                 install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
             }
-        return LimitlessMetaDecklistSource(client, baseUrl = "https://limitless.test/api")
+        return LimitlessMetaDecklistSource(
+            client,
+            LimitlessSettings(
+                "PocketDeck/test (+https://example.test)",
+                cacheDirectory,
+                "https://limitless.test/api",
+                clock,
+            ),
+        )
     }
 
     private fun MockRequestHandleScope.json(body: String) =
@@ -134,6 +154,77 @@ class LimitlessMetaDecklistSourceTest {
         }
 
     @Test
+    fun `names itself in every request`() =
+        runTest {
+            val agents = mutableSetOf<String?>()
+
+            source {
+                agents += it.headers[HttpHeaders.UserAgent]
+                answer(it)
+            }.recentDecklists()
+
+            agents shouldBe setOf("PocketDeck/test (+https://example.test)")
+        }
+
+    private val finishedAndRunning =
+        """[{"id":"big","players":300,"date":"2026-10-01T10:00:00Z"},
+            |{"id":"live","players":300,"date":"2026-10-08T10:00:00Z"}]
+        """.trimMargin()
+
+    private fun MockRequestHandleScope.answerWithTimes(request: HttpRequestData): HttpResponseData =
+        when {
+            request.url.encodedPath.endsWith("/tournaments") -> json(finishedAndRunning)
+            request.url.encodedPath.endsWith("/standings") -> json(standings)
+            else -> respondError(HttpStatusCode.InternalServerError)
+        }
+
+    @Test
+    fun `asks for the standings of a finished tournament only once`() =
+        runTest {
+            val asked = mutableListOf<String>()
+
+            fun fresh() =
+                source {
+                    asked += it.url.encodedPath
+                    answerWithTimes(it)
+                }
+
+            fresh().recentDecklists()
+            fresh().recentDecklists()
+
+            asked.count { it.endsWith("/big/standings") } shouldBe 1
+            asked.count { it.endsWith("/live/standings") } shouldBe 2
+        }
+
+    @Test
+    fun `sends nothing more until the time retry-after asked for has passed`() =
+        runTest {
+            var requests = 0
+            var limited = true
+            val source =
+                source {
+                    requests++
+                    if (limited) {
+                        respond(
+                            "",
+                            HttpStatusCode.TooManyRequests,
+                            headersOf(HttpHeaders.RetryAfter, "120"),
+                        )
+                    } else {
+                        answer(it)
+                    }
+                }
+
+            source.recentDecklists() shouldBe Outcome.Failure(MetaSourceFailure.RateLimited)
+            source.recentDecklists() shouldBe Outcome.Failure(MetaSourceFailure.RateLimited)
+            requests shouldBe 1
+
+            limited = false
+            clock.instant = now.plusSeconds(121)
+            (source.recentDecklists() is Outcome.Success) shouldBe true
+        }
+
+    @Test
     fun `energy names are understood in any case`() {
         "fire".toEnergyType() shouldBe EnergyType.FIRE
         "Psychic".toEnergyType() shouldBe EnergyType.PSYCHIC
@@ -145,4 +236,14 @@ class LimitlessMetaDecklistSourceTest {
         CardLineDto(1, "P-A", "7").cardId() shouldBe CardId("pa-007")
         CardLineDto(1, "A2b", "12").cardId() shouldBe CardId("a2b-012")
     }
+}
+
+private class SettableClock(
+    var instant: Instant,
+) : Clock() {
+    override fun getZone(): ZoneId = ZoneOffset.UTC
+
+    override fun withZone(zone: ZoneId): Clock = this
+
+    override fun instant(): Instant = instant
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android refuses plain http by default. A server the player runs themselves (Ollama, LM Studio) on their own network is
+    usually reached that way, and its address (a LAN IP) cannot be listed here in advance, so the platform allows it.
+    The app itself still only uses an http:// address after the player has switched on "Allow plain http" in Settings > AI
+    (ChatCompletionsDeckAdvisor refuses it otherwise); everything else the app talks to is https.
+-->
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <base-config cleartextTrafficPermitted="true" tools:ignore="InsecureBaseConfiguration" />
+</network-security-config>

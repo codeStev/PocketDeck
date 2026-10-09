@@ -1,5 +1,6 @@
 package dev.pocketdeck.adapter.ui.collection
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +44,7 @@ import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
 import dev.pocketdeck.adapter.ui.theme.tintKey
+import dev.pocketdeck.adapter.ui.thumbnailOf
 import dev.pocketdeck.application.catalog.CatalogSyncFailure
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.card.EnergyType
@@ -62,7 +64,7 @@ fun CollectionScreen(
         state = state,
         queryText = queryText,
         onQueryChange = viewModel::onQueryChange,
-        onOwnedOnlyChange = viewModel::onOwnedOnlyChange,
+        onFilterChange = viewModel::onFilterChange,
         onAdjust = viewModel::adjust,
         onSync = viewModel::sync,
         onOpenScan = onOpenScan,
@@ -74,7 +76,7 @@ internal fun CollectionContent(
     state: CollectionUiState,
     queryText: String,
     onQueryChange: (String) -> Unit,
-    onOwnedOnlyChange: (Boolean) -> Unit,
+    onFilterChange: (CollectionFilter) -> Unit,
     onAdjust: (CardId, Int) -> Unit,
     onSync: () -> Unit,
     onOpenScan: () -> Unit,
@@ -82,9 +84,9 @@ internal fun CollectionContent(
     // Kept by id, so the dialog shows the live number of copies while the player changes them.
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
     state.items.firstOrNull { it.id.value == openId }?.let { CardDialog(it, onAdjust) { openId = null } }
-    Column(Modifier.fillMaxSize().padding(horizontal = PdSpacing.space4)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = PdSpacing.space4).animateContentSize()) {
         Title(state.sync, onSync)
-        Filters(state, queryText, onQueryChange, onOwnedOnlyChange)
+        Filters(state, queryText, onQueryChange, onFilterChange)
         SyncBanner(state.sync, onSync)
         if (state.totalOwned == 0 && state.catalogSize > 0 && state.sync == SyncState.Idle) EmptyHint(onOpenScan)
         when {
@@ -147,8 +149,10 @@ private fun Filters(
     state: CollectionUiState,
     queryText: String,
     onQueryChange: (String) -> Unit,
-    onOwnedOnlyChange: (Boolean) -> Unit,
+    onFilterChange: (CollectionFilter) -> Unit,
 ) {
+    var panelOpen by rememberSaveable { mutableStateOf(false) }
+    if (panelOpen) CollectionFilterPanel(state.filter, state.options, onFilterChange) { panelOpen = false }
     Column(verticalArrangement = Arrangement.spacedBy(PdSpacing.space2)) {
         PdTextField(
             queryText,
@@ -165,9 +169,10 @@ private fun Filters(
         ) {
             PdFilterChip(
                 stringResource(R.string.collection_owned_only),
-                state.ownedOnly,
-                onOwnedOnlyChange,
+                state.filter.ownedOnly,
+                { onFilterChange(state.filter.copy(ownedOnly = it)) },
             )
+            PdFilterChip(filtersLabel(state.filter.chosenCount), state.filter.chosenCount > 0, { panelOpen = true })
             Text(
                 stringResource(R.string.collection_stats, state.uniqueOwned, state.catalogSize, state.totalOwned),
                 style = PocketDesign.typography.bodySm,
@@ -176,6 +181,16 @@ private fun Filters(
         }
     }
 }
+
+@Composable
+private fun filtersLabel(chosen: Int) =
+    if (chosen ==
+        0
+    ) {
+        stringResource(R.string.collection_filters)
+    } else {
+        stringResource(R.string.collection_filters_count, chosen)
+    }
 
 @Composable
 private fun SyncBanner(
@@ -221,7 +236,7 @@ private fun CardGrid(
         verticalArrangement = Arrangement.spacedBy(PdSpacing.space4),
         modifier = Modifier.fillMaxSize(),
     ) {
-        items(items, key = { it.id.value }) { item -> CardTile(item) { onOpen(item) } }
+        items(items, key = { it.id.value }) { item -> CardTile(item, Modifier.animateItem()) { onOpen(item) } }
     }
 }
 
@@ -229,9 +244,10 @@ private fun CardGrid(
 @Composable
 private fun CardTile(
     item: CardItem,
+    modifier: Modifier = Modifier,
     onOpen: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(PdSpacing.space1)) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(PdSpacing.space1)) {
         PdArtTile(
             tint = PocketDesign.colors.tint(item.detail.tintKey()),
             contentDescription = tileDescription(item),
@@ -239,7 +255,7 @@ private fun CardTile(
             owned = item.copies > 0,
             onClick = onOpen,
         ) {
-            Art(item)
+            Art(item, small = true)
         }
         Text(
             item.name,
@@ -262,9 +278,12 @@ private fun tileDescription(item: CardItem) =
     }
 
 @Composable
-private fun Art(item: CardItem) {
+private fun Art(
+    item: CardItem,
+    small: Boolean = false,
+) {
     AsyncImage(
-        model = item.artworkUrl,
+        model = if (small) thumbnailOf(item.artworkUrl) else item.artworkUrl,
         contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = Modifier.fillMaxSize(),

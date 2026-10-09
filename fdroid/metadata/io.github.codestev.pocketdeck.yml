@@ -1,0 +1,16 @@
+Categories:
+  - Games
+License: AGPL-3.0-or-later
+AuthorName: codeStev
+WebSite: https://github.com/codeStev/PocketDeck
+SourceCode: https://github.com/codeStev/PocketDeck
+IssueTracker: https://github.com/codeStev/PocketDeck/issues
+Changelog: https://github.com/codeStev/PocketDeck/blob/main/CHANGELOG.md
+
+AutoName: PocketDeck
+# Summary and description come from the localized files (fastlane/metadata/android), which the release workflow copies in.
+AntiFeatures:
+  NonFreeNet:
+    en-US: Uses Limitless TCG, TCGdex and, when you set it up, OpenRouter, OpenAI, Anthropic or a server of your own.
+  NonFreeAssets:
+    en-US: Card names and artwork belong to their owners.

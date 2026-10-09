@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 internal data class TournamentDto(
     val id: String,
     val players: Int = 0,
+    val date: String? = null,
 )
 
 @Serializable

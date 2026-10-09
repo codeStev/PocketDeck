@@ -26,7 +26,7 @@ object ChaseListing {
     ) = ChaseCardItem(
         key = entry.card.gameplayKey.value,
         name = entry.card.nameIn(language).value,
-        artworkUrl = entry.card.artwork?.value,
+        artworkUrl = entry.card.artworkIn(language)?.value,
         decksFinished = entry.decksFinished,
         decksHelped = entry.decksHelped,
         packs = entry.packs,

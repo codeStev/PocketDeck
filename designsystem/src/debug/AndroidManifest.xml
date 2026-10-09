@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
         <!-- Debug builds only: the design catalog gets its own launcher icon, "Design catalog". It can also be started with
-             adb shell am start -n dev.pocketdeck/dev.codestev.pocketdesign.catalog.CatalogActivity -->
+             adb shell am start -n io.github.codestev.pocketdeck/dev.codestev.pocketdesign.catalog.CatalogActivity -->
         <activity
             android:name="dev.codestev.pocketdesign.catalog.CatalogActivity"
             android:exported="true"

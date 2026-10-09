@@ -29,7 +29,7 @@ class PdTokensTest {
 
     @Test
     fun `every icon parses into drawable paths`() {
-        PdIcons.all shouldHaveSize 19
+        PdIcons.all shouldHaveSize 21
         PdIcons.all.forEach { icon -> (icon.root.size > 0) shouldBe true }
     }
 }

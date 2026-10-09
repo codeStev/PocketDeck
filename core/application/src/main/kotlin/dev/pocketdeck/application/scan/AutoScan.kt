@@ -65,6 +65,9 @@ sealed interface AutoScanFailure {
     data object TooManyScreens : AutoScanFailure
 
     data object ScanNotRunning : AutoScanFailure
+
+    /** The game is not showing its card list, so nothing was swiped: a swipe on another screen could do something. */
+    data object NotOnCardList : AutoScanFailure
 }
 
 /** Inbound port: scroll the game's card grid from the top to the bottom while the running scan reads it. */
@@ -118,6 +121,8 @@ data class AutoScanSettings(
     val overlapRows: Int = 1,
     /** How many scrolls in a row may leave the picture unchanged before the list is considered ended. */
     val stallLimit: Int = 4,
+    /** How many pictures are looked at for a card grid before the scan gives up and says the screen is wrong. */
+    val gridLookPolls: Int = 8,
     val maxScreens: Int = 400,
     val maxRewindSwipes: Int = 60,
 )

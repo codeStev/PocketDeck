@@ -16,6 +16,8 @@ object PdIcons {
     val Check by lazy { icon("Check", "M5 12.5l4.5 4.5L19 7.5") }
     val ChevronRight by lazy { icon("ChevronRight", "M9 6l6 6-6 6") }
     val ChevronDown by lazy { icon("ChevronDown", "M7 10l5 5 5-5") }
+    val ArrowUp by lazy { icon("ArrowUp", "M12 19V5M6 11l6-6 6 6") }
+    val ArrowDown by lazy { icon("ArrowDown", "M12 5v14M6 13l6 6 6-6") }
     val Back by lazy { icon("Back", "M15 6l-6 6 6 6") }
     val Close by lazy { icon("Close", "M6 6l12 12M18 6L6 18") }
     val Plus by lazy { icon("Plus", "M12 5v14M5 12h14") }
@@ -80,6 +82,8 @@ object PdIcons {
             Check,
             ChevronRight,
             ChevronDown,
+            ArrowUp,
+            ArrowDown,
             Back,
             Close,
             Plus,

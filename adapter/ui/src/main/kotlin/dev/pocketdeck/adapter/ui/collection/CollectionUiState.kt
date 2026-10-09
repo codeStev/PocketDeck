@@ -43,7 +43,7 @@ data class CollectionUiState(
     val uniqueOwned: Int = 0,
     val totalOwned: Int = 0,
     val catalogSize: Int = 0,
-    val query: String = "",
-    val ownedOnly: Boolean = false,
+    val filter: CollectionFilter = CollectionFilter(),
+    val options: FilterOptions = FilterOptions(),
     val sync: SyncState = SyncState.Idle,
 )

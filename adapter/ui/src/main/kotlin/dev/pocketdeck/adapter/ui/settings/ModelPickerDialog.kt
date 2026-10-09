@@ -72,12 +72,16 @@ private fun AdvisorProvider.title() =
     when (this) {
         AdvisorProvider.ANTHROPIC -> R.string.settings_ai_models_title_claude
         AdvisorProvider.OPENROUTER -> R.string.settings_ai_models_title
+        AdvisorProvider.OPENAI -> R.string.settings_ai_models_title_openai
+        AdvisorProvider.OWN_SERVER -> R.string.settings_ai_models_title_own
     }
 
 private fun AdvisorProvider.hint() =
     when (this) {
         AdvisorProvider.ANTHROPIC -> R.string.settings_ai_models_hint_claude
         AdvisorProvider.OPENROUTER -> R.string.settings_ai_models_hint
+        AdvisorProvider.OPENAI -> R.string.settings_ai_models_hint_openai
+        AdvisorProvider.OWN_SERVER -> R.string.settings_ai_models_hint_own
     }
 
 /** Paid models are optional and say so: every request is charged to the player's OpenRouter account. */
@@ -98,7 +102,7 @@ private fun Failed(
 ) {
     val reason = content.message
     val text =
-        if (reason == null && picker.provider == AdvisorProvider.ANTHROPIC) {
+        if (reason == null && picker.provider.needsKeyToList()) {
             stringResource(R.string.settings_ai_models_key_needed)
         } else {
             stringResource(R.string.settings_ai_models_failed, reason.orEmpty())
@@ -160,6 +164,9 @@ private fun ColumnScope.LoadedContent(
     }
 }
 
+/** Anthropic and OpenAI list their models only to a key holder. */
+private fun AdvisorProvider.needsKeyToList() = this == AdvisorProvider.ANTHROPIC || this == AdvisorProvider.OPENAI
+
 private fun ListedModel.matches(query: String): Boolean =
     query.isBlank() || name.contains(query.trim(), ignoreCase = true) || id.contains(query.trim(), ignoreCase = true)
 
@@ -203,7 +210,9 @@ private fun details(model: ListedModel): String {
         )
     val context = stringResource(R.string.settings_ai_context, model.contextTokens / TOKENS_PER_K)
     val expires = model.expiresOn?.let { " · " + stringResource(R.string.settings_ai_expires, it) }.orEmpty()
-    return listOfNotNull(model.id, "$context · $thinking$expires", priceLine(model)).joinToString("\n")
+    // OpenAI and a server of the player's own state neither context nor thinking; the id says it all.
+    val facts = if (model.contextTokens > 0) "$context · $thinking$expires" else null
+    return listOfNotNull(model.id, facts, priceLine(model)).joinToString("\n")
 }
 
 /** What the model costs, as the service states it: free, or dollars per million tokens and about one deck's worth. */

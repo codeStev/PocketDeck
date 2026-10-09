@@ -30,7 +30,7 @@ class CollectionListingTest {
         ownedOnly: Boolean = false,
         collection: CardCollection = this.collection,
         language: Language = Language.ENGLISH,
-    ) = CollectionListing.build(catalog, collection, query, ownedOnly, language)
+    ) = CollectionListing.build(catalog, collection, CollectionFilter(query, ownedOnly), language)
 
     @Test
     fun `lists every catalog card with its owned copies in catalog order`() {
@@ -105,8 +105,7 @@ class CollectionListingTest {
             CollectionListing.build(
                 CardCatalog(listOf(card)),
                 CardCollection.EMPTY,
-                "",
-                false,
+                CollectionFilter(),
                 Language.ENGLISH,
             )
 
@@ -136,7 +135,7 @@ class CollectionListingTest {
     private fun bilingualListing(
         query: String,
         language: Language,
-    ) = CollectionListing.build(bilingual, CardCollection.EMPTY, query, false, language)
+    ) = CollectionListing.build(bilingual, CardCollection.EMPTY, CollectionFilter(query), language)
 
     @Test
     fun `search finds a card by either of its names regardless of the display language`() {
