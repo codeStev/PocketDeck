@@ -11,6 +11,6 @@ AutoName: PocketDeck
 # Summary and description come from the localized files (fastlane/metadata/android), which the release workflow copies in.
 AntiFeatures:
   NonFreeNet:
-    en-US: Uses Limitless TCG, TCGdex and, when you set it up, OpenRouter or Anthropic.
+    en-US: Uses Limitless TCG, TCGdex and, when you set it up, OpenRouter, OpenAI, Anthropic or a server of your own.
   NonFreeAssets:
     en-US: Card names and artwork belong to their owners.

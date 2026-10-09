@@ -14,7 +14,7 @@ First public release.
 - Collection: search, owned-only, filters by set, rarity and type, sorting by number, name, copies or rarity (ascending or descending),
   card details with a copy stepper; several accounts.
 - Decks: recent tournament decks ranked by how well you can build them (with effect-aware stand-ins), decks built from your own cards, optional
-  suggestions from your own Claude or OpenRouter key, opening odds, "What to chase", saved decks, import QR codes for the game.
+  suggestions from your own Claude, OpenAI or OpenRouter key or from a server of your own (Ollama, LM Studio, ...), opening odds, "What to chase", saved decks, import QR codes for the game.
 - Share a deck as text or as a branded image tinted by its energy type.
 - Export and import your collection as JSON or CSV; undo an import from the scan backup.
 - Welcome tour, About screen with credits and licences, diagnostics you can copy when reporting a problem.

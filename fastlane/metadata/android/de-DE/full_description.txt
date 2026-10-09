@@ -10,7 +10,7 @@ Suchen, nach Erweiterung, Seltenheit und Typ filtern, nach Nummer, Name, Anzahl 
 • Aktuelle Turnier-Decks, sortiert danach, wie gut du sie bauen kannst, mit Ersatzkarten für fehlende
 • Aus deinen eigenen Karten gebaute Decks, mit Startwahrscheinlichkeiten für jedes Deck
 • „Was jagen?“: die Karten, die die meisten Turnier-Decks vervollständigen würden
-• Optionale Vorschläge eines KI-Dienstes deiner Wahl (dein eigener Claude- oder OpenRouter-Schlüssel)
+• Optionale Vorschläge eines KI-Dienstes deiner Wahl (dein eigener Claude-, OpenAI- oder OpenRouter-Schlüssel, oder ein eigener Server wie Ollama oder LM Studio)
 • Per QR-Code ins Spiel importieren und ein Deck als Text oder Bild teilen
 
 <b>Privat von Grund auf</b>
