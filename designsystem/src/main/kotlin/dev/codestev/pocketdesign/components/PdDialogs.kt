@@ -12,6 +12,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,6 +60,7 @@ fun PdDialog(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DialogCard(
     title: String,
@@ -83,9 +86,11 @@ private fun DialogCard(
     ) {
         Text(title, style = PocketDesign.typography.titleMd, color = PocketDesign.colors.ink)
         content()
-        Row(
+        // A flow, not a row: a long translation of the dismiss label would otherwise leave the confirm button a few letters of width.
+        FlowRow(
             modifier = Modifier.fillMaxWidth().padding(top = PdSpacing.space2),
             horizontalArrangement = Arrangement.spacedBy(PdSpacing.space2, Alignment.End),
+            verticalArrangement = Arrangement.spacedBy(PdSpacing.space2),
         ) {
             if (dismissText != null) PdButton(dismissText, onDismissRequest, style = PdButtonStyle.Text)
             PdButton(confirmText, onConfirm, style = if (destructive) PdButtonStyle.Danger else PdButtonStyle.Primary)

@@ -37,8 +37,11 @@ android {
         providers.gradleProperty("pocketdeck.idSuffix").orNull?.let {
             applicationIdSuffix = it
             manifestPlaceholders["appLabel"] = "PocketDeck RC"
+            // Another background colour, so the two installs can be told apart on the home screen.
+            manifestPlaceholders["appIcon"] = "@mipmap/ic_launcher_rc"
         }
         if (!manifestPlaceholders.containsKey("appLabel")) manifestPlaceholders["appLabel"] = "PocketDeck"
+        if (!manifestPlaceholders.containsKey("appIcon")) manifestPlaceholders["appIcon"] = "@mipmap/ic_launcher"
     }
 }
 

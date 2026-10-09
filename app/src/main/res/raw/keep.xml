@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The release-candidate icon is reached through the manifest placeholder ${appIcon}, which lint and the resource shrinker cannot follow. -->
+<resources
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@mipmap/ic_launcher_rc,@color/ic_launcher_background_rc" />
