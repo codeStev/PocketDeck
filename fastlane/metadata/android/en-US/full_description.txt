@@ -10,7 +10,7 @@ Search, filter by set, rarity and type, sort by number, name, copies or rarity, 
 • Recent tournament decks ranked by how well you can build them, with stand-ins for missing cards
 • Decks built from your own cards, with opening odds for each deck
 • "What to chase": the cards that would finish the most tournament decks
-• Optional suggestions from an AI service of your choice (your own Claude or OpenRouter key)
+• Optional suggestions from an AI service of your choice (your own Claude, OpenAI or OpenRouter key, or a server of your own such as Ollama or LM Studio)
 • Import into the game with a QR code, and share a deck as text or as an image
 
 <b>Private by design</b>

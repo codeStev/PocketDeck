@@ -76,6 +76,9 @@ def main():
     if not args.serial.startswith("emulator-"):
         sys.exit(f"{args.serial} is not an emulator; this script taps blindly and must not run on a phone.")
 
+    # A hosted emulator is slow enough that its own launcher and System UI show "isn't responding" dialogs over the app. Hiding
+    # error dialogs only hides the dialog: an ANR or crash of the app is still written to the log, which is checked below.
+    adb(args.serial, "shell", "settings", "put", "global", "hide_error_dialogs", "1")
     adb(args.serial, "install", "-r", args.apk)
     adb(args.serial, "logcat", "-c")
     adb(args.serial, "shell", "am", "start", "-n", f"{PACKAGE}/{MAIN_ACTIVITY}")
