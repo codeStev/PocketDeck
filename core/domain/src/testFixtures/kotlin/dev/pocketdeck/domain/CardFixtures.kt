@@ -1,5 +1,6 @@
 package dev.pocketdeck.domain
 
+import dev.pocketdeck.domain.card.ArtworkUrl
 import dev.pocketdeck.domain.card.Attack
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.card.CardName
@@ -30,6 +31,7 @@ fun basicPokemon(
     hp = 60,
     gameplayKey = gameplayKey,
     gameEntityId = entityIdOf(id),
+    englishArtwork = ArtworkUrl("https://example.test/en/$id.webp"),
     attacks = listOf(TACKLE),
     packs = packs,
     rarity = Rarity.COMMON,
@@ -50,6 +52,7 @@ fun evolvedPokemon(
     hp = 90,
     evolvesFrom = CardName(evolvesFrom),
     gameEntityId = entityIdOf(id),
+    englishArtwork = ArtworkUrl("https://example.test/en/$id.webp"),
     attacks = listOf(TACKLE),
     packs = packs,
     rarity = Rarity.COMMON,
@@ -66,6 +69,7 @@ fun trainer(
     name = CardName(name),
     kind = kind,
     gameEntityId = entityIdOf(id),
+    englishArtwork = ArtworkUrl("https://example.test/en/$id.webp"),
     packs = packs,
     effect = effect,
     rarity = Rarity.COMMON,

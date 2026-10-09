@@ -54,7 +54,8 @@ class ReviewListingTest {
 
         item.copies shouldBe 3
         item.confidence shouldBe 0.6
-        item.artworkUrl shouldBe null
+        // The English reader gets the English print of the card.
+        item.artworkUrl shouldBe "https://example.test/en/T-Magmar.webp"
     }
 
     @Test

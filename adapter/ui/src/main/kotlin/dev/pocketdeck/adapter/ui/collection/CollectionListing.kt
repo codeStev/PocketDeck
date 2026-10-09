@@ -106,7 +106,7 @@ data class CollectionListing(
             id = id,
             name = nameIn(language).value,
             detail = detail(),
-            artworkUrl = artwork?.value,
+            artworkUrl = artworkIn(language)?.value,
             copies = copies,
         )
 

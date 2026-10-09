@@ -58,4 +58,26 @@ class CardCatalogTest {
         Rarity.ofCode("nonsense") shouldBe null
         (Rarity.COMMON < Rarity.CROWN) shouldBe true
     }
+
+    @Test
+    fun `a catalog stored before the English pictures existed has to be loaded again`() {
+        val withoutEnglish = basicPokemon("Bulbasaur", id = "A1-001").copy(englishArtwork = null)
+
+        CardCatalog(listOf(withoutEnglish)).lacksCardDetails shouldBe true
+    }
+
+    @Test
+    fun `a card shows the picture of the language, and the German one when there is no English print`() {
+        val both =
+            basicPokemon("Bulbasaur", id = "A1-001")
+                .copy(
+                    artwork = ArtworkUrl("https://x.test/de.webp"),
+                    englishArtwork = ArtworkUrl("https://x.test/en.webp"),
+                )
+        val germanOnly = both.copy(englishArtwork = null)
+
+        both.artworkIn(Language.GERMAN)?.value shouldBe "https://x.test/de.webp"
+        both.artworkIn(Language.ENGLISH)?.value shouldBe "https://x.test/en.webp"
+        germanOnly.artworkIn(Language.ENGLISH)?.value shouldBe "https://x.test/de.webp"
+    }
 }

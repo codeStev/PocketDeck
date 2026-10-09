@@ -259,7 +259,14 @@ class DecksViewModel(
         viewModelScope.launch {
             val list = listCentrepieces()
             centres = list.associateBy { it.id.value }
-            val items = list.map { CentrepieceItem(it.id.value, it.nameIn(language).value, it.artwork?.value) }
+            val items =
+                list.map {
+                    CentrepieceItem(
+                        it.id.value,
+                        it.nameIn(language).value,
+                        it.artworkIn(language)?.value,
+                    )
+                }
             mutableState.update { it.copy(centrepieces = items) }
         }
     }

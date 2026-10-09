@@ -31,7 +31,7 @@ object ReviewListing {
                     ReviewItem(
                         cardId = card.cardId,
                         name = known.nameIn(language).value,
-                        artworkUrl = known.artwork?.value,
+                        artworkUrl = known.artworkIn(language)?.value,
                         copies = card.copies,
                         confidence = card.confidence.value,
                         needsReview = card.needsReview,

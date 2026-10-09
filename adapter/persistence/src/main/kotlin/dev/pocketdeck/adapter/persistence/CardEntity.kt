@@ -31,6 +31,8 @@ internal data class CardEntity(
     val packs: String? = null,
     // Added in schema version 9: the rarity code (see Rarity); rows from version 8 have none until the next sync.
     val rarity: String? = null,
+    // Added in schema version 10: the English print of the picture; rows from version 9 have none until the next sync.
+    val englishArtworkUrl: String? = null,
 )
 
 /** One game account. The first one (id 1) is created with the database and holds what existed before profiles. */
