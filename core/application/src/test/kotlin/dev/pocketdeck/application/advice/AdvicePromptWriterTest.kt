@@ -87,9 +87,9 @@ class AdvicePromptWriterTest {
     fun `lists every owned card with its id and at most two usable copies`() {
         val text = AdvicePromptWriter.write(request(copies = 3)).collection
 
-        text shouldContain "a1-001 | Bulbasaur | Grass Basic | HP 70 | retreat 1 | copies 2"
-        text shouldContain "a1-002 | Ivysaur | Grass Stage 1 (evolves from Bulbasaur) | HP 90"
-        text shouldContain "a1-219 | Erika | Supporter | copies 2 | Heal 50 damage."
+        text shouldContain "a1-001 | Bulbasaur | Grass Basic | 70hp r1 x2 |"
+        text shouldContain "a1-002 | Ivysaur | Grass Stage 1 (from Bulbasaur) | 90hp"
+        text shouldContain "a1-219 | Erika | Supporter | x2 | Heal 50 damage."
     }
 
     @Test
@@ -102,7 +102,9 @@ class AdvicePromptWriterTest {
         val text = AdvicePromptWriter.write(request()).collection
 
         text shouldContain "GC 40 Vine Whip"
-        text shouldContain "GGC 60 Leech: Heal 20 damage from this Pokémon."
+        // Bulbasaur and Ivysaur share the effect, so it is written once and referred to.
+        text shouldContain "GGC 60 Leech: [E1]"
+        text shouldContain "[E1] = Heal 20 damage from this Pokémon."
     }
 
     @Test
@@ -165,5 +167,110 @@ class AdvicePromptWriterTest {
         AdviceFormat.energyName(EnergyType.LIGHTNING) shouldBe "Lightning"
         AdviceFormat.energyOf("lightning") shouldBe EnergyType.LIGHTNING
         AdviceFormat.energyOf("Banana") shouldBe null
+    }
+
+    private fun unplayable(): Pair<PokemonCard, PokemonCard> {
+        val venusaur =
+            bulbasaur.copy(
+                id = CardId("a1-003"),
+                name = CardName("Venusaur"),
+                stage = Stage.STAGE_2,
+                evolvesFrom = CardName("Ivysaur"),
+                hp = 150,
+                gameplayKey = GameplayKey("Venusaur#a"),
+            )
+        val charizard =
+            bulbasaur.copy(
+                id = CardId("a1-036"),
+                name = CardName("Charizard"),
+                stage = Stage.STAGE_2,
+                evolvesFrom = CardName("Charmeleon"),
+                gameplayKey = GameplayKey("Charizard#a"),
+            )
+        return venusaur to charizard
+    }
+
+    private fun requestOwning(
+        vararg owned: Card,
+        all: List<Card> = cards,
+    ): AdviceRequest {
+        val collection = owned.fold(CardCollection.EMPTY) { c, card -> c.withCopies(card.id, 2) }
+        val catalog = CardCatalog(all)
+        return AdviceRequest(null, catalog, Inventory.of(collection, catalog), MetaSnapshot.EMPTY)
+    }
+
+    @Test
+    fun `leaves out an evolution the player cannot play because they own nothing to evolve from`() {
+        val (venusaur, charizard) = unplayable()
+        val request = requestOwning(bulbasaur, ivysaur, venusaur, charizard, all = cards + venusaur + charizard)
+
+        val text = AdvicePromptWriter.write(request).collection
+
+        text shouldContain "a1-003 | Venusaur"
+        text shouldNotContain "a1-036"
+    }
+
+    @Test
+    fun `keeps a Stage 2 that Rare Candy can bring in without its Stage 1`() {
+        val (venusaur, _) = unplayable()
+        val rareCandy =
+            TrainerCard(
+                CardId("a1-216"),
+                CardName("Rare Candy"),
+                TrainerKind.ITEM,
+                GameplayKey("RC#a"),
+                effect = "Evolve.",
+            )
+        val request = requestOwning(bulbasaur, venusaur, rareCandy, all = cards + venusaur + rareCandy)
+
+        AdvicePromptWriter.write(request).collection shouldContain "a1-003 | Venusaur"
+    }
+
+    @Test
+    fun `writes an effect that several cards share once and refers to it`() {
+        val shared = "Flip a coin. If heads, this attack does 30 more damage."
+        val a = bulbasaur.copy(attacks = listOf(Attack("Slam", "C", 20, shared)))
+        val b = a.copy(id = CardId("a1-010"), name = CardName("Oddish"), gameplayKey = GameplayKey("Oddish#a"))
+        val request = requestOwning(a, b, all = listOf(a, b))
+
+        val text = AdvicePromptWriter.write(request).collection
+
+        text.split(shared).size - 1 shouldBe 1
+        text shouldContain "[E1] = $shared"
+        text shouldContain "C 20 Slam: [E1]"
+    }
+
+    @Test
+    fun `expanding the references gives back exactly the effects of every listed card`() {
+        val shared = "Flip a coin. If heads, this attack does 30 more damage."
+        val a = bulbasaur.copy(attacks = listOf(Attack("Slam", "C", 20, shared), Attack("Poke", "G", 10, "Short.")))
+        val b = a.copy(id = CardId("a1-010"), name = CardName("Oddish"), gameplayKey = GameplayKey("Oddish#a"))
+        val request = requestOwning(a, b, erika, all = listOf(a, b, erika))
+
+        val text = AdvicePromptWriter.write(request).collection
+        val definitions =
+            Regex(
+                """(\[E\d+]) = (.*)""",
+            ).findAll(text).associate { it.groupValues[1] to it.groupValues[2] }
+        val expanded =
+            definitions.entries.fold(
+                text.substringAfter("List of effects:").substringAfter("\n\n"),
+            ) { t, (code, full) -> t.replace(code, full) }
+
+        expanded shouldContain "C 20 Slam: $shared"
+        expanded shouldContain "G 10 Poke: Short."
+        expanded shouldContain "Supporter | x2 | Heal 50 damage."
+    }
+
+    @Test
+    fun `an effect shared only once or too short for a reference stays in the line`() {
+        val short = "Draw a card."
+        val a = bulbasaur.copy(attacks = listOf(Attack("Slam", "C", 20, short)))
+        val b = a.copy(id = CardId("a1-010"), name = CardName("Oddish"), gameplayKey = GameplayKey("Oddish#a"))
+
+        val text = AdvicePromptWriter.write(requestOwning(a, b, all = listOf(a, b))).collection
+
+        text shouldNotContain "[E1]"
+        text shouldNotContain "List of effects"
     }
 }

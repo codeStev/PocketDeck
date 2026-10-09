@@ -32,6 +32,7 @@ class AskAiForDeckService(
     private val validator: DeckValidator = DeckValidator(),
     private val completeness: CompletenessCalculator = CompletenessCalculator(),
     private val diagnostics: AdvisorDiagnostics = AdvisorDiagnostics.NONE,
+    private val repair: DeckRepair = DeckRepair(validator),
 ) : AskAiForDeck {
     override suspend fun invoke(wish: String?): Outcome<DeckSuggestion, AskAiFailure> {
         val catalog = catalogs.current()
@@ -77,7 +78,31 @@ class AskAiForDeckService(
                 }
             }
         }
-        return Outcome.Failure(AskAiFailure.NoValidDeck(feedback.last().problems))
+        return repaired(feedback.last(), catalog, inventory)
+    }
+
+    /**
+     * The player asked for a deck from their own cards, not for an error: when the advisor kept asking for cards they do not
+     * own, the deck is cut down to what they have and filled up, and the rationale says so.
+     */
+    private fun repaired(
+        last: AdviceFeedback,
+        catalog: CardCatalog,
+        inventory: Inventory,
+    ): Outcome<DeckSuggestion, AskAiFailure> {
+        val advice = last.advice
+        val wanted =
+            advice.entries.mapNotNull { entry ->
+                resolve(entry, catalog, inventory)?.let { it to entry.copies }
+            }
+        val deck = repair.repair(wanted, advice.energyTypes, catalog, inventory)
+        if (deck == null) {
+            diagnostics.note("The deck could not be repaired either")
+            return Outcome.Failure(AskAiFailure.NoValidDeck(last.problems))
+        }
+        diagnostics.note("The deck was repaired by cutting it down to the owned cards and filling it up")
+        val adjusted = advice.copy(rationale = "${advice.rationale}\n\n$REPAIR_NOTE".trim())
+        return Outcome.Success(suggestionOf(adjusted, deck, inventory))
     }
 
     private sealed interface Checked {
@@ -106,10 +131,12 @@ class AskAiForDeckService(
                 .groupBy({ requireNotNull(it.second) }, { it.first.copies })
                 .map { (card, copies) -> DeckEntry(card, copies.sum()) }
         val deck = Deck(entries, advice.energyTypes.toSet())
+        val missing = notOwned(deck, inventory)
         val problems =
-            notOwned(deck, inventory) + energyProblems(advice) + validator.validate(deck).map(::describe) +
-                deadTrainers(deck, catalog)
-        return if (problems.isEmpty()) Checked.Valid(deck) else Checked.Invalid(problems)
+            missing + energyProblems(advice) + validator.validate(deck).map(::describe) + deadTrainers(deck, catalog)
+        if (problems.isEmpty()) return Checked.Valid(deck)
+        val lacksCards = missing.isNotEmpty() || deck.size < Deck.SIZE
+        return Checked.Invalid(if (lacksCards) problems + stillFree(deck, catalog, inventory) else problems)
     }
 
     /** The card by its id, or else by its name among the cards the player owns; null when neither names a card. */
@@ -166,6 +193,33 @@ class AskAiForDeckService(
         }
     }
 
+    /**
+     * Where an advisor lacks cards it needs choices: the owned cards that still have copies free in this deck. Without them it
+     * tends to swap one card it does not own for another.
+     */
+    private fun stillFree(
+        deck: Deck,
+        catalog: CardCatalog,
+        inventory: Inventory,
+    ): List<String> {
+        val used =
+            deck.entries.groupBy { it.card.gameplayKey }.mapValues { (_, entries) ->
+                entries.sumOf { it.copies }
+            }
+        val free =
+            catalog.cards
+                .distinctBy { it.gameplayKey }
+                .mapNotNull { card ->
+                    val room = minOf(inventory.copiesOf(card), Deck.MAX_COPIES_PER_NAME) - (used[card.gameplayKey] ?: 0)
+                    "${card.id.value} ${card.name.value} ($room)".takeIf { room > 0 }
+                }
+        if (free.isEmpty()) return emptyList()
+        return listOf(
+            "Only the player's own cards may be used, so replace anything they do not own with one of these " +
+                "(id name (copies still free)): " + free.take(MAX_FREE_SHOWN).joinToString(", "),
+        )
+    }
+
     private fun copies(count: Int) = if (count == 1) "1 copy" else "$count copies"
 
     private fun energyProblems(advice: DeckAdvice): List<String> {
@@ -214,6 +268,9 @@ class AskAiForDeckService(
 
     private companion object {
         const val MAX_ATTEMPTS = 3
+        const val MAX_FREE_SHOWN = 60
+        const val REPAIR_NOTE =
+            "Some cards the AI first chose are not in your collection; they were left out and the deck was filled with cards you own."
 
         /** Asked for by the player, so it is shown first; the order among such decks is the order they were asked in. */
         const val AI_SCORE = 1.0
