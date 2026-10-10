@@ -58,6 +58,15 @@ class BuildSiteTest(unittest.TestCase):
         self.assertIn('id="auto-scroll"', privacy)
         self.assertNotIn("<h2>Auto-scroll", landing)
 
+    def test_the_ai_note_is_a_disclaimer_on_every_page_and_not_a_section(self):
+        landing = build_site.landing("1.0.1", FINGERPRINT)
+        privacy = build_site.prose_page("Privacy", "# Privacy\n", "d", "privacy")
+
+        self.assertNotRegex(landing, r"<h2[^>]*>Built with AI")
+        self.assertIn(build_site.AI_NOTE, landing)
+        self.assertIn(build_site.AI_NOTE, privacy)
+        self.assertEqual(2, landing.count(build_site.AI_NOTE))
+
     def test_nested_bullets_become_a_list_inside_their_tile(self):
         tiles = build_site.feature_tiles("## What it does\n- **Decks:**\n  - First entry\n  - Second\n    entry\n- **Next:** Text.\n")
 

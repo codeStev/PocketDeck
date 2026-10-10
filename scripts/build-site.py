@@ -22,7 +22,7 @@ SITE = "https://codestev.github.io/PocketDeck"
 REPO_URL = "https://github.com/codeStev/PocketDeck"
 FONTS = ROOT / "designsystem" / "src" / "main" / "res" / "font"
 LICENCES = ROOT / "designsystem" / "licenses"
-LANDING_SECTIONS = ["Built with AI assistance", "Privacy", "Data and credits", "Licence"]
+LANDING_SECTIONS = ["Privacy", "Data and credits", "Licence"]
 LINKS = {
     "[PRIVACY.md](PRIVACY.md)": "[the privacy policy](privacy/index.html)",
     "(PRIVACY.md#auto-scroll)": "(privacy/index.html#auto-scroll)",
@@ -31,6 +31,8 @@ LINKS = {
     "`LICENSE`": f"[LICENSE]({REPO_URL}/blob/main/LICENSE)",
 }
 TINTS = ["orange", "blue", "green", "purple"]
+UNOFFICIAL = "Unofficial fan tool, not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA."
+AI_NOTE = 'Built with AI coding assistance (<a href="https://claude.com/claude-code">Claude Code</a>).'
 
 # The app's tokens (SignalBrand, PdShapes, PdSpacing, PdTypography); light is the default, dark follows the system.
 STYLE = """
@@ -78,6 +80,7 @@ h3 { margin: 24px 0 8px; font: 600 20px/26px var(--display); }
   background: var(--accent); color: var(--on-accent); font: 800 16px var(--text); text-decoration: none; transition: transform 120ms; }
 .button.secondary { background: transparent; color: var(--ink); border: 2px solid var(--line-strong); }
 .button:active { transform: scale(.97); }
+.notice a { color: inherit; text-decoration: underline; }
 .notice { margin: 8px 0 0; padding: 12px 16px; border-radius: 14px; background: var(--warning-soft); color: var(--on-warning); font-size: 14px; line-height: 20px; }
 .features { display: grid; gap: 12px; margin: 32px 0 0; grid-template-columns: 1fr; }
 @media (min-width: 38rem) { .features { grid-template-columns: 1fr 1fr; } }
@@ -213,8 +216,8 @@ def page(title, body, description, prefix="./", active=""):
 <main class="wrap">
 {body}
 </main>
-<footer class="wrap"><p>Unofficial fan tool, not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA.
-Pokémon, Pokémon TCG Pocket, card names and artwork belong to their owners. Fonts: Fredoka and Nunito (SIL Open Font License).</p></footer>
+<footer class="wrap"><p>{UNOFFICIAL} Pokémon, Pokémon TCG Pocket, card names and artwork belong to their owners. {AI_NOTE}
+Fonts: Fredoka and Nunito (SIL Open Font License).</p></footer>
 </body>
 </html>
 """
@@ -226,7 +229,7 @@ def hero():
 <h1>PocketDeck</h1>
 <p class="lead">Scan your Pokémon TCG Pocket collection and get competitive decks you can build from the cards you own.</p>
 <div class="actions"><a class="button" href="#install">Install</a><a class="button secondary" href="{REPO_URL}">Source on GitHub</a></div>
-<p class="notice">Unofficial fan tool. Not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA.</p>
+<p class="notice">{UNOFFICIAL} {AI_NOTE}</p>
 </div>"""
 
 
