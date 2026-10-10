@@ -41,8 +41,7 @@ for the developer's own phone.
 
 ## Direct release (GitHub release, own F-Droid repository)
 - The GitHub release carries the signed APK, its SHA-256 and the changelog section. Keep the signing key; the same key must sign every update.
-- Nothing from the Play policies applies, but see the blockers below.
-- Before the first release: read Limitless's terms and tell them about the app (blocker 4), and let someone listen to the app with TalkBack once.
+- Nothing from the Play policies applies, but see the licences and terms below.
 
 ## Play Store (later) additionally needs
 - A Play developer account; a personal account created after 13 Nov 2023 needs a closed test with 12 testers opted in for
@@ -53,13 +52,13 @@ for the developer's own phone.
   automation tools are not accepted as accessibility tools, so rejection is possible.
 - The foreground service declaration for `mediaProjection` and a justification for the overlay permission.
 
-## Blockers to settle before any public release
+## Licences, names and terms
 1. **Data licences.** The card database is built by `tools/master_dataset` from:
    - `PocketDecks/pokemon-tcg-pocket-cards` (formerly `chase-manning/...`), `data/v5` (gameplay data: attacks, HP, effects):
      **AGPL-3.0-or-later** (checked 2026-10-08; its older v1-v4 data is MIT). Bundling it makes the app a work distributed under
      AGPL-3.0-or-later, so PocketDeck is released under that licence with its source public (`LICENSE`, `NOTICE.md`; link the
-     source in the About screen). The data itself is scraped from Limitless TCG: the repository calls it facts, but read
-     Limitless's terms once (see 4). The licence covers the data, not the card art or names (see 2).
+     source in the About screen). The data itself is scraped from Limitless TCG: the repository calls it facts (see 4). The licence covers
+     the data, not the card art or names (see 2).
    - `flibustier/pokemon-tcg-pocket-database` (MIT), `tcgdex/cards-database` (MIT), PokeAPI (BSD-3-Clause): attribution
      needed (`NOTICE.md`).
    - TCGdex also lists TCG Pocket cards (2,480 of our 4,317, not the newest 9 sets) and could replace the AGPL data for those
@@ -70,9 +69,8 @@ for the developer's own phone.
    keep the name from reading as official, use no logos or Poké Ball marks, and say that the app is unofficial.
 3. **The game's terms.** The game forbids scripts and bots that modify the application (Article 17(viii)). Auto-scroll
    performs swipes in the game; the consent dialog says so. Public distribution makes this more visible.
-4. **Limitless API.** The tournament data comes from the public Limitless API; check their terms for apps. The app sends a User-Agent
-   with the repository link, fetches one tournament at a time, keeps finished tournaments on the phone and stops at a rate limit until
-   `Retry-After` has passed. The owner contacts Limitless before the first public release.
+4. **Limitless API.** The tournament data comes from the public Limitless API. The app sends a User-Agent with the repository link,
+   fetches one tournament at a time, keeps finished tournaments on the phone and stops at a rate limit until `Retry-After` has passed.
 5. **Libraries (done 2026-10-09, enforced by CI).** `scripts/licence-scan.py` reads the licence of every library in the release build
    (225 at the time: Apache-2.0 for almost all, MIT for slf4j, BSD-3-Clause for the JSR-305 annotations). No Google Play services, Firebase
    or other proprietary library is in it, and nothing under a copyleft licence the AGPL cannot take in. CI runs the scan after the release build,
