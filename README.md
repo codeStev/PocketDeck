@@ -51,9 +51,11 @@ how the design system in `designsystem/` is used. Branches and versions (gitflow
 Found a bug? Use *Report a problem* in the app (About), which opens the [issue tracker](https://github.com/codeStev/PocketDeck/issues).
 
 ## Data and credits
-Card data: [PocketDecks/pokemon-tcg-pocket-cards](https://github.com/PocketDecks/pokemon-tcg-pocket-cards) (AGPL-3.0-or-later), scraped
-from Limitless TCG; tournament decks: [Limitless TCG](https://play.limitlesstcg.com); card images and German names:
-[TCGdex](https://tcgdex.dev). Full list in `NOTICE.md`.
+- **Card data:** [PocketDecks/pokemon-tcg-pocket-cards](https://github.com/PocketDecks/pokemon-tcg-pocket-cards) (AGPL-3.0-or-later), scraped from Limitless TCG
+- **Tournament decks:** [Limitless TCG](https://play.limitlesstcg.com)
+- **Card images and German names:** [TCGdex](https://tcgdex.dev)
+
+The full list is in `NOTICE.md`.
 
 ## License
 GNU Affero General Public License v3.0 or later, see `LICENSE`. The bundled card dataset is AGPL-3.0-or-later, so the app as a whole is
