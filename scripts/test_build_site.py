@@ -100,6 +100,14 @@ class BuildSiteTest(unittest.TestCase):
         self.assertIn("<figcaption>Deck list</figcaption>", shown)
         self.assertEqual("", hidden)
 
+    def test_the_qr_code_scales_with_its_box_and_has_a_quiet_zone(self):
+        block = build_site.install_block("1.0.1", FINGERPRINT)
+        svg = re.search(r"<svg[^>]*>", block).group(0)
+
+        self.assertIn("viewBox", svg)
+        self.assertNotRegex(svg, r'\swidth="')
+        self.assertIn("viewBox=\"0 0 49 49\"", svg)
+
     def test_nested_bullets_become_a_list_inside_their_tile(self):
         tiles = build_site.feature_tiles("## What it does\n- **Decks:**\n  - First entry\n  - Second\n    entry\n- **Next:** Text.\n")
 

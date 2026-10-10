@@ -101,7 +101,7 @@ h3 { margin: 24px 0 8px; font: 600 20px/26px var(--display); }
 .option { padding: 16px 18px; border-radius: 20px; background: var(--page); border: 1px solid var(--line); }
 .option h3 { margin: 0 0 8px; } .option p { margin: 8px 0; }
 .tag { margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--on-accent-soft); font: 800 12px var(--text); vertical-align: middle; }
-.qr { width: 9.5rem; padding: 8px; background: #fff; border-radius: 14px; margin: 0 0 12px; }
+.qr { width: 13rem; max-width: 100%; background: #fff; border-radius: 14px; margin: 0 0 12px; overflow: hidden; }
 .qr svg { display: block; width: 100%; height: auto; }
 .mobile-only { display: none; } @media (max-width: 45.99rem) { .desktop-only { display: none; } .mobile-only { display: block; } }
 .screens { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 40px -16px 0; padding: 4px 16px 16px; }
@@ -181,7 +181,10 @@ def install_block(version, fingerprint):
     """How to get the app, as two options: the F-Droid repository (updates itself; its address, a QR code for wide screens, the
     fingerprint to compare) or the signed APK (direct download, updated by hand)."""
     link = f"fdroidrepos://{SITE.split('//')[1]}/repo?fingerprint={fingerprint.upper()}"
-    qr = segno.make(link, error="m").svg_inline(scale=4, border=1, dark="#000000", light="#ffffff")
+    # A viewBox and no fixed size, so CSS can scale it; the 4-module quiet zone and the low error correction (a clean screen) keep it
+    # at 41 modules, which a phone camera can read at a width of about 13rem.
+    qr = segno.make(link, error="l").svg_inline(scale=1, border=4, omitsize=True, dark="#000000", light="#ffffff")
+    qr = qr.replace("<svg ", '<svg shape-rendering="crispEdges" ', 1)
     downloads = f"{REPO_URL}/releases/download/v{version}"
     return f"""
 <section class="install" id="install">
