@@ -6,3 +6,7 @@ local.properties
 .kotlin/
 *.apk
 .claude/worktrees/
+
+# Personal planning notes and tool state, kept out of the repository
+.private/
+.claude/

@@ -16,7 +16,7 @@ class ListSuitableModelsServiceTest {
     ) = ListedModel(id, id, context, free, tools, thinking, expiresOn = null)
 
     private fun service(vararg models: ListedModel) =
-        ListSuitableModelsService { _, _ -> Outcome.Success(models.toList()) }
+        ListSuitableModelsService { _, _, _ -> Outcome.Success(models.toList()) }
 
     private suspend fun ids(
         service: ListSuitableModelsService,
@@ -62,7 +62,14 @@ class ListSuitableModelsServiceTest {
     @Test
     fun `passes on a failure to reach the catalog`() =
         runTest {
-            val failing = ListSuitableModelsService { _, _ -> Outcome.Failure(AdvisorFailure.NotReachable("offline")) }
+            val failing =
+                ListSuitableModelsService {
+                    _,
+                    _,
+                    _,
+                    ->
+                    Outcome.Failure(AdvisorFailure.NotReachable("offline"))
+                }
 
             failing(ModelRequest(AdvisorProvider.OPENROUTER)) shouldBe
                 Outcome.Failure(AdvisorFailure.NotReachable("offline"))
@@ -100,7 +107,7 @@ class ListSuitableModelsServiceTest {
         runTest {
             var seen: String? = null
             val service =
-                ListSuitableModelsService { _, key ->
+                ListSuitableModelsService { _, key, _ ->
                     seen = key
                     Outcome.Success(emptyList())
                 }
@@ -125,8 +132,8 @@ class ListSuitableModelsServiceTest {
                 completionPrice = 15.0,
             )
 
-        // 30,000 tokens in at $3 per million, 3,000 out at $15 per million.
-        ModelCost.perDeck(paid) shouldBe (0.09 + 0.045 plusOrMinus 1e-9)
+        // 22,000 tokens in at $3 per million, 3,000 out at $15 per million.
+        ModelCost.perDeck(paid) shouldBe (0.066 + 0.045 plusOrMinus 1e-9)
         ModelCost.perDeck(model("free")) shouldBe 0.0
         ModelCost.perDeck(paid.copy(promptPrice = null)) shouldBe null
     }
@@ -138,5 +145,31 @@ class ListSuitableModelsServiceTest {
             val service = service(priced, model("router", free = false))
 
             ids(service, ModelRequest(AdvisorProvider.OPENROUTER, includePaid = true)) shouldBe listOf("priced")
+        }
+
+    @Test
+    fun `lists every model of a server of the player's own as it comes and hands over the address`() =
+        runTest {
+            var seenAddress: String? = null
+            val service =
+                ListSuitableModelsService { _, _, address ->
+                    seenAddress = address
+                    Outcome.Success(
+                        listOf(
+                            model("qwen3", context = 0, free = false, tools = false),
+                            model("llama3.1", context = 0, free = false),
+                        ),
+                    )
+                }
+
+            val listed =
+                (
+                    service(
+                        ModelRequest(AdvisorProvider.OWN_SERVER, address = "http://pc:11434/v1"),
+                    ) as Outcome.Success
+                ).value
+
+            listed.map { it.id } shouldBe listOf("qwen3", "llama3.1")
+            seenAddress shouldBe "http://pc:11434/v1"
         }
 }

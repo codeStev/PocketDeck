@@ -25,6 +25,8 @@ internal data class MasterCardDto(
     val gameEntityId: Int? = null,
     /** The packs (or other sources, such as missions) the card can be obtained from. */
     val packs: List<String> = emptyList(),
+    /** The short rarity code (`C`, `RR`, `SAR`, ...). */
+    val rarityCode: String? = null,
     val attacks: List<AttackDto> = emptyList(),
     val ability: AbilityDto? = null,
     /** The effect text of a trainer card. */

@@ -77,13 +77,22 @@ data class ReviewBreakdown(
 class ScanSession private constructor(
     private val observations: Map<CardId, List<TileRecognition>>,
     val framesProcessed: Int,
+    /** How many of the latest frames in a row showed no card at all. */
+    val framesWithoutCardsInARow: Int = 0,
 ) {
     val distinctCards: Int get() = observations.size
+
+    /**
+     * The screen does not look like the game's card list: several frames in a row without one recognised card. A few empty
+     * frames are normal (a transition, the list reloading), so one is not enough.
+     */
+    val screenLooksWrong: Boolean get() = framesWithoutCardsInARow >= EMPTY_FRAMES_BEFORE_WARNING
 
     fun observe(recognitions: List<TileRecognition>): ScanSession {
         val merged = observations.toMutableMap()
         recognitions.forEach { merged[it.cardId] = merged[it.cardId].orEmpty() + it }
-        return ScanSession(merged, framesProcessed + 1)
+        val empty = if (recognitions.isEmpty()) framesWithoutCardsInARow + 1 else 0
+        return ScanSession(merged, framesProcessed + 1, empty)
     }
 
     fun summarize(): List<ScannedCard> =
@@ -162,6 +171,9 @@ class ScanSession private constructor(
     companion object {
         const val REVIEW_CONFIDENCE_THRESHOLD = 0.8
         private const val MINIMUM_OWNED = 1
+
+        /** About a second and a half of polling, so a transition does not raise it but a home screen does. */
+        const val EMPTY_FRAMES_BEFORE_WARNING = 6
 
         /** A reading that needs no review is no misread, so a differing count belongs to another print. */
         private const val PRINT_CONFIDENCE = REVIEW_CONFIDENCE_THRESHOLD

@@ -29,6 +29,7 @@ class OpenRouterModelCatalog(
     override suspend fun available(
         provider: AdvisorProvider,
         apiKey: String?,
+        address: String?,
     ): Outcome<List<ListedModel>, AdvisorFailure> {
         if (provider != AdvisorProvider.OPENROUTER) return Outcome.Success(emptyList())
         return try {

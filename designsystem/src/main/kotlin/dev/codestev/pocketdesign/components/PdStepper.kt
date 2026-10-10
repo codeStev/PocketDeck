@@ -1,9 +1,17 @@
 package dev.codestev.pocketdesign.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
@@ -16,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.codestev.pocketdesign.icons.PdIcons
+import dev.codestev.pocketdesign.theme.PdMotion
 import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PocketDesign
 
@@ -43,13 +52,31 @@ fun PdStepper(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         StepButton(PdIcons.Minus, decrementDescription, enabled = value > range.first) { onValueChange(value - 1) }
-        Text(
-            text = value.toString(),
+        // The number slides the way it counts: up when it grows, down when it shrinks.
+        AnimatedContent(
+            targetState = value,
             modifier = Modifier.widthIn(min = CountWidth),
-            style = PocketDesign.typography.numeric,
-            color = PocketDesign.colors.ink,
-            textAlign = TextAlign.Center,
-        )
+            transitionSpec = {
+                val direction = if (targetState > initialState) 1 else -1
+                (
+                    slideInVertically(tween(PdMotion.STATE_MILLIS)) { direction * it / 2 } +
+                        fadeIn(tween(PdMotion.STATE_MILLIS))
+                ).togetherWith(
+                    slideOutVertically(tween(PdMotion.STATE_MILLIS)) { -direction * it / 2 } +
+                        fadeOut(tween(PdMotion.STATE_MILLIS)),
+                )
+            },
+            contentAlignment = Alignment.Center,
+            label = "stepperValue",
+        ) { shown ->
+            Text(
+                text = shown.toString(),
+                modifier = Modifier.fillMaxWidth(),
+                style = PocketDesign.typography.numeric,
+                color = PocketDesign.colors.ink,
+                textAlign = TextAlign.Center,
+            )
+        }
         StepButton(PdIcons.Plus, incrementDescription, enabled = value < range.last) { onValueChange(value + 1) }
     }
 }

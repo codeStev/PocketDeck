@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.Flow
 enum class AdvisorProvider(
     /** The models asked, in this order, until one gives a deck, when the player has not chosen a model. */
     val defaultModels: List<String>,
+    /** Whether the player chooses the server's address (a runtime of their own) instead of the service having one. */
+    val hasOwnAddress: Boolean = false,
 ) {
     /** Claude, directly from Anthropic. Strongest, costs money. */
     ANTHROPIC(listOf("claude-opus-5-5")),
@@ -17,9 +19,28 @@ enum class AdvisorProvider(
      * dropped: its free capacity answered with HTTP 429 every time.
      */
     OPENROUTER(listOf("nvidia/nemotron-3-super-120b-a12b:free")),
+
+    /** OpenAI itself. Its models are reasoning models, so the request keeps the thinking short. */
+    OPENAI(listOf("gpt-5-mini")),
+
+    /**
+     * A server of the player's own that speaks the OpenAI chat API (Ollama, LM Studio, llama.cpp, vLLM ...), on their
+     * computer or phone. Which models it has is up to them, so there is no default; the key is optional.
+     */
+    OWN_SERVER(emptyList(), hasOwnAddress = true),
     ;
 
-    val defaultModel: String get() = defaultModels.first()
+    /** Empty when the provider has no default model, which is the case for the player's own server. */
+    val defaultModel: String get() = defaultModels.firstOrNull().orEmpty()
+
+    /** Claude is chosen alone; every other provider tries the models the player lists one after the other. */
+    val takesSeveralModels: Boolean get() = this != ANTHROPIC
+
+    /** Whether the service's model list is offered as it comes, without the free/tools/context filters OpenRouter needs. */
+    val listsEveryModel: Boolean get() = this != OPENROUTER
+
+    /** Whether it works without a key (a server on the player's own network often has none). */
+    val keyIsOptional: Boolean get() = hasOwnAddress
 }
 
 /** What the player has set up for the advisors: keys, chosen models and which provider is tried first. */
@@ -27,6 +48,9 @@ data class AdvisorSettings(
     val order: List<AdvisorProvider> = AdvisorProvider.entries,
     private val keys: Map<AdvisorProvider, String> = emptyMap(),
     private val models: Map<AdvisorProvider, String> = emptyMap(),
+    private val addresses: Map<AdvisorProvider, String> = emptyMap(),
+    /** Whether an address that starts with http:// (no encryption) may be used; off until the player switches it on. */
+    val plainHttpAllowed: Boolean = false,
 ) {
     fun keyOf(provider: AdvisorProvider): String? = keys[provider]?.takeIf { it.isNotBlank() }
 
@@ -47,8 +71,23 @@ data class AdvisorSettings(
     /** The model the player typed in, if any (the default does not count). */
     fun chosenModelOf(provider: AdvisorProvider): String? = models[provider]?.takeIf { it.isNotBlank() }
 
-    /** The providers that have a key, in the order they are tried. */
-    fun usable(): List<AdvisorProvider> = order.filter { keyOf(it) != null }
+    /** The address the player gave for a provider of their own, without a trailing slash. */
+    fun addressOf(provider: AdvisorProvider): String? =
+        addresses[provider]?.trim()?.trimEnd('/')?.takeIf { it.isNotEmpty() }
+
+    /**
+     * The providers that can be asked, in the order they are tried: those with a key, and the player's own server once it
+     * has an address and a model (it has no default model, and needs no key).
+     */
+    fun usable(): List<AdvisorProvider> = order.filter { isUsable(it) }
+
+    private fun isUsable(provider: AdvisorProvider) =
+        if (provider.hasOwnAddress) {
+            addressOf(provider) != null && chosenModelOf(provider) != null
+        } else {
+            keyOf(provider) !=
+                null
+        }
 
     fun withKey(
         provider: AdvisorProvider,
@@ -59,6 +98,15 @@ data class AdvisorSettings(
         provider: AdvisorProvider,
         model: String?,
     ) = copy(models = if (model.isNullOrBlank()) models - provider else models + (provider to model.trim()))
+
+    fun withAddress(
+        provider: AdvisorProvider,
+        address: String?,
+    ) = copy(
+        addresses = if (address.isNullOrBlank()) addresses - provider else addresses + (provider to address.trim()),
+    )
+
+    fun withPlainHttpAllowed(allowed: Boolean) = copy(plainHttpAllowed = allowed)
 
     fun withOrder(newOrder: List<AdvisorProvider>) =
         copy(

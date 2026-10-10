@@ -22,6 +22,10 @@ data class AiSettingsForm(
     val order: List<AdvisorProvider>,
     val keys: Map<AdvisorProvider, String>,
     val models: Map<AdvisorProvider, String>,
+    /** The addresses of the providers the player runs themselves. */
+    val addresses: Map<AdvisorProvider, String> = emptyMap(),
+    /** Whether an http:// address (no encryption) may be used. */
+    val plainHttp: Boolean = false,
 )
 
 /** What the model picker shows while it is open. */
@@ -43,8 +47,8 @@ data class ModelPicker(
     /** Whether paid models are listed too; only OpenRouter has free ones to leave out. */
     val includePaid: Boolean = false,
 ) {
-    /** OpenRouter models are tried in turn, so several can be chosen; a Claude model is chosen alone. */
-    val chooseSeveral: Boolean get() = provider == AdvisorProvider.OPENROUTER
+    /** Models are tried in turn, so several can be chosen; a Claude model is chosen alone. */
+    val chooseSeveral: Boolean get() = provider.takesSeveralModels
 }
 
 data class SettingsUiState(
@@ -80,6 +84,13 @@ class SettingsViewModel(
         key: String,
     ) = edit { it.copy(keys = it.keys + (provider to key)) }
 
+    fun onAddressChanged(
+        provider: AdvisorProvider,
+        address: String,
+    ) = edit { it.copy(addresses = it.addresses + (provider to address)) }
+
+    fun onPlainHttpChanged(allowed: Boolean) = edit { it.copy(plainHttp = allowed) }
+
     fun onModelChanged(
         provider: AdvisorProvider,
         model: String,
@@ -111,12 +122,17 @@ class SettingsViewModel(
         mutableState.update { it.copy(modelPicker = picker) }
         viewModelScope.launch {
             // The key as typed, saved or not: the player should not have to save before looking at Claude's models.
-            val request =
-                ModelRequest(picker.provider, mutableState.value.form.keys[picker.provider], picker.includePaid)
+            val form = mutableState.value.form
+            val address = form.addresses[picker.provider]?.trim()
+            val request = ModelRequest(picker.provider, form.keys[picker.provider], picker.includePaid, address)
             val content =
-                when (val outcome = listModels(request)) {
-                    is Outcome.Success -> ModelPickerContent.Loaded(outcome.value)
-                    is Outcome.Failure -> ModelPickerContent.Failed(outcome.reason.message())
+                if (address.orEmpty().startsWith(PLAIN_HTTP, ignoreCase = true) && !form.plainHttp) {
+                    ModelPickerContent.Failed(PLAIN_HTTP_OFF)
+                } else {
+                    when (val outcome = listModels(request)) {
+                        is Outcome.Success -> ModelPickerContent.Loaded(outcome.value)
+                        is Outcome.Failure -> ModelPickerContent.Failed(outcome.reason.message())
+                    }
                 }
             mutableState.update { state ->
                 state.modelPicker?.let { state.copy(modelPicker = it.copy(content = content)) }
@@ -138,7 +154,7 @@ class SettingsViewModel(
                 .split(',')
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
-        val several = provider == AdvisorProvider.OPENROUTER
+        val several = provider.takesSeveralModels
         val updated =
             when {
                 id in chosen -> chosen - id
@@ -166,11 +182,18 @@ class SettingsViewModel(
         }
 
     fun onSave() {
+        // The keyboard's Done key saves too, also when nothing was edited.
+        if (!mutableState.value.changed) return
         val form = mutableState.value.form
         viewModelScope.launch {
             val settings =
-                AdvisorProvider.entries.fold(AdvisorSettings().withOrder(form.order)) { acc, provider ->
-                    acc.withKey(provider, form.keys[provider]).withModel(provider, form.models[provider])
+                AdvisorProvider.entries.fold(
+                    AdvisorSettings().withOrder(form.order).withPlainHttpAllowed(form.plainHttp),
+                ) { acc, provider ->
+                    acc
+                        .withKey(provider, form.keys[provider])
+                        .withModel(provider, form.models[provider])
+                        .withAddress(provider, form.addresses[provider])
                 }
             saveSettings(settings)
             mutableState.update { SettingsUiState(form = formOf(settings), changed = false, justSaved = true) }
@@ -185,7 +208,14 @@ class SettingsViewModel(
             order = settings.order,
             keys = AdvisorProvider.entries.mapNotNull { p -> settings.keyOf(p)?.let { p to it } }.toMap(),
             models = AdvisorProvider.entries.mapNotNull { p -> settings.chosenModelOf(p)?.let { p to it } }.toMap(),
+            addresses = AdvisorProvider.entries.mapNotNull { p -> settings.addressOf(p)?.let { p to it } }.toMap(),
+            plainHttp = settings.plainHttpAllowed,
         )
+
+    private companion object {
+        const val PLAIN_HTTP = "http://"
+        const val PLAIN_HTTP_OFF = "Plain http is switched off; allow it in the provider's settings or use https."
+    }
 
     class Factory(
         private val observeSettings: ObserveAdvisorSettings,

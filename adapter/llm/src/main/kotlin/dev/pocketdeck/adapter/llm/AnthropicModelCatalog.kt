@@ -31,6 +31,7 @@ class AnthropicModelCatalog(
     override suspend fun available(
         provider: AdvisorProvider,
         apiKey: String?,
+        address: String?,
     ): Outcome<List<ListedModel>, AdvisorFailure> {
         if (provider != AdvisorProvider.ANTHROPIC) return Outcome.Success(emptyList())
         if (apiKey.isNullOrBlank()) return Outcome.Failure(AdvisorFailure.MissingKey)

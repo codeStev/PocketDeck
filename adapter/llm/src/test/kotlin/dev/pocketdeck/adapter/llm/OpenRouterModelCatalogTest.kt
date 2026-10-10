@@ -50,7 +50,7 @@ class OpenRouterModelCatalogTest {
                     OpenRouterModelCatalog(
                         client(answer),
                         "https://or.test/api/v1",
-                    ).available(AdvisorProvider.OPENROUTER, null) as Outcome.Success
+                    ).available(AdvisorProvider.OPENROUTER, null, null) as Outcome.Success
                 ).value
 
             val gemma = models.first { it.id == "google/gemma-4-31b-it:free" }
@@ -72,7 +72,7 @@ class OpenRouterModelCatalogTest {
                     OpenRouterModelCatalog(
                         client(answer),
                         "https://or.test",
-                    ).available(AdvisorProvider.OPENROUTER, null) as Outcome.Success
+                    ).available(AdvisorProvider.OPENROUTER, null, null) as Outcome.Success
                 ).value
 
             models.first { it.id == "anthropic/claude-x" }.free shouldBe false
@@ -91,7 +91,7 @@ class OpenRouterModelCatalogTest {
                     },
                 )
 
-            OpenRouterModelCatalog(http, "https://or.test/api/v1").available(AdvisorProvider.OPENROUTER, null)
+            OpenRouterModelCatalog(http, "https://or.test/api/v1").available(AdvisorProvider.OPENROUTER, null, null)
 
             asked shouldBe "https://or.test/api/v1/models"
         }
@@ -102,7 +102,7 @@ class OpenRouterModelCatalogTest {
             OpenRouterModelCatalog(
                 client(answer),
                 "https://or.test",
-            ).available(AdvisorProvider.ANTHROPIC, null) shouldBe
+            ).available(AdvisorProvider.ANTHROPIC, null, null) shouldBe
                 Outcome.Success(emptyList())
         }
 
@@ -111,13 +111,13 @@ class OpenRouterModelCatalogTest {
         runTest {
             val offline = HttpClient(MockEngine { throw IOException("no network") })
 
-            OpenRouterModelCatalog(offline, "https://x").available(AdvisorProvider.OPENROUTER, null) shouldBe
+            OpenRouterModelCatalog(offline, "https://x").available(AdvisorProvider.OPENROUTER, null, null) shouldBe
                 Outcome.Failure(AdvisorFailure.NotReachable("no network"))
             (
                 OpenRouterModelCatalog(
                     client("<html>"),
                     "https://x",
-                ).available(AdvisorProvider.OPENROUTER, null) as Outcome.Failure
+                ).available(AdvisorProvider.OPENROUTER, null, null) as Outcome.Failure
             ).reason.javaClass shouldBe AdvisorFailure.Unusable::class.java
         }
 
@@ -129,7 +129,7 @@ class OpenRouterModelCatalogTest {
                     OpenRouterModelCatalog(
                         client(answer),
                         "https://or.test",
-                    ).available(AdvisorProvider.OPENROUTER, null) as Outcome.Success
+                    ).available(AdvisorProvider.OPENROUTER, null, null) as Outcome.Success
                 ).value
 
             // Seen in practice: models with this metadata thought for minutes and never answered.
@@ -143,7 +143,7 @@ class OpenRouterModelCatalogTest {
             val models =
                 (
                     OpenRouterModelCatalog(client(answer), "https://or.test")
-                        .available(AdvisorProvider.OPENROUTER, null) as Outcome.Success
+                        .available(AdvisorProvider.OPENROUTER, null, null) as Outcome.Success
                 ).value
 
             val claude = models.first { it.id == "anthropic/claude-x" }

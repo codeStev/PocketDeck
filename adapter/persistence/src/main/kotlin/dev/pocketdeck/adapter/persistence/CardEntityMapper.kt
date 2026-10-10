@@ -8,6 +8,7 @@ import dev.pocketdeck.domain.card.CardName
 import dev.pocketdeck.domain.card.EnergyType
 import dev.pocketdeck.domain.card.GameplayKey
 import dev.pocketdeck.domain.card.PokemonCard
+import dev.pocketdeck.domain.card.Rarity
 import dev.pocketdeck.domain.card.Stage
 import dev.pocketdeck.domain.card.TrainerCard
 import dev.pocketdeck.domain.card.TrainerKind
@@ -43,6 +44,7 @@ private fun Card.baseEntity(kind: String) =
         germanName = germanName.value,
         gameplayKey = gameplayKey.value,
         artworkUrl = artwork?.value,
+        englishArtworkUrl = englishArtwork?.value,
         energyType = null,
         stage = null,
         hp = null,
@@ -51,6 +53,7 @@ private fun Card.baseEntity(kind: String) =
         trainerKind = null,
         gameEntityId = gameEntityId,
         packs = PackCodec.encode(packs),
+        rarity = rarity?.code,
     )
 
 /** Throws [IllegalStateException] for rows this app version cannot have written (corrupt or newer database). */
@@ -72,11 +75,13 @@ private fun CardEntity.toPokemon() =
         retreatCost = requireColumn(retreatCost, "retreatCost"),
         gameplayKey = GameplayKey(gameplayKey),
         artwork = artworkUrl?.let(::ArtworkUrl),
+        englishArtwork = englishArtworkUrl?.let(::ArtworkUrl),
         germanName = germanNameOrEnglish(),
         gameEntityId = gameEntityId,
         attacks = AttackCodec.decode(attacks),
         ability = abilityName?.let { Ability(it, abilityEffect.orEmpty()) },
         packs = PackCodec.decode(packs),
+        rarity = Rarity.ofCode(rarity),
     )
 
 private fun CardEntity.toTrainer() =
@@ -86,10 +91,12 @@ private fun CardEntity.toTrainer() =
         kind = TrainerKind.valueOf(requireColumn(trainerKind, "trainerKind")),
         gameplayKey = GameplayKey(gameplayKey),
         artwork = artworkUrl?.let(::ArtworkUrl),
+        englishArtwork = englishArtworkUrl?.let(::ArtworkUrl),
         germanName = germanNameOrEnglish(),
         gameEntityId = gameEntityId,
         effect = effectText,
         packs = PackCodec.decode(packs),
+        rarity = Rarity.ofCode(rarity),
     )
 
 private fun CardEntity.germanNameOrEnglish() = CardName(germanName.ifBlank { name })

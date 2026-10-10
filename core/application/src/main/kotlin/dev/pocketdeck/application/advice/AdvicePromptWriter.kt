@@ -1,9 +1,5 @@
 package dev.pocketdeck.application.advice
 
-import dev.pocketdeck.domain.card.Card
-import dev.pocketdeck.domain.card.PokemonCard
-import dev.pocketdeck.domain.card.Stage
-import dev.pocketdeck.domain.card.TrainerCard
 import dev.pocketdeck.domain.deck.Deck
 import dev.pocketdeck.domain.meta.Archetype
 import dev.pocketdeck.domain.meta.CardPopularity
@@ -22,7 +18,6 @@ data class AdvicePrompt(
 )
 
 object AdvicePromptWriter {
-    private const val MAX_EFFECT_LENGTH = 160
     private const val ARCHETYPES_SHOWN = 8
     private const val POPULAR_CARDS_SHOWN = 20
     private const val PERCENT = 100
@@ -59,70 +54,17 @@ object AdvicePromptWriter {
           one that names Pokémon needs at least one of them, and one that talks about Stage 2 or Mega Pokémon needs those.
           Never include a trainer whose condition the deck cannot meet.
         - Prefer cards that work together and a clear plan; use the tournament picture as evidence of what is strong.
+        - The tournament decklists below are proven. If the player owns every card of a list that fits their request, play
+          that list exactly; nobody wants an untested deck when a winning one is within reach. If some of its cards are
+          missing, keep the plan and replace only those cards with the best owned alternatives. A card that is not in the
+          owned list does not exist for you.
+        - You always deliver a full legal deck of ${Deck.SIZE} cards. A weaker deck built only from owned cards is always better
+          than no deck. If good cards are missing, play the best owned alternatives and say in the rationale which cards
+          would improve the deck. Never refuse, apologise or explain that cards are missing instead of building the deck.
         - Call the tool ${AdviceFormat.TOOL_NAME} exactly once with the finished deck. Do not answer in any other way.
         """.trimIndent()
 
-    private fun collection(request: AdviceRequest): String {
-        val owned =
-            request.catalog.cards
-                .distinctBy { it.gameplayKey }
-                .filter { request.inventory.copiesOf(it) > 0 }
-        val lines = owned.map { card -> line(card, minOf(request.inventory.copiesOf(card), Deck.MAX_COPIES_PER_NAME)) }
-        return "Cards the player owns (id | name | details | copies you may use | effects):\n" +
-            lines.joinToString("\n")
-    }
-
-    private fun line(
-        card: Card,
-        copies: Int,
-    ): String =
-        when (card) {
-            is PokemonCard -> pokemonLine(card, copies)
-
-            is TrainerCard -> "${card.id.value} | ${card.name.value} | ${kind(
-                card,
-            )} | copies $copies | ${effect(card.effect)}"
-        }
-
-    private fun kind(card: TrainerCard) =
-        card.kind.name
-            .lowercase()
-            .replaceFirstChar(Char::uppercase)
-
-    private fun pokemonLine(
-        card: PokemonCard,
-        copies: Int,
-    ): String {
-        val stage = stageName(card.stage) + (card.evolvesFrom?.let { " (evolves from ${it.value})" } ?: "")
-        val attacks =
-            card.attacks.joinToString("; ") { attack ->
-                "${attack.cost} ${attack.damage ?: "-"} ${attack.name}" +
-                    (attack.effect?.let { ": ${effect(it)}" } ?: "")
-            }
-        val ability = card.ability?.let { " | ability ${it.name}: ${effect(it.effect)}" }.orEmpty()
-        return "${card.id.value} | ${card.name.value} | ${typeName(card)} $stage | HP ${card.hp} | " +
-            "retreat ${card.retreatCost} | copies $copies | attacks: $attacks$ability"
-    }
-
-    private fun typeName(card: PokemonCard) = AdviceFormat.energyName(card.energyType)
-
-    private fun stageName(stage: Stage) =
-        when (stage) {
-            Stage.BASIC -> "Basic"
-            Stage.STAGE_1 -> "Stage 1"
-            Stage.STAGE_2 -> "Stage 2"
-        }
-
-    private fun effect(text: String?): String =
-        (text ?: "").let {
-            if (it.length >
-                MAX_EFFECT_LENGTH
-            ) {
-                it.take(MAX_EFFECT_LENGTH) + "…"
-            } else {
-                it
-            }
-        }
+    private fun collection(request: AdviceRequest): String = OwnedCardsText.write(request)
 
     private fun tournament(request: AdviceRequest): String {
         val archetypes =
@@ -130,7 +72,8 @@ object AdvicePromptWriter {
                 .sortedByDescending { it.strength }
                 .take(ARCHETYPES_SHOWN)
         if (archetypes.isEmpty()) return "No tournament data is available; rely on card strength and synergy."
-        return "Strong decks in recent tournaments (name, share of the field, win rate, a typical list):\n" +
+        return "Strong decks in recent tournaments, proven lists the player may or may not own completely " +
+            "(name, share of the field, win rate, a typical list):\n" +
             archetypes.joinToString("\n") { archetypeLine(it, request) } +
             "\n\n" + popularCards(request)
     }
@@ -151,10 +94,7 @@ object AdvicePromptWriter {
 
     private fun popularCards(request: AdviceRequest): String {
         val popularity = CardPopularity.of(request.meta, request.catalog)
-        val owned =
-            request.catalog.cards
-                .distinctBy { it.gameplayKey }
-                .filter { request.inventory.copiesOf(it) > 0 }
+        val owned = OwnedCardsText.playable(request)
         val top =
             owned.sortedByDescending { popularity.of(it) }.take(POPULAR_CARDS_SHOWN).filter {
                 popularity.of(it) >
@@ -170,7 +110,8 @@ object AdvicePromptWriter {
         if (wish == null) {
             "Build the best deck you can from these cards."
         } else {
-            "Build the best deck you can from these cards. The player asks for: $wish"
+            "Build the best deck you can from these cards. The player asks for: $wish. If the owned cards cannot " +
+                "fully do that, build the closest strong deck from them anyway."
         }
 }
 

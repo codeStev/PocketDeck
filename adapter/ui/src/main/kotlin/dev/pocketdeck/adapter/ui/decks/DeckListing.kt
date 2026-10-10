@@ -101,13 +101,13 @@ object DeckListing {
                     val card = entries.first().card
                     DeckCardLine(
                         name = card.nameIn(language).value,
-                        artworkUrl = card.artwork?.value,
+                        artworkUrl = card.artworkIn(language)?.value,
                         copies = entries.sumOf { it.copies },
                         missingCopies = missing[key] ?: 0,
                         isPokemon = card is PokemonCard,
                     )
                 }.sortedByDescending { it.missingCopies > 0 }
-        val heroes = heroesOf(suggestion)
+        val heroes = heroesOf(suggestion, language)
         return DeckItem(
             key = "${suggestion.title}#$index",
             title = suggestion.centrepiece?.nameIn(language)?.value ?: suggestion.title,
@@ -136,7 +136,10 @@ object DeckListing {
      * One Pokémon per evolution line, the centrepiece first, then the rest by ex, stage and copies. A mixed deck such as
      * "Mega Gardevoir ex + Mega Diancie ex" shows each of its lines, not three cards of one.
      */
-    private fun heroesOf(suggestion: DeckSuggestion): List<DeckHero> {
+    private fun heroesOf(
+        suggestion: DeckSuggestion,
+        language: Language,
+    ): List<DeckHero> {
         val pokemon = suggestion.deck.entries.filter { it.card is PokemonCard }
         val byName = pokemon.associateBy { it.card.name }
 
@@ -156,7 +159,7 @@ object DeckListing {
         return ranked
             .distinctBy(::rootOf)
             .take(MAX_HEROES)
-            .map { DeckHero(it.card.artwork?.value, (it.card as PokemonCard).energyType) }
+            .map { DeckHero(it.card.artworkIn(language)?.value, (it.card as PokemonCard).energyType) }
     }
 
     private const val PERCENT = 100

@@ -6,6 +6,8 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -98,6 +100,31 @@ private class FakeGridWorld(
 class AutoScanServiceTest {
     private fun service(world: FakeGridWorld) =
         AutoScanService(world.capturer, world.locator, world.scroller, world.submit)
+
+    private val noCards = SubmitScanFrame { Outcome.Success(FrameAnalysis(ScanProgress(1, 0, 0), 0, 0, 0)) }
+
+    @Test
+    fun `does not swipe at all when the screen shows no card grid`() =
+        runTest {
+            val world = FakeGridWorld(contentHeight = 200)
+
+            val outcome = AutoScanService(world.capturer, { null }, world.scroller, noCards)()
+
+            outcome shouldBe Outcome.Failure(AutoScanFailure.NotOnCardList)
+            world.gestures shouldBe emptyList()
+        }
+
+    @Test
+    fun `waits a moment for a grid that is still loading`() =
+        runTest {
+            val world = FakeGridWorld(contentHeight = 200)
+            var looks = 0
+            val locatesLate = GridLocator { frame -> if (++looks > 3) world.locator.locate(frame) else null }
+
+            val outcome = AutoScanService(world.capturer, locatesLate, world.scroller, noCards)()
+
+            (outcome is Outcome.Success) shouldBe true
+        }
 
     @Test
     fun `scans a whole list from top to bottom with every row seen`() =
@@ -339,5 +366,36 @@ class AutoScanServiceTest {
                 .first()
                 .analysis
                 ?.countsRead shouldBe 0
+        }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class ManualScanWrongScreenTest {
+    private val frame = ScreenFrame(2, 2, IntArray(4) { it })
+
+    private fun TestScope.run(tiles: Int): Int {
+        var submitted = 0
+        val capturer = ScreenCapturer { frame }
+        val submit =
+            SubmitScanFrame {
+                submitted++
+                Outcome.Success(FrameAnalysis(ScanProgress(submitted, 0, 0), tiles, tiles, tiles))
+            }
+        val job = launch { ManualScanService(capturer, submit)() }
+        advanceTimeBy(3_000)
+        job.cancel()
+        return submitted
+    }
+
+    @Test
+    fun `a still picture without cards keeps being looked at, so the warning can appear`() =
+        runTest {
+            (run(tiles = 0) > 5) shouldBe true
+        }
+
+    @Test
+    fun `a still picture with cards is analysed once`() =
+        runTest {
+            run(tiles = 12) shouldBe 1
         }
 }

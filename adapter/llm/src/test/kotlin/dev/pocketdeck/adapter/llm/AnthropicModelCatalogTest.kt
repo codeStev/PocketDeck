@@ -39,7 +39,7 @@ class AnthropicModelCatalogTest {
             val models =
                 (
                     AnthropicModelCatalog(client(answer), "https://a.test")
-                        .available(AdvisorProvider.ANTHROPIC, "sk-ant") as Outcome.Success
+                        .available(AdvisorProvider.ANTHROPIC, "sk-ant", null) as Outcome.Success
                 ).value
 
             models.map { it.id } shouldBe listOf("claude-opus-5-5", "claude-haiku-4-5-20251001")
@@ -60,7 +60,7 @@ class AnthropicModelCatalogTest {
                     version = it.headers["anthropic-version"]
                 },
                 "https://a.test",
-            ).available(AdvisorProvider.ANTHROPIC, " sk-ant ")
+            ).available(AdvisorProvider.ANTHROPIC, " sk-ant ", null)
 
             key shouldBe "sk-ant"
             version shouldBe "2023-06-01"
@@ -72,7 +72,7 @@ class AnthropicModelCatalogTest {
             var asked = false
             val catalog = AnthropicModelCatalog(client(answer) { asked = true }, "https://a.test")
 
-            catalog.available(AdvisorProvider.ANTHROPIC, "  ") shouldBe Outcome.Failure(AdvisorFailure.MissingKey)
+            catalog.available(AdvisorProvider.ANTHROPIC, "  ", null) shouldBe Outcome.Failure(AdvisorFailure.MissingKey)
             asked shouldBe false
         }
 
@@ -80,22 +80,28 @@ class AnthropicModelCatalogTest {
     fun `tells a rejected key, a busy service and a missing connection apart`() =
         runTest {
             val unauthorized = client("""{"error":{"message":"invalid x-api-key"}}""", HttpStatusCode.Unauthorized)
-            AnthropicModelCatalog(unauthorized, "https://a.test").available(AdvisorProvider.ANTHROPIC, "k") shouldBe
+            AnthropicModelCatalog(
+                unauthorized,
+                "https://a.test",
+            ).available(AdvisorProvider.ANTHROPIC, "k", null) shouldBe
                 Outcome.Failure(AdvisorFailure.InvalidKey)
 
             val busy = client("""{"error":{"message":"slow down"}}""", HttpStatusCode.TooManyRequests)
-            AnthropicModelCatalog(busy, "https://a.test").available(AdvisorProvider.ANTHROPIC, "k") shouldBe
+            AnthropicModelCatalog(busy, "https://a.test").available(AdvisorProvider.ANTHROPIC, "k", null) shouldBe
                 Outcome.Failure(AdvisorFailure.Busy("slow down"))
 
             val offline = HttpClient(MockEngine { throw IOException("no network") })
-            AnthropicModelCatalog(offline, "https://a.test").available(AdvisorProvider.ANTHROPIC, "k") shouldBe
+            AnthropicModelCatalog(offline, "https://a.test").available(AdvisorProvider.ANTHROPIC, "k", null) shouldBe
                 Outcome.Failure(AdvisorFailure.NotReachable("no network"))
         }
 
     @Test
     fun `lists nothing for another provider`() =
         runTest {
-            AnthropicModelCatalog(client(answer), "https://a.test").available(AdvisorProvider.OPENROUTER, "k") shouldBe
+            AnthropicModelCatalog(
+                client(answer),
+                "https://a.test",
+            ).available(AdvisorProvider.OPENROUTER, "k", null) shouldBe
                 Outcome.Success(emptyList())
         }
 }

@@ -51,6 +51,7 @@ import dev.codestev.pocketdesign.icons.PdIcons
 import dev.codestev.pocketdesign.theme.PdSpacing
 import dev.codestev.pocketdesign.theme.PocketDesign
 import dev.pocketdeck.adapter.ui.R
+import dev.pocketdeck.adapter.ui.thumbnailOf
 import dev.pocketdeck.domain.card.CardId
 import dev.pocketdeck.domain.scan.ReviewReason
 
@@ -309,16 +310,16 @@ private fun Review(
             Modifier.fillMaxWidth().padding(horizontal = PdSpacing.space4, vertical = PdSpacing.space3),
             horizontalArrangement = Arrangement.spacedBy(PdSpacing.space2),
         ) {
+            // The discard label keeps the width it needs (a fixed share broke "Verwerfen" in German); saving takes the rest.
             PdButton(
                 stringResource(R.string.review_discard),
                 onDiscard,
-                Modifier.weight(1f),
                 style = PdButtonStyle.Secondary,
             )
             PdButton(
                 stringResource(R.string.review_save),
                 onConfirm,
-                Modifier.weight(2f),
+                Modifier.weight(1f),
                 enabled = state.review.isNotEmpty(),
             )
         }
@@ -364,7 +365,7 @@ private fun ReviewRow(
     PdCard(Modifier.fillMaxWidth(), contentPadding = PdSpacing.space3) {
         Row(horizontalArrangement = Arrangement.spacedBy(PdSpacing.space3)) {
             AsyncImage(
-                model = item.artworkUrl,
+                model = thumbnailOf(item.artworkUrl),
                 contentDescription = item.name,
                 contentScale = ContentScale.Crop,
                 modifier =

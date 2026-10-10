@@ -17,6 +17,12 @@ extensions.configure<ApplicationExtension> {
         targetSdk = 37
     }
     buildFeatures.compose = true
+    // AGP adds an encrypted list of the dependencies, readable only by Google, to every APK. F-Droid flags it as a blob and it
+    // would make builds differ; nobody needs it for a sideloaded app.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21

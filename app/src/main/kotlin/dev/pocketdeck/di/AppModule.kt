@@ -11,9 +11,12 @@ import dev.pocketdeck.LogScanDiagnostics
 import dev.pocketdeck.adapter.carddb.MasterCatalogSource
 import dev.pocketdeck.adapter.exchange.JsonCsvCollectionFileCodec
 import dev.pocketdeck.adapter.limitless.LimitlessMetaDecklistSource
+import dev.pocketdeck.adapter.limitless.LimitlessSettings
 import dev.pocketdeck.adapter.llm.AnthropicDeckAdvisor
 import dev.pocketdeck.adapter.llm.AnthropicModelCatalog
-import dev.pocketdeck.adapter.llm.OpenRouterDeckAdvisor
+import dev.pocketdeck.adapter.llm.ChatCompletionsDeckAdvisor
+import dev.pocketdeck.adapter.llm.ChatDialect
+import dev.pocketdeck.adapter.llm.OpenAiStyleModelCatalog
 import dev.pocketdeck.adapter.llm.OpenRouterModelCatalog
 import dev.pocketdeck.adapter.llm.ProviderModelCatalog
 import dev.pocketdeck.adapter.persistence.PocketDeckDatabases
@@ -125,6 +128,7 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import java.io.File
 import java.time.Clock
 import java.util.Locale
 import javax.inject.Singleton
@@ -303,7 +307,12 @@ object AppModule {
             settings,
             mapOf(
                 AdvisorProvider.ANTHROPIC to AnthropicDeckAdvisor(client, diagnostics = diagnostics),
-                AdvisorProvider.OPENROUTER to OpenRouterDeckAdvisor(client, diagnostics = diagnostics),
+                AdvisorProvider.OPENROUTER to
+                    ChatCompletionsDeckAdvisor(client, ChatDialect.OPENROUTER, diagnostics = diagnostics),
+                AdvisorProvider.OPENAI to
+                    ChatCompletionsDeckAdvisor(client, ChatDialect.OPENAI, diagnostics = diagnostics),
+                AdvisorProvider.OWN_SERVER to
+                    ChatCompletionsDeckAdvisor(client, ChatDialect.OWN_SERVER, diagnostics = diagnostics),
             ),
             diagnostics,
         )
@@ -329,6 +338,8 @@ object AppModule {
             mapOf(
                 AdvisorProvider.ANTHROPIC to AnthropicModelCatalog(client),
                 AdvisorProvider.OPENROUTER to OpenRouterModelCatalog(client),
+                AdvisorProvider.OPENAI to OpenAiStyleModelCatalog(client),
+                AdvisorProvider.OWN_SERVER to OpenAiStyleModelCatalog(client),
             ),
         )
 
@@ -346,7 +357,24 @@ object AppModule {
     )
 
     @Provides
-    fun metaDecklistSource(client: HttpClient): MetaDecklistSource = LimitlessMetaDecklistSource(client)
+    @Singleton
+    fun metaDecklistSource(
+        client: HttpClient,
+        @ApplicationContext context: Context,
+    ): MetaDecklistSource {
+        val version =
+            context.packageManager
+                .getPackageInfo(context.packageName, 0)
+                .versionName
+                .orEmpty()
+        val settings =
+            LimitlessSettings(
+                // Says who is asking and where to reach the maker, as the API's etiquette asks.
+                userAgent = "PocketDeck/$version (+https://github.com/codeStev/PocketDeck)",
+                cacheDirectory = File(context.cacheDir, "limitless"),
+            )
+        return LimitlessMetaDecklistSource(client, settings)
+    }
 
     @Provides
     @Singleton
