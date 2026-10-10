@@ -132,7 +132,7 @@ data class AutoScanSettings(
      * The game opens on its landing page (and with start-up screens and pop-ups first), and the player navigates to the list
      * themselves, so the scan waits for that; Stop on the pill or in the notification ends it at any time.
      */
-    val gridWaitMillis: Long = 600_000,
+    val gridWaitMillis: Long = 300_000,
     val maxScreens: Int = 400,
     val maxRewindSwipes: Int = 60,
 )

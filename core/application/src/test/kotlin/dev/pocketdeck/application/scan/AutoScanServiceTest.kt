@@ -142,7 +142,7 @@ class AutoScanServiceTest {
 
             AutoScanService(world.capturer, never, world.scroller, noCards, settings)()
 
-            // 2 s at 250 ms, then 1 s steps up to the wait of 10 minutes: about 600 looks, not 2,400 at the normal pace.
+            // 2 s at 250 ms, then 1 s steps up to the wait of 5 minutes: about 300 looks, not 1,200 at the normal pace.
             val expected =
                 (settings.gridQuickLookMillis / settings.pollMillis) +
                     ((settings.gridWaitMillis - settings.gridQuickLookMillis) / settings.gridWaitPollMillis)
