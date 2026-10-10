@@ -58,7 +58,7 @@ class BuildSiteTest(unittest.TestCase):
         self.assertEqual(1, landing.count("<h2>Install</h2>"))
         self.assertEqual(4, landing.count('class="tile '))
         self.assertNotIn("./gradlew", landing)
-        self.assertIn("And more", landing)
+        self.assertIn("<h3>Scan</h3>", landing)
         for name in build_site.LANDING_SECTIONS:
             self.assertIn(f"<h2>{name}</h2>", landing)
 

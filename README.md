@@ -7,11 +7,11 @@ screen and suggests competitive decks you can build from the cards you own.
 > Pokémon TCG Pocket, card names and artwork are trademarks and copyrights of their owners.
 
 ## What it does
-- **Scan** your collection while you scroll through My Cards (3 cards per row), or let the optional auto-scroll do the swiping.
-- **Decks:** recent tournament decks ranked by how well you can build them, with stand-ins for missing cards; decks built from your own
-  cards; optional suggestions from an AI service you set up; opening odds for each deck; "What to chase" for the cards you lack.
-- **Import into the game:** each deck is shown as the game's import QR code.
-- Several accounts, English and German, light and dark theme. Everything is stored on your phone.
+- **Scan:** Read your collection straight from the game's My Cards screen, with the scrolling done by you or by an optional auto-scroll.
+- **Decks:** See which recent tournament decks you can build, with stand-ins for cards you are missing. Build decks from your own cards, see
+  the opening odds of every deck, find out which cards to chase next, and optionally ask an AI service for ideas.
+- **Import into the game:** Every deck comes with the game's import QR code, so you can load it into the game right away.
+- **Everything on your phone:** Use several accounts, in English or German, in a light or dark theme. Your data stays on your phone.
 
 ## Install
 Releases are on the [releases page](https://github.com/codeStev/PocketDeck/releases) as signed APKs with their SHA-256 (`SHA256SUMS.txt`).
