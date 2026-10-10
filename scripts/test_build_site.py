@@ -30,17 +30,24 @@ class BuildSiteTest(unittest.TestCase):
 
         self.assertIn("82 BF A8 99", block)
         self.assertIn("<svg", block)
-        self.assertIn("https://codestev.github.io/PocketDeck/repo", block)
+        self.assertIn("https://codestev.github.io/PocketDeck/repo", block.replace("<wbr>", ""))
         self.assertIn(f"fdroidrepos://codestev.github.io/PocketDeck/repo?fingerprint={FINGERPRINT}", block)
+
+    def test_the_bullets_of_what_it_does_become_tiles_titled_by_their_bold_lead(self):
+        tiles = build_site.feature_tiles("## What it does\n- **Scan** your cards.\n- Plain bullet.\n")
+
+        self.assertIn("<h3>Scan</h3><p>Your cards.</p>", tiles)
+        self.assertIn("<h3>And more</h3><p>Plain bullet.</p>", tiles)
 
     def test_the_site_has_three_pages_and_the_landing_page_leaves_out_the_build_instructions(self):
         with tempfile.TemporaryDirectory() as out:
             build_site.write(Path(out), "index.html", build_site.landing("1.0.1", FINGERPRINT))
             landing = (Path(out) / "index.html").read_text(encoding="utf-8")
 
-        self.assertIn("<h2>Install</h2>", landing)
-        self.assertNotIn("./gradlew", landing)
         self.assertEqual(1, landing.count("<h2>Install</h2>"))
+        self.assertEqual(4, landing.count('class="tile '))
+        self.assertNotIn("./gradlew", landing)
+        self.assertIn("And more", landing)
 
 
 if __name__ == "__main__":

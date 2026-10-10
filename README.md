@@ -20,10 +20,7 @@ Settings > Repositories, and check that the fingerprint shown matches the one pr
 APK over the old one; it updates in place and keeps your data. The app is not on the Play Store.
 
 ## Built with AI assistance
-PocketDeck was built with the help of AI coding assistance ([Claude Code](https://claude.com/claude-code) by Anthropic): much of the code,
-the tests and the documentation was written with it. The maintainer sets the direction, decides what goes in and tests the app on a
-real phone and in the game, but as with any software, expect the occasional bug. The optional AI deck suggestions are a separate feature
-that only runs when you add your own key; see [PRIVACY.md](PRIVACY.md).
+PocketDeck was built with AI coding assistance ([Claude Code](https://claude.com/claude-code)).
 
 ## Auto-scroll
 Auto-scroll is optional and off until you agree in the app. It uses an Android Accessibility service only to swipe the card list while
