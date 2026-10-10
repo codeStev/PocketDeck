@@ -1,7 +1,7 @@
 name: Release
 
-# The owner tags a commit on main (v<version>) and publishes a GitHub release for the tag by hand, with the notes from
-# CHANGELOG.md. Publishing starts this workflow: it builds the signed APK and attaches it and its SHA-256 to that release.
+# Runs when a GitHub release is published for a tag: builds and signs the APK and attaches it with its SHA-256 to the release.
+# A final release (not a pre-release) also updates the F-Droid repository and the site on the gh-pages branch.
 on:
   release:
     types: [published]
