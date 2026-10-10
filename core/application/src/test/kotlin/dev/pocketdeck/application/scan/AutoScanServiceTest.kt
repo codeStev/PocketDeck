@@ -115,6 +115,54 @@ class AutoScanServiceTest {
         }
 
     @Test
+    fun `waits for the player to open My Cards instead of giving up after a couple of seconds`() =
+        runTest {
+            val world = FakeGridWorld(contentHeight = 200)
+            // The player taps Start, the game opens on its landing page and they navigate to My Cards: far longer than two seconds.
+            var looks = 0
+            val locatesAfterAWhile = GridLocator { frame -> if (++looks > 60) world.locator.locate(frame) else null }
+
+            val outcome = AutoScanService(world.capturer, locatesAfterAWhile, world.scroller, noCards)()
+
+            (outcome is Outcome.Success) shouldBe true
+            looks shouldBeGreaterThan 60
+        }
+
+    @Test
+    fun `looks for the grid once a second after the first two seconds`() =
+        runTest {
+            val world = FakeGridWorld(contentHeight = 200)
+            val settings = AutoScanSettings()
+            var looks = 0
+            val never =
+                GridLocator {
+                    looks++
+                    null
+                }
+
+            AutoScanService(world.capturer, never, world.scroller, noCards, settings)()
+
+            // 2 s at 250 ms, then 1 s steps up to the wait of 5 minutes: about 300 looks, not 1,200 at the normal pace.
+            val expected =
+                (settings.gridQuickLookMillis / settings.pollMillis) +
+                    ((settings.gridWaitMillis - settings.gridQuickLookMillis) / settings.gridWaitPollMillis)
+            (looks.toLong() > expected - 3) shouldBe true
+            (looks.toLong() < expected + 5) shouldBe true
+        }
+
+    @Test
+    fun `gives up on a screen that is never My Cards once the wait is over`() =
+        runTest {
+            val world = FakeGridWorld(contentHeight = 200)
+            val impatient = AutoScanSettings(gridWaitMillis = 10_000)
+
+            val outcome = AutoScanService(world.capturer, { null }, world.scroller, noCards, impatient)()
+
+            outcome shouldBe Outcome.Failure(AutoScanFailure.NotOnCardList)
+            world.gestures shouldBe emptyList()
+        }
+
+    @Test
     fun `waits a moment for a grid that is still loading`() =
         runTest {
             val world = FakeGridWorld(contentHeight = 200)
