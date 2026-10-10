@@ -32,7 +32,11 @@ LINKS = {
     "`LICENSE`": f"[LICENSE]({REPO_URL}/blob/main/LICENSE)",
 }
 TINTS = ["orange", "blue", "green", "purple"]
-UNOFFICIAL = "Unofficial fan tool, not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA."
+UNOFFICIAL = (
+    "Unofficial fan tool, not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA. "
+    'Despite the similar name, also not affiliated with the GitHub account <a href="https://github.com/PocketDecks">PocketDecks</a>, '
+    "whose card data it uses."
+)
 AI_NOTE = 'Built with AI coding assistance (<a href="https://claude.com/claude-code">Claude Code</a>).'
 
 # The app's tokens (SignalBrand, PdShapes, PdSpacing, PdTypography); light is the default, dark follows the system.
