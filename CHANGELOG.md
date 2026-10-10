@@ -5,8 +5,8 @@ All notable changes, newest first. Format: [Keep a Changelog](https://keepachang
 
 ## [Unreleased]
 
-## [1.0.0]
-First public release.
+## [1.0.1]
+First public release (an earlier 1.0.0 build was never published).
 
 ### Added
 - Scan your collection from the game's My Cards screen while you scroll, or with the optional auto-scroll (accessibility service, opt-in).
