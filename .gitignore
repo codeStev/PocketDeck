@@ -10,3 +10,4 @@ local.properties
 # Personal planning notes and tool state, kept out of the repository
 .private/
 .claude/
+__pycache__/
