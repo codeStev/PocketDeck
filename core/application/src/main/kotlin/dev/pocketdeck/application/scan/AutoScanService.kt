@@ -97,17 +97,21 @@ class AutoScanService(
     }
 
     /**
-     * Looks for the card grid for a moment (the list may still be loading) before the first swipe. The locator alone is not
+     * Looks for the card grid before the first swipe: for a moment at the normal pace (the list may still be loading), then once a
+     * second for up to [AutoScanSettings.gridWaitMillis], because the player opens the game and My Cards themselves. The locator alone is not
      * trusted to say "no": it may miss a real grid (the scan then swipes by a default distance), so when it finds nothing the
      * recognizer gets the picture too, and only a picture without one recognised card counts as the wrong screen.
      */
     private suspend fun showsCardGrid(): Boolean {
-        repeat(settings.gridLookPolls) {
+        var waited = 0L
+        while (waited <= settings.gridWaitMillis) {
             val frame = awaitFrame()
             if (locator.locate(frame) != null) return true
             val analysis = submit(frame)
             if (analysis is Outcome.Success && analysis.value.tilesRecognized > 0) return true
-            delay(settings.pollMillis)
+            val pause = if (waited < settings.gridQuickLookMillis) settings.pollMillis else settings.gridWaitPollMillis
+            delay(pause)
+            waited += pause
         }
         return false
     }
