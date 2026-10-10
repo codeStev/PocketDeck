@@ -40,7 +40,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun AboutPanel(
     versionName: String,
-    diagnostics: () -> String,
     onOpenAccessibilitySettings: () -> Unit,
     onShowWelcome: () -> Unit,
     onClose: () -> Unit,
@@ -87,7 +86,6 @@ fun AboutPanel(
                     style = PdButtonStyle.Secondary,
                 )
             }
-            Problems(diagnostics)
             PdButton(
                 stringResource(R.string.about_tour),
                 onShowWelcome,
@@ -95,55 +93,6 @@ fun AboutPanel(
                 style = PdButtonStyle.Tonal,
             )
         }
-    }
-}
-
-/** "Something not working?": the diagnostics go to the clipboard after saying what they hold, and the issue page opens. */
-@Composable
-private fun Problems(diagnostics: () -> String) {
-    val links = LocalUriHandler.current
-    val clipboard = LocalClipboard.current
-    val scope = rememberCoroutineScope()
-    var asking by rememberSaveable { mutableStateOf(false) }
-    var copied by rememberSaveable { mutableStateOf(false) }
-    if (asking) {
-        PdDialog(
-            title = stringResource(R.string.about_diagnostics_title),
-            onDismissRequest = { asking = false },
-            confirmText = stringResource(R.string.about_copy_diagnostics),
-            onConfirm = {
-                asking = false
-                copied = true
-                scope.launch {
-                    clipboard.setClipEntry(
-                        android.content.ClipData
-                            .newPlainText("PocketDeck diagnostics", diagnostics())
-                            .toClipEntry(),
-                    )
-                }
-            },
-            dismissText = stringResource(R.string.decks_cancel),
-        ) {
-            Text(
-                stringResource(R.string.about_diagnostics_text),
-                style = PocketDesign.typography.body,
-                color = PocketDesign.colors.ink,
-            )
-        }
-    }
-    Section(R.string.about_problems_title, R.string.about_problems_text) {
-        PdButton(
-            stringResource(R.string.about_copy_diagnostics),
-            { asking = true },
-            Modifier.fillMaxWidth(),
-            style = PdButtonStyle.Secondary,
-        )
-        PdButton(
-            stringResource(R.string.about_report_problem),
-            { links.openUri(Links.ISSUES) },
-            Modifier.fillMaxWidth(),
-        )
-        if (copied) PdBanner(stringResource(R.string.about_diagnostics_copied), kind = PdBannerKind.Success)
     }
 }
 

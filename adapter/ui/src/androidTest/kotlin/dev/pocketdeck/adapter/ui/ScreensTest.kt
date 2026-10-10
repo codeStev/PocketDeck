@@ -297,6 +297,15 @@ class ScreensTest {
     }
 
     @Test
+    fun settingsOfferDiagnosticsAndReportingAProblemWithoutOpeningAbout() {
+        settings()
+
+        compose.onNodeWithText(string(R.string.settings_support_title)).assertExists()
+        compose.onNodeWithText(string(R.string.settings_support_copy)).assertExists()
+        compose.onNodeWithText(string(R.string.settings_support_report)).assertExists()
+    }
+
+    @Test
     fun settingsControlsAreLabelled() {
         settings()
 
