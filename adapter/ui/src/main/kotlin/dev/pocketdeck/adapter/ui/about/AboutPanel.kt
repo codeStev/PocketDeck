@@ -206,6 +206,11 @@ private fun Credits() {
                 }
             }
         }
+        Text(
+            stringResource(R.string.about_pocketdecks_note),
+            style = PocketDesign.typography.bodySm,
+            color = PocketDesign.colors.inkMuted,
+        )
     }
 }
 

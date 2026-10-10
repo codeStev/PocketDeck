@@ -357,6 +357,7 @@
     <string name="about_source_code">Quellcode</string>
     <string name="about_licence_text">Lizenztext</string>
     <string name="about_credits_title">Daten und Danksagungen</string>
+    <string name="about_pocketdecks_note">Trotz des ähnlichen Namens ist PocketDeck nicht mit der GitHub-Organisation PocketDecks verbunden, deren Kartendaten es nutzt.</string>
     <string name="credit_card_data">Kartendaten</string>
     <string name="credit_tournaments">Turnier-Decklisten</string>
     <string name="credit_images">Kartenbilder und deutsche Namen</string>
