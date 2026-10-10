@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PocketDeck</title>
+<meta name="description" content="An unofficial Android companion for Pokémon TCG Pocket: scan your collection and get decks you can build.">
+<meta name="theme-color" content="#CC3518">
+<style>
+@font-face { font-family: "Fredoka"; src: url("./assets/fonts/fredoka.ttf") format("truetype"); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: "Nunito"; src: url("./assets/fonts/nunito.ttf") format("truetype"); font-weight: 200 1000; font-display: swap; }
+:root {
+  color-scheme: light dark;
+  --page: #F3F5F9; --card: #FFFFFF; --sunken: #E8ECF3; --line: #D5DBE5; --line-strong: #727D8F;
+  --ink: #131822; --muted: #4F5A6B; --accent: #CC3518; --on-accent: #FFFFFF; --accent-soft: #FDE9E4; --on-accent-soft: #8C2410;
+  --warning-soft: #FFF1D6; --on-warning: #8A5A00; --focus: #1456D6;
+  --orange: #FDE8DF; --blue: #E0EEFB; --green: #E4F3E6; --purple: #F4E4F8;
+  --shadow: 0 1px 2px rgba(19,24,34,.06), 0 8px 24px rgba(19,24,34,.07);
+  --display: "Fredoka", ui-rounded, system-ui, sans-serif; --text: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --page: #0D1015; --card: #171B22; --sunken: #0A0C10; --line: #2A313C; --line-strong: #8995A8;
+  --ink: #F1F4F9; --muted: #A9B3C2; --accent: #FF7455; --on-accent: #1A0B07; --accent-soft: #3A1B14; --on-accent-soft: #FFB5A3;
+  --warning-soft: #35280B; --on-warning: #F3B442; --focus: #7FB1FF;
+  --orange: #3A1D12; --blue: #10263A; --green: #16301A; --purple: #2E1536;
+  --shadow: 0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.35);
+} }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 500 16px/1.6 var(--text); }
+a { color: var(--accent); font-weight: 700; }
+a:focus-visible, .button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.wrap { max-width: 46rem; margin: 0 auto; padding: 0 16px; }
+.pill-nav { position: sticky; top: 12px; z-index: 5; display: flex; align-items: center; gap: 4px; margin: 12px auto 0; max-width: 46rem;
+  padding: 6px 8px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow); }
+.pill-nav .brand { display: flex; align-items: center; gap: 8px; margin-right: auto; padding: 2px 10px 2px 2px; color: var(--ink);
+  text-decoration: none; font: 600 18px var(--display); }
+.pill-nav .brand svg { width: 32px; height: 32px; border-radius: 10px; }
+.pill-nav a.link { padding: 8px 12px; border-radius: 999px; color: var(--muted); text-decoration: none; font-weight: 800; font-size: 15px; }
+.pill-nav a.link:hover, .pill-nav a.link[aria-current] { background: var(--accent-soft); color: var(--on-accent-soft); }
+@media (max-width: 30rem) { .pill-nav .brand span { display: none; } .pill-nav a.link { padding: 8px 10px; font-size: 14px; } }
+.hero { text-align: center; padding: 56px 0 32px; }
+.hero .icon { display: inline-block; width: 96px; height: 96px; border-radius: 26px; overflow: hidden; box-shadow: var(--shadow); }
+.hero .icon svg { display: block; width: 100%; height: 100%; }
+h1 { margin: 16px 0 8px; font: 700 clamp(34px, 8vw, 44px)/1.1 var(--display); }
+h2 { margin: 48px 0 12px; font: 600 28px/34px var(--display); }
+h3 { margin: 24px 0 8px; font: 600 20px/26px var(--display); }
+.lead { max-width: 34rem; margin: 0 auto 24px; color: var(--muted); font: 600 17px/26px var(--text); }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 24px; border-radius: 999px;
+  background: var(--accent); color: var(--on-accent); font: 800 16px var(--text); text-decoration: none; transition: transform 120ms; }
+.button.secondary { background: transparent; color: var(--ink); border: 2px solid var(--line-strong); }
+.button:active { transform: scale(.97); }
+.notice a { color: inherit; text-decoration: underline; }
+.notice { margin: 8px 0 0; padding: 12px 16px; border-radius: 14px; background: var(--warning-soft); color: var(--on-warning); font-size: 14px; line-height: 20px; }
+.features { display: grid; gap: 12px; margin: 32px 0 0; grid-template-columns: 1fr; }
+@media (min-width: 38rem) { .features { grid-template-columns: 1fr 1fr; } }
+.tile { padding: 20px; border-radius: 20px; }
+.tile h3 { margin-top: 0; }
+.tile p { margin: 0; }
+.tile ul { margin: 0; padding-left: 1.2rem; } .tile li { margin: 4px 0; }
+.tile.orange { background: var(--orange); } .tile.blue { background: var(--blue); } .tile.green { background: var(--green); } .tile.purple { background: var(--purple); }
+.install { margin-top: 48px; padding: 24px; background: var(--card); border: 1px solid var(--line); border-radius: 28px; box-shadow: var(--shadow); }
+.install h2 { margin: 0 0 4px; } .install .lead-in { margin: 0 0 16px; color: var(--muted); }
+.options { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 46rem) { .options { grid-template-columns: 1fr 1fr; } }
+.option { padding: 16px 18px; border-radius: 20px; background: var(--page); border: 1px solid var(--line); }
+.option h3 { margin: 0 0 8px; } .option p { margin: 8px 0; }
+.tag { margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--on-accent-soft); font: 800 12px var(--text); vertical-align: middle; }
+.qr { width: 9.5rem; padding: 8px; background: #fff; border-radius: 14px; margin: 0 0 12px; }
+.qr svg { display: block; width: 100%; height: auto; }
+.mobile-only { display: none; } @media (max-width: 45.99rem) { .desktop-only { display: none; } .mobile-only { display: block; } }
+.screens { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 40px -16px 0; padding: 4px 16px 16px; }
+.screens figure { flex: 0 0 13.5rem; margin: 0; scroll-snap-align: start; }
+.screens img { display: block; width: 100%; height: auto; border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--card); }
+.screens figcaption { margin-top: 8px; text-align: center; color: var(--muted); font-size: 14px; }
+@media (min-width: 46rem) { .screens { justify-content: center; overflow-x: visible; } }
+code { font: 600 .9em ui-monospace, "SFMono-Regular", Menlo, monospace; background: var(--sunken); padding: .15em .45em; border-radius: 6px; overflow-wrap: anywhere; }
+.fp { display: block; margin: 8px 0 16px; padding: 12px 14px; border-radius: 10px; letter-spacing: .02em; word-spacing: .15em; }
+section.prose h2:first-child { margin-top: 48px; }
+blockquote { margin: 16px 0; padding: 4px 16px; border-left: 4px solid var(--accent); background: var(--accent-soft); color: var(--on-accent-soft); border-radius: 0 14px 14px 0; }
+.page { padding: 32px 0 0; } .page h1 { margin-top: 24px; }
+table { border-collapse: collapse; } td, th { padding: 6px 12px; border-bottom: 1px solid var(--line); text-align: left; }
+footer { margin-top: 64px; padding: 24px 0 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; line-height: 20px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .button { transition: none; } }
+</style>
+</head>
+<body>
+<nav class="pill-nav wrap" aria-label="Site">
+<a class="brand" href="./index.html"><svg viewBox="0 0 108 108" role="img" aria-label="PocketDeck" xmlns="http://www.w3.org/2000/svg">
+<rect width="108" height="108" fill="#CC3518"/>
+<path d="M48,68h-10a4,4 0 0 1 -4,-4v-28a4,4 0 0 1 4,-4h18a4,4 0 0 1 4,4v4" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M52,40h18a4,4 0 0 1 4,4v28a4,4 0 0 1 -4,4h-18a4,4 0 0 1 -4,-4v-28a4,4 0 0 1 4,-4z" fill="#fff"/>
+<path d="M61,53a5,5 0 1 0 0.001 0z" fill="#CC3518"/></svg><span>PocketDeck</span></a>
+<a class="link" href="./index.html#install">Install</a><a class="link" href="./privacy/index.html">Privacy</a><a class="link" href="./changelog/index.html">Changelog</a><a class="link" href="https://github.com/codeStev/PocketDeck">Source</a>
+</nav>
+<main class="wrap">
+<div class="hero">
+<span class="icon"><svg viewBox="0 0 108 108" role="img" aria-label="PocketDeck" xmlns="http://www.w3.org/2000/svg">
+<rect width="108" height="108" fill="#CC3518"/>
+<path d="M48,68h-10a4,4 0 0 1 -4,-4v-28a4,4 0 0 1 4,-4h18a4,4 0 0 1 4,4v4" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M52,40h18a4,4 0 0 1 4,4v28a4,4 0 0 1 -4,4h-18a4,4 0 0 1 -4,-4v-28a4,4 0 0 1 4,-4z" fill="#fff"/>
+<path d="M61,53a5,5 0 1 0 0.001 0z" fill="#CC3518"/></svg></span>
+<h1>PocketDeck</h1>
+<p class="lead">An unofficial Android companion for Pokémon TCG Pocket: scan your collection and get competitive decks you can build from the cards you own.</p>
+<div class="actions"><a class="button" href="#install">Install</a><a class="button secondary" href="https://github.com/codeStev/PocketDeck">Source on GitHub</a></div>
+<p class="notice">Unofficial fan tool, not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA. Despite the similar name, also not affiliated with the GitHub organization <a href="https://github.com/PocketDecks">PocketDecks</a>, whose card data it uses. Built with AI coding assistance (<a href="https://claude.com/claude-code">Claude Code</a>).</p>
+</div><div class="features"><div class="tile orange"><h3>Scan</h3><p>Read your collection straight from the game's My Cards screen, with the scrolling done by you or by an optional auto-scroll (<a href="privacy/index.html#auto-scroll">details</a>).</p></div><div class="tile blue"><h3>Decks</h3><ul><li>Recent tournament decks, ranked by how well you can build them, with stand-ins for missing cards</li><li>Decks built from your own cards</li><li>Opening odds for each deck</li><li>"What to chase": the cards you lack that would finish the most decks</li><li>Optional suggestions from an AI service you set up</li></ul></div><div class="tile green"><h3>Import into the game</h3><p>Every deck comes with the game's import QR code, so you can load it into the game right away.</p></div><div class="tile purple"><h3>Everything on your phone</h3><ul><li>Several accounts</li><li>English and German</li><li>Light and dark theme</li><li>Your collection and settings stay on your phone</li></ul></div></div><div class="screens" aria-label="Screenshots"><figure><img src="assets/screens/1-collection.jpg" alt="PocketDeck: Collection" loading="lazy" width="270" height="543"><figcaption>Collection</figcaption></figure><figure><img src="assets/screens/2-decks.jpg" alt="PocketDeck: Decks" loading="lazy" width="270" height="543"><figcaption>Decks</figcaption></figure><figure><img src="assets/screens/3-scan.jpg" alt="PocketDeck: Scan" loading="lazy" width="270" height="543"><figcaption>Scan</figcaption></figure></div>
+<section class="install" id="install">
+<h2>Install</h2>
+<p class="lead-in">Android only. Version <strong>1.0.2</strong>. Not on the Play Store.</p>
+<div class="options">
+<div class="option">
+<h3>F-Droid <span class="tag">updates itself</span></h3>
+<div class="qr desktop-only" role="img" aria-label="QR code that adds the F-Droid repository"><svg width="204" height="204" class="segno"><g transform="scale(4)"><path fill="#fff" d="M0 0h51v51h-51z"/><path class="qrline" stroke="#000" d="M1 1.5h7m2 0h2m1 0h4m1 0h1m1 0h1m1 0h1m1 0h1m6 0h2m1 0h1m1 0h3m2 0h1m1 0h7m-49 1h1m5 0h1m3 0h2m1 0h5m1 0h5m1 0h1m1 0h1m1 0h2m5 0h5m1 0h1m5 0h1m-49 1h1m1 0h3m1 0h1m1 0h2m2 0h1m4 0h1m1 0h1m3 0h3m1 0h1m1 0h2m3 0h1m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-49 1h1m1 0h3m1 0h1m1 0h8m2 0h2m1 0h2m1 0h2m5 0h1m2 0h4m1 0h1m2 0h1m1 0h3m1 0h1m-49 1h1m1 0h3m1 0h1m1 0h2m3 0h1m2 0h3m2 0h8m1 0h2m3 0h1m1 0h1m4 0h1m1 0h3m1 0h1m-49 1h1m5 0h1m1 0h2m2 0h6m1 0h1m1 0h2m3 0h1m5 0h3m1 0h3m3 0h1m5 0h1m-49 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-41 1h1m3 0h3m2 0h2m3 0h1m3 0h2m1 0h4m4 0h2m1 0h1m-41 1h1m1 0h5m2 0h1m1 0h2m2 0h2m1 0h1m3 0h5m3 0h2m3 0h5m2 0h5m-47 1h1m1 0h3m4 0h1m2 0h1m1 0h1m1 0h4m1 0h1m1 0h3m1 0h2m1 0h1m1 0h1m2 0h1m5 0h2m1 0h2m2 0h1m-49 1h3m1 0h1m1 0h1m3 0h2m1 0h1m4 0h2m4 0h1m1 0h1m2 0h1m1 0h2m1 0h5m1 0h1m1 0h1m2 0h4m-46 1h1m1 0h1m1 0h1m2 0h2m1 0h4m1 0h1m5 0h1m3 0h1m1 0h3m5 0h2m1 0h5m2 0h1m-49 1h1m2 0h4m1 0h2m4 0h1m1 0h2m3 0h1m1 0h3m3 0h1m1 0h1m1 0h1m1 0h3m2 0h1m1 0h1m3 0h3m-49 1h1m1 0h2m3 0h2m3 0h1m1 0h1m2 0h1m1 0h2m1 0h1m4 0h1m2 0h2m1 0h1m1 0h1m1 0h1m1 0h1m1 0h3m1 0h2m-47 1h3m1 0h6m6 0h3m1 0h3m1 0h6m1 0h1m2 0h1m1 0h1m4 0h1m1 0h1m3 0h2m-49 1h4m1 0h1m2 0h1m6 0h3m1 0h2m1 0h1m1 0h2m1 0h1m1 0h1m4 0h1m1 0h2m1 0h1m1 0h1m2 0h2m-44 1h1m1 0h3m2 0h2m2 0h1m1 0h1m5 0h1m1 0h2m3 0h1m2 0h5m1 0h1m1 0h3m4 0h3m-49 1h1m4 0h1m1 0h2m4 0h1m1 0h1m1 0h3m2 0h4m1 0h3m2 0h1m1 0h1m6 0h4m2 0h1m-44 1h1m1 0h2m1 0h1m3 0h1m2 0h1m2 0h2m1 0h1m5 0h1m1 0h4m1 0h1m3 0h1m1 0h1m2 0h2m2 0h1m-47 1h1m1 0h1m7 0h2m1 0h1m1 0h2m6 0h3m1 0h1m1 0h2m3 0h1m2 0h1m1 0h2m1 0h1m3 0h1m-48 1h1m2 0h3m2 0h2m2 0h1m4 0h1m4 0h2m1 0h1m6 0h1m1 0h7m1 0h1m2 0h1m1 0h1m-47 1h3m5 0h1m1 0h6m1 0h1m1 0h1m1 0h4m2 0h2m11 0h2m3 0h1m-48 1h1m2 0h7m1 0h1m2 0h5m3 0h5m4 0h1m1 0h13m2 0h1m-47 1h3m3 0h2m6 0h1m1 0h2m1 0h2m3 0h2m1 0h1m2 0h2m3 0h4m3 0h1m3 0h1m-49 1h3m1 0h1m1 0h1m1 0h2m1 0h1m3 0h1m1 0h1m2 0h3m1 0h1m1 0h1m2 0h3m1 0h8m1 0h1m1 0h3m-44 1h2m3 0h1m2 0h1m2 0h2m2 0h2m2 0h1m3 0h3m1 0h2m5 0h1m1 0h2m3 0h1m2 0h1m-44 1h5m1 0h1m1 0h1m1 0h1m1 0h1m1 0h10m1 0h1m2 0h1m1 0h2m2 0h1m1 0h5m1 0h3m-49 1h6m2 0h3m2 0h6m2 0h1m5 0h2m1 0h1m1 0h3m2 0h1m3 0h1m2 0h2m1 0h2m-48 1h3m2 0h2m1 0h1m1 0h1m1 0h2m1 0h4m1 0h2m1 0h1m5 0h2m1 0h1m1 0h2m2 0h1m2 0h1m3 0h3m-49 1h2m1 0h1m1 0h1m1 0h2m1 0h2m1 0h3m1 0h1m3 0h3m2 0h2m1 0h2m2 0h1m1 0h1m1 0h1m2 0h1m2 0h1m1 0h1m-46 1h1m2 0h1m2 0h4m2 0h2m4 0h2m10 0h2m2 0h2m3 0h2m1 0h3m2 0h2m-46 1h3m1 0h1m1 0h3m2 0h2m1 0h1m3 0h3m2 0h1m3 0h2m1 0h1m1 0h2m4 0h1m1 0h1m1 0h1m1 0h2m-48 1h1m2 0h1m1 0h1m1 0h2m1 0h1m1 0h1m3 0h5m1 0h1m2 0h2m1 0h2m5 0h1m2 0h2m1 0h3m1 0h2m-48 1h2m1 0h2m3 0h1m1 0h1m1 0h1m1 0h4m3 0h2m1 0h1m5 0h2m1 0h1m1 0h2m2 0h2m4 0h1m1 0h1m-47 1h1m4 0h6m5 0h1m3 0h1m5 0h1m1 0h2m5 0h1m2 0h4m1 0h3m1 0h1m-46 1h3m2 0h3m1 0h4m1 0h2m2 0h2m1 0h3m1 0h5m3 0h1m1 0h1m1 0h1m2 0h1m4 0h1m-48 1h2m1 0h1m1 0h1m1 0h1m2 0h2m1 0h1m2 0h5m1 0h1m3 0h1m1 0h1m5 0h2m1 0h3m1 0h1m1 0h5m-49 1h2m2 0h1m2 0h2m3 0h2m2 0h1m4 0h1m2 0h1m1 0h1m2 0h2m4 0h2m2 0h2m2 0h1m3 0h1m-47 1h1m3 0h3m5 0h1m1 0h1m1 0h3m2 0h4m1 0h2m2 0h1m2 0h3m1 0h7m3 0h1m-48 1h3m4 0h1m4 0h4m1 0h1m2 0h1m5 0h1m4 0h2m3 0h1m2 0h1m7 0h1m-49 1h3m3 0h1m4 0h1m5 0h1m2 0h1m1 0h5m3 0h2m1 0h1m1 0h2m1 0h11m-41 1h3m3 0h1m1 0h4m1 0h2m3 0h3m1 0h1m1 0h1m2 0h3m2 0h1m3 0h2m-46 1h7m5 0h1m4 0h6m1 0h1m1 0h2m1 0h1m4 0h1m3 0h3m1 0h1m1 0h2m1 0h2m-49 1h1m5 0h1m1 0h1m4 0h1m1 0h8m3 0h1m1 0h1m1 0h3m7 0h1m3 0h2m1 0h1m-48 1h1m1 0h3m1 0h1m1 0h3m1 0h2m3 0h2m2 0h6m4 0h1m2 0h1m1 0h2m1 0h6m1 0h1m-47 1h1m1 0h3m1 0h1m1 0h3m1 0h5m1 0h3m1 0h1m7 0h4m1 0h1m4 0h1m1 0h1m1 0h1m2 0h1m-48 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h2m1 0h1m1 0h1m1 0h1m2 0h3m1 0h3m4 0h2m1 0h3m1 0h1m1 0h1m1 0h1m1 0h2m-49 1h1m5 0h1m4 0h2m1 0h2m3 0h4m4 0h1m1 0h1m4 0h1m1 0h5m1 0h4m2 0h1m-49 1h7m1 0h4m2 0h4m1 0h3m1 0h1m1 0h1m2 0h1m2 0h5m2 0h1m2 0h1m1 0h2m1 0h3"/></g></svg></div>
+<p>Add this repository in F-Droid, Droid-ify or Neo Store<span class="desktop-only"> (or scan the code)</span>:</p>
+<code class="fp">https://codestev.github.io/<wbr>PocketDeck/<wbr>repo</code>
+<p>The client shows a fingerprint when you add it. It must be:</p>
+<code class="fp">82 BF A8 99 F2 D1 4D 82 70 65 73 51 9D A5 FC D8 74 49 C0 B9 5F DB B2 AE 60 3A D0 91 47 BB 66 3E</code>
+<p class="mobile-only"><a class="button" href="fdroidrepos://codestev.github.io/PocketDeck/repo?fingerprint=82BFA899F2D14D82706573519DA5FCD87449C0B95FDBB2AE603AD09147BB663E">Open in F-Droid</a></p>
+</div>
+<div class="option">
+<h3>APK <span class="tag">update by hand</span></h3>
+<p>Download the signed APK and open it. A newer APK installs over the old one and keeps your data.</p>
+<p><a class="button" href="https://github.com/codeStev/PocketDeck/releases/download/v1.0.2/PocketDeck-1.0.2.apk">Download APK</a></p>
+<p>Check it against <a href="https://github.com/codeStev/PocketDeck/releases/download/v1.0.2/SHA256SUMS.txt">SHA256SUMS.txt</a>. Older versions are on the <a href="https://github.com/codeStev/PocketDeck/releases">releases page</a>.</p>
+</div>
+</div>
+</section>
+<section class="prose"><h2 id="privacy">Privacy</h2>
+<p>No account, no analytics, no server of ours. See <a href="privacy/index.html">the privacy policy</a> for what stays on the phone, what is downloaded and what
+the AI feature sends.</p>
+<h2 id="data-and-credits">Data and credits</h2>
+<ul>
+<li><strong>Card data:</strong> <a href="https://github.com/PocketDecks/pokemon-tcg-pocket-cards">PocketDecks/pokemon-tcg-pocket-cards</a> (AGPL-3.0-or-later), scraped from Limitless TCG</li>
+<li><strong>Tournament decks:</strong> <a href="https://play.limitlesstcg.com">Limitless TCG</a></li>
+<li><strong>Card images and German names:</strong> <a href="https://tcgdex.dev">TCGdex</a></li>
+</ul>
+<p>The full list is in <a href="https://github.com/codeStev/PocketDeck/blob/main/NOTICE.md">NOTICE.md</a>.</p>
+<h2 id="license">License</h2>
+<p>GNU Affero General Public License v3.0 or later, see <a href="https://github.com/codeStev/PocketDeck/blob/main/LICENSE">LICENSE</a>. The bundled card dataset is AGPL-3.0-or-later, so the app as a whole is
+distributed under the same terms.</p></section>
+</main>
+<footer class="wrap"><p>Unofficial fan tool, not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA. Despite the similar name, also not affiliated with the GitHub organization <a href="https://github.com/PocketDecks">PocketDecks</a>, whose card data it uses. Pokémon, Pokémon TCG Pocket, card names and artwork belong to their owners. Built with AI coding assistance (<a href="https://claude.com/claude-code">Claude Code</a>).
+Fonts: Fredoka and Nunito (SIL Open Font License).</p></footer>
+</body>
+</html>

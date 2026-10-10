@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Changelog - PocketDeck</title>
+<meta name="description" content="What changed in each PocketDeck release.">
+<meta name="theme-color" content="#CC3518">
+<style>
+@font-face { font-family: "Fredoka"; src: url("../assets/fonts/fredoka.ttf") format("truetype"); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: "Nunito"; src: url("../assets/fonts/nunito.ttf") format("truetype"); font-weight: 200 1000; font-display: swap; }
+:root {
+  color-scheme: light dark;
+  --page: #F3F5F9; --card: #FFFFFF; --sunken: #E8ECF3; --line: #D5DBE5; --line-strong: #727D8F;
+  --ink: #131822; --muted: #4F5A6B; --accent: #CC3518; --on-accent: #FFFFFF; --accent-soft: #FDE9E4; --on-accent-soft: #8C2410;
+  --warning-soft: #FFF1D6; --on-warning: #8A5A00; --focus: #1456D6;
+  --orange: #FDE8DF; --blue: #E0EEFB; --green: #E4F3E6; --purple: #F4E4F8;
+  --shadow: 0 1px 2px rgba(19,24,34,.06), 0 8px 24px rgba(19,24,34,.07);
+  --display: "Fredoka", ui-rounded, system-ui, sans-serif; --text: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --page: #0D1015; --card: #171B22; --sunken: #0A0C10; --line: #2A313C; --line-strong: #8995A8;
+  --ink: #F1F4F9; --muted: #A9B3C2; --accent: #FF7455; --on-accent: #1A0B07; --accent-soft: #3A1B14; --on-accent-soft: #FFB5A3;
+  --warning-soft: #35280B; --on-warning: #F3B442; --focus: #7FB1FF;
+  --orange: #3A1D12; --blue: #10263A; --green: #16301A; --purple: #2E1536;
+  --shadow: 0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.35);
+} }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 500 16px/1.6 var(--text); }
+a { color: var(--accent); font-weight: 700; }
+a:focus-visible, .button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.wrap { max-width: 46rem; margin: 0 auto; padding: 0 16px; }
+.pill-nav { position: sticky; top: 12px; z-index: 5; display: flex; align-items: center; gap: 4px; margin: 12px auto 0; max-width: 46rem;
+  padding: 6px 8px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow); }
+.pill-nav .brand { display: flex; align-items: center; gap: 8px; margin-right: auto; padding: 2px 10px 2px 2px; color: var(--ink);
+  text-decoration: none; font: 600 18px var(--display); }
+.pill-nav .brand svg { width: 32px; height: 32px; border-radius: 10px; }
+.pill-nav a.link { padding: 8px 12px; border-radius: 999px; color: var(--muted); text-decoration: none; font-weight: 800; font-size: 15px; }
+.pill-nav a.link:hover, .pill-nav a.link[aria-current] { background: var(--accent-soft); color: var(--on-accent-soft); }
+@media (max-width: 30rem) { .pill-nav .brand span { display: none; } .pill-nav a.link { padding: 8px 10px; font-size: 14px; } }
+.hero { text-align: center; padding: 56px 0 32px; }
+.hero .icon { display: inline-block; width: 96px; height: 96px; border-radius: 26px; overflow: hidden; box-shadow: var(--shadow); }
+.hero .icon svg { display: block; width: 100%; height: 100%; }
+h1 { margin: 16px 0 8px; font: 700 clamp(34px, 8vw, 44px)/1.1 var(--display); }
+h2 { margin: 48px 0 12px; font: 600 28px/34px var(--display); }
+h3 { margin: 24px 0 8px; font: 600 20px/26px var(--display); }
+.lead { max-width: 34rem; margin: 0 auto 24px; color: var(--muted); font: 600 17px/26px var(--text); }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 24px; border-radius: 999px;
+  background: var(--accent); color: var(--on-accent); font: 800 16px var(--text); text-decoration: none; transition: transform 120ms; }
+.button.secondary { background: transparent; color: var(--ink); border: 2px solid var(--line-strong); }
+.button:active { transform: scale(.97); }
+.notice a { color: inherit; text-decoration: underline; }
+.notice { margin: 8px 0 0; padding: 12px 16px; border-radius: 14px; background: var(--warning-soft); color: var(--on-warning); font-size: 14px; line-height: 20px; }
+.features { display: grid; gap: 12px; margin: 32px 0 0; grid-template-columns: 1fr; }
+@media (min-width: 38rem) { .features { grid-template-columns: 1fr 1fr; } }
+.tile { padding: 20px; border-radius: 20px; }
+.tile h3 { margin-top: 0; }
+.tile p { margin: 0; }
+.tile ul { margin: 0; padding-left: 1.2rem; } .tile li { margin: 4px 0; }
+.tile.orange { background: var(--orange); } .tile.blue { background: var(--blue); } .tile.green { background: var(--green); } .tile.purple { background: var(--purple); }
+.install { margin-top: 48px; padding: 24px; background: var(--card); border: 1px solid var(--line); border-radius: 28px; box-shadow: var(--shadow); }
+.install h2 { margin: 0 0 4px; } .install .lead-in { margin: 0 0 16px; color: var(--muted); }
+.options { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 46rem) { .options { grid-template-columns: 1fr 1fr; } }
+.option { padding: 16px 18px; border-radius: 20px; background: var(--page); border: 1px solid var(--line); }
+.option h3 { margin: 0 0 8px; } .option p { margin: 8px 0; }
+.tag { margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--on-accent-soft); font: 800 12px var(--text); vertical-align: middle; }
+.qr { width: 9.5rem; padding: 8px; background: #fff; border-radius: 14px; margin: 0 0 12px; }
+.qr svg { display: block; width: 100%; height: auto; }
+.mobile-only { display: none; } @media (max-width: 45.99rem) { .desktop-only { display: none; } .mobile-only { display: block; } }
+.screens { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 40px -16px 0; padding: 4px 16px 16px; }
+.screens figure { flex: 0 0 13.5rem; margin: 0; scroll-snap-align: start; }
+.screens img { display: block; width: 100%; height: auto; border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--card); }
+.screens figcaption { margin-top: 8px; text-align: center; color: var(--muted); font-size: 14px; }
+@media (min-width: 46rem) { .screens { justify-content: center; overflow-x: visible; } }
+code { font: 600 .9em ui-monospace, "SFMono-Regular", Menlo, monospace; background: var(--sunken); padding: .15em .45em; border-radius: 6px; overflow-wrap: anywhere; }
+.fp { display: block; margin: 8px 0 16px; padding: 12px 14px; border-radius: 10px; letter-spacing: .02em; word-spacing: .15em; }
+section.prose h2:first-child { margin-top: 48px; }
+blockquote { margin: 16px 0; padding: 4px 16px; border-left: 4px solid var(--accent); background: var(--accent-soft); color: var(--on-accent-soft); border-radius: 0 14px 14px 0; }
+.page { padding: 32px 0 0; } .page h1 { margin-top: 24px; }
+table { border-collapse: collapse; } td, th { padding: 6px 12px; border-bottom: 1px solid var(--line); text-align: left; }
+footer { margin-top: 64px; padding: 24px 0 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; line-height: 20px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .button { transition: none; } }
+</style>
+</head>
+<body>
+<nav class="pill-nav wrap" aria-label="Site">
+<a class="brand" href="../index.html"><svg viewBox="0 0 108 108" role="img" aria-label="PocketDeck" xmlns="http://www.w3.org/2000/svg">
+<rect width="108" height="108" fill="#CC3518"/>
+<path d="M48,68h-10a4,4 0 0 1 -4,-4v-28a4,4 0 0 1 4,-4h18a4,4 0 0 1 4,4v4" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M52,40h18a4,4 0 0 1 4,4v28a4,4 0 0 1 -4,4h-18a4,4 0 0 1 -4,-4v-28a4,4 0 0 1 4,-4z" fill="#fff"/>
+<path d="M61,53a5,5 0 1 0 0.001 0z" fill="#CC3518"/></svg><span>PocketDeck</span></a>
+<a class="link" href="../index.html#install">Install</a><a class="link" href="../privacy/index.html">Privacy</a><a class="link" href="../changelog/index.html" aria-current="page">Changelog</a><a class="link" href="https://github.com/codeStev/PocketDeck">Source</a>
+</nav>
+<main class="wrap">
+<article class="page prose"><h1 id="changelog">Changelog</h1>
+<p>What changed in each release, newest first.</p>
+<h2 id="102">1.0.2</h2>
+<h3 id="added">Added</h3>
+<ul>
+<li>A website with the privacy policy and the changelog at https://codestev.github.io/PocketDeck/, and screenshots in the store listing.</li>
+</ul>
+<h3 id="changed">Changed</h3>
+<ul>
+<li>The About screen says that PocketDeck is not affiliated with the GitHub organization PocketDecks, whose card data it uses.</li>
+</ul>
+<h2 id="101">1.0.1</h2>
+<p>First public release.</p>
+<h3 id="added_1">Added</h3>
+<ul>
+<li>Scan your collection from the game's My Cards screen while you scroll, or with the optional auto-scroll (accessibility service, opt-in).
+  The scan tells you when the game is not on its card list.</li>
+<li>Collection: search, owned-only, filters by set, rarity and type, sorting by number, name, copies or rarity (ascending or descending),
+  card details with a copy stepper; several accounts.</li>
+<li>Decks: recent tournament decks ranked by how well you can build them (with effect-aware stand-ins), decks built from your own cards, optional
+  suggestions from your own Claude, OpenAI or OpenRouter key or from a server of your own (Ollama, LM Studio, ...), opening odds, "What to chase", saved decks, import QR codes for the game.</li>
+<li>Share a deck as text or as a branded image tinted by its energy type.</li>
+<li>Export and import your collection as JSON or CSV; undo an import from the scan backup.</li>
+<li>Welcome tour, About screen with credits and licenses, diagnostics you can copy when reporting a problem.</li>
+<li>English and German, light and dark theme.</li>
+</ul></article>
+</main>
+<footer class="wrap"><p>Unofficial fan tool, not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA. Despite the similar name, also not affiliated with the GitHub organization <a href="https://github.com/PocketDecks">PocketDecks</a>, whose card data it uses. Pokémon, Pokémon TCG Pocket, card names and artwork belong to their owners. Built with AI coding assistance (<a href="https://claude.com/claude-code">Claude Code</a>).
+Fonts: Fredoka and Nunito (SIL Open Font License).</p></footer>
+</body>
+</html>
