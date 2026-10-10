@@ -5,13 +5,24 @@ screen and suggests competitive decks you can build from the cards you own.
 
 > Unofficial fan tool. Not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA. Pokémon,
 > Pokémon TCG Pocket, card names and artwork are trademarks and copyrights of their owners.
+>
+> Despite the similar name, PocketDeck is not affiliated with the GitHub organization [PocketDecks](https://github.com/PocketDecks), whose card
+> data repository it uses.
 
 ## What it does
-- **Scan** your collection while you scroll through My Cards (3 cards per row), or let the optional auto-scroll do the swiping.
-- **Decks:** recent tournament decks ranked by how well you can build them, with stand-ins for missing cards; decks built from your own
-  cards; optional suggestions from an AI service you set up; opening odds for each deck; "What to chase" for the cards you lack.
-- **Import into the game:** each deck is shown as the game's import QR code.
-- Several accounts, English and German, light and dark theme. Everything is stored on your phone.
+- **Scan:** Read your collection straight from the game's My Cards screen, with the scrolling done by you or by an optional auto-scroll ([details](PRIVACY.md#auto-scroll)).
+- **Decks:**
+  - Recent tournament decks, ranked by how well you can build them, with stand-ins for missing cards
+  - Decks built from your own cards
+  - Opening odds for each deck
+  - "What to chase": the cards you lack that would finish the most decks
+  - Optional suggestions from an AI service you set up
+- **Import into the game:** Every deck comes with the game's import QR code, so you can load it into the game right away.
+- **Everything on your phone:**
+  - Several accounts
+  - English and German
+  - Light and dark theme
+  - Your collection and settings stay on your phone
 
 ## Install
 Releases are on the [releases page](https://github.com/codeStev/PocketDeck/releases) as signed APKs with their SHA-256 (`SHA256SUMS.txt`).
@@ -20,15 +31,13 @@ Settings > Repositories, and check that the fingerprint shown matches the one pr
 APK over the old one; it updates in place and keeps your data. The app is not on the Play Store.
 
 ## Built with AI assistance
-PocketDeck was built with the help of AI coding assistance ([Claude Code](https://claude.com/claude-code) by Anthropic): much of the code,
-the tests and the documentation was written with it. The maintainer sets the direction, decides what goes in and tests the app on a
-real phone and in the game, but as with any software, expect the occasional bug. The optional AI deck suggestions are a separate feature
-that only runs when you add your own key; see [PRIVACY.md](PRIVACY.md).
+PocketDeck was built with AI coding assistance ([Claude Code](https://claude.com/claude-code)).
 
-## Auto-scroll
-Auto-scroll is optional and off until you agree in the app. It uses an Android Accessibility service only to swipe the card list while
-a scan runs; it reads nothing on the screen. Automating input in a game may go against the game's terms of service, so you use it
-at your own risk. Without it you scroll yourself and the app still reads the screen.
+## Auto-scroll (optional)
+A scan reads your cards while the game's My Cards list moves past, so the list has to be scrolled from top to bottom. By default you
+do that yourself. If you switch on auto-scroll, PocketDeck swipes the list for you instead. It is off until you agree in the app, and it
+uses an Android Accessibility service only to swipe the card list while a scan runs; it reads nothing on the screen. Automating input in a
+game may go against the game's terms of service, so you use it at your own risk.
 
 ## Privacy
 No account, no analytics, no server of ours. See [PRIVACY.md](PRIVACY.md) for what stays on the phone, what is downloaded and what
@@ -45,10 +54,12 @@ how the design system in `designsystem/` is used. Branches and versions (gitflow
 Found a bug? Use *Report a problem* in the app (About), which opens the [issue tracker](https://github.com/codeStev/PocketDeck/issues).
 
 ## Data and credits
-Card data: [PocketDecks/pokemon-tcg-pocket-cards](https://github.com/PocketDecks/pokemon-tcg-pocket-cards) (AGPL-3.0-or-later), scraped
-from Limitless TCG; tournament decks: [Limitless TCG](https://play.limitlesstcg.com); card images and German names:
-[TCGdex](https://tcgdex.dev). Full list in `NOTICE.md`.
+- **Card data:** [PocketDecks/pokemon-tcg-pocket-cards](https://github.com/PocketDecks/pokemon-tcg-pocket-cards) (AGPL-3.0-or-later), scraped from Limitless TCG
+- **Tournament decks:** [Limitless TCG](https://play.limitlesstcg.com)
+- **Card images and German names:** [TCGdex](https://tcgdex.dev)
 
-## Licence
+The full list is in `NOTICE.md`.
+
+## License
 GNU Affero General Public License v3.0 or later, see `LICENSE`. The bundled card dataset is AGPL-3.0-or-later, so the app as a whole is
 distributed under the same terms.

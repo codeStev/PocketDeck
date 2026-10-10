@@ -1,7 +1,7 @@
 name: Release
 
-# The owner tags a commit on main (v<version>) and publishes a GitHub release for the tag by hand, with the notes from
-# CHANGELOG.md. Publishing starts this workflow: it builds the signed APK and attaches it and its SHA-256 to that release.
+# Runs when a GitHub release is published for a tag: builds and signs the APK and attaches it with its SHA-256 to the release.
+# A final release (not a pre-release) also updates the F-Droid repository and the site on the gh-pages branch.
 on:
   release:
     types: [published]
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install fdroidserver
+      - run: pip install fdroidserver markdown segno
       - name: Fetch the signed APK of this release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -124,6 +124,16 @@ jobs:
           mkdir -p pages/repo
           rsync -a --delete work/repo/ pages/repo/
           touch pages/.nojekyll
+      - name: Build the site around the repository
+        # The landing page, privacy policy and changelog come from the Markdown files of this tag, with the fingerprint of the key
+        # that signed the index just written, so the page always shows the current one. The repository is what matters: if the
+        # site cannot be built, it is still published and this step only shows as a warning.
+        continue-on-error: true
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          FINGERPRINT=$(keytool -printcert -jarfile work/repo/index-v1.jar | sed -n 's/.*SHA256: //p' | tr -d ':')
+          python3 scripts/build-site.py pages --version "${TAG#v}" --fingerprint "$FINGERPRINT"
       - name: Publish
         run: |
           cd pages

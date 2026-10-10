@@ -30,8 +30,6 @@ extensions.configure<ApplicationExtension> {
     }
     lint.warningsAsErrors = true
 
-    // The release key lives outside the repository: ~/.pocketdeck/signing.properties (see docs/RELEASE.md). Without it the
-    // release build is simply unsigned. `-Ppocketdeck.signWithDebugKey=true` signs a test build with the debug key instead.
     val signingFile = file("${System.getProperty("user.home")}/.pocketdeck/signing.properties")
     val signing = if (signingFile.isFile) Properties().apply { signingFile.inputStream().use(::load) } else null
     signingConfigs {
