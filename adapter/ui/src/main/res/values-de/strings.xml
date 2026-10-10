@@ -337,8 +337,8 @@
     <string name="welcome_title_1">Deine Sammlung, deine Decks</string>
     <string name="welcome_body_1">PocketDeck liest deine Pokémon TCG Pocket-Karten vom Bildschirm ab und schlägt dir starke Decks vor, die du mit deinen Karten bauen kannst.</string>
     <string name="welcome_unofficial">Inoffizielles Fan-Werkzeug, nicht verbunden mit oder gebilligt von The Pokémon Company, Nintendo, Creatures, GAME FREAK oder DeNA.</string>
-    <string name="welcome_title_2">In einer Minute gescannt</string>
-    <string name="welcome_body_2">Öffne im Spiel „Meine Karten“ und wähle die Ansicht mit 3 Karten pro Reihe. Tippe in PocketDeck auf Start und scrolle durch deine Karten. Auf Wunsch übernimmt das automatische Scrollen das Wischen; es bleibt aus, bis du zustimmst.</string>
+    <string name="welcome_title_2">Karten scannen</string>
+    <string name="welcome_body_2">Öffne im Spiel „Meine Karten“ und wähle die Ansicht mit 3 Karten pro Reihe. Tippe in PocketDeck auf Start und scrolle durch deine Karten. Auf Wunsch übernimmt das automatische Scrollen das Wischen; es bleibt aus, bis du zustimmst. Ein vollständiger Scan dauert eine Weile; du kannst jederzeit stoppen und behältst, was gefunden wurde.</string>
     <string name="welcome_title_3">Was dein Handy verlässt</string>
     <string name="welcome_point_local">Deine Sammlung, Decks und Einstellungen bleiben auf diesem Handy.</string>
     <string name="welcome_point_download">Turnierlisten und Kartenbilder werden von Limitless TCG, TCGdex und GitHub geladen, die dabei deine IP-Adresse sehen.</string>

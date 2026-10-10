@@ -337,8 +337,8 @@
     <string name="welcome_title_1">Your collection, your decks</string>
     <string name="welcome_body_1">PocketDeck reads your Pokémon TCG Pocket cards from the screen and suggests competitive decks you can build with what you own.</string>
     <string name="welcome_unofficial">Unofficial fan tool, not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA.</string>
-    <string name="welcome_title_2">Scan in a minute</string>
-    <string name="welcome_body_2">In the game open My Cards and choose the view with 3 cards per row. Tap Start in PocketDeck, then scroll through your cards. Optionally auto-scroll does the swiping for you; it stays off until you agree to it.</string>
+    <string name="welcome_title_2">Scan your cards</string>
+    <string name="welcome_body_2">In the game open My Cards and choose the view with 3 cards per row. Tap Start in PocketDeck, then scroll through your cards. Optionally auto-scroll does the swiping for you; it stays off until you agree to it. A full scan takes a while; you can stop at any time and keep what was found.</string>
     <string name="welcome_title_3">What leaves your phone</string>
     <string name="welcome_point_local">Your collection, decks and settings stay on this phone.</string>
     <string name="welcome_point_download">Tournament lists and card images are downloaded from Limitless TCG, TCGdex and GitHub, which can see your IP address.</string>
