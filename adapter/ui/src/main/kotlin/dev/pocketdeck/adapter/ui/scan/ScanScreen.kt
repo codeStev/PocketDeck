@@ -66,6 +66,7 @@ fun ScanScreen(
     viewModel: ScanViewModel,
     accountName: String?,
     autoScrollEnabled: Boolean,
+    gameInstalled: Boolean,
     onOpenAccessibilitySettings: () -> Unit,
     onStartScan: (automatic: Boolean) -> Unit,
 ) {
@@ -74,6 +75,7 @@ fun ScanScreen(
         state = state,
         accountName = accountName,
         autoScrollEnabled = autoScrollEnabled,
+        gameInstalled = gameInstalled,
         onAutomaticChanged = viewModel::onAutomaticChanged,
         onOpenAccessibilitySettings = onOpenAccessibilitySettings,
         onStartScan = onStartScan,
@@ -94,6 +96,7 @@ internal fun ScanContent(
     state: ScanUiState,
     accountName: String?,
     autoScrollEnabled: Boolean,
+    gameInstalled: Boolean,
     onAutomaticChanged: (Boolean) -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
     onStartScan: (Boolean) -> Unit,
@@ -113,6 +116,7 @@ internal fun ScanContent(
                 state,
                 accountName,
                 autoScrollEnabled,
+                gameInstalled,
                 onAutomaticChanged,
                 onOpenAccessibilitySettings,
                 onStartScan,
@@ -136,6 +140,7 @@ private fun Instructions(
     state: ScanUiState,
     accountName: String?,
     autoScrollEnabled: Boolean,
+    gameInstalled: Boolean,
     onAutomaticChanged: (Boolean) -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
     onStartScan: (Boolean) -> Unit,
@@ -183,12 +188,14 @@ private fun Instructions(
                 onAction = onOpenAccessibilitySettings,
             )
         }
+        // Without the game there is nothing to scan, and the scan would only show a pill asking for a screen that does not exist.
+        if (!gameInstalled) PdBanner(stringResource(R.string.scan_game_missing), kind = PdBannerKind.Warning)
         state.notice?.let { Notice(it) }
         PdButton(
             stringResource(R.string.scan_start),
             { if (state.automatic && !state.autoScrollConsented) asking = true else proceed() },
             Modifier.fillMaxWidth(),
-            enabled = !needsService,
+            enabled = !needsService && gameInstalled,
             leadingIcon = PdIcons.Scan,
         )
         if (state.backupAvailable) {

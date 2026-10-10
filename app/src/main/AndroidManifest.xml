@@ -6,7 +6,7 @@
     <!-- Card artwork is loaded from the network (the card data itself is bundled). -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Lets the app start the game after a scan has been started. -->
+    <!-- Lets the app see whether the game is installed, so the scan page can say so before a scan starts. -->
     <queries>
         <package android:name="jp.pokemon.pokemontcgp" />
     </queries>

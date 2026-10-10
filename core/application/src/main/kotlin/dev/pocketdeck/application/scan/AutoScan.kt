@@ -121,8 +121,22 @@ data class AutoScanSettings(
     val overlapRows: Int = 1,
     /** How many scrolls in a row may leave the picture unchanged before the list is considered ended. */
     val stallLimit: Int = 4,
-    /** How many pictures are looked at for a card grid before the scan gives up and says the screen is wrong. */
-    val gridLookPolls: Int = 8,
-    val maxScreens: Int = 400,
+    /**
+     * How long the scan looks for the card grid at the normal pace, which is enough when the list is merely still loading.
+     * Then it looks once a second, so that waiting does not keep the phone busy.
+     */
+    val gridQuickLookMillis: Long = 2_000,
+    val gridWaitPollMillis: Long = 1_000,
+    /**
+     * How long the player has to open My Cards after tapping Start before the scan gives up and says the screen is wrong.
+     * The game opens on its landing page (and with start-up screens and pop-ups first), and the player navigates to the list
+     * themselves, so the scan waits for that; Stop on the pill or in the notification ends it at any time.
+     */
+    val gridWaitMillis: Long = 300_000,
+    /**
+     * Safety net against a list that never ends; the stall limit ends a real one. A complete collection (about 4,300 cards at
+     * roughly 9 new cards per screen) takes around 500 screens, so this must stay several times above that.
+     */
+    val maxScreens: Int = 2_000,
     val maxRewindSwipes: Int = 60,
 )

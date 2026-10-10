@@ -1,0 +1,1 @@
+Der automatische Scan wartet, bis du „Meine Karten“ geöffnet hast, und schafft auch eine komplette Sammlung. Scan-Pille und Benachrichtigung haben immer eine Stopp-Taste, und die App warnt, wenn das Spiel fehlt. Diagnose und Fehlermeldung sind jetzt in den Einstellungen.

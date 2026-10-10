@@ -102,7 +102,8 @@ New way of driving the app => new driving adapter calling inbound ports.
 - `SubmitScanFrame` returns a `FrameAnalysis` (tiles recognised, counts readable) which the auto-scroll policy uses.
 - Wrong screen: `ScanSession.screenLooksWrong` (6 frames in a row without a recognised card) turns the floating button's text into "Open My Cards ..."
   (`ScanProgress.screenLooksWrong`); `ManualScanService` keeps re-analysing a still picture without cards so this can fire; `AutoScanService` checks for
-  the grid (locator, else the recognizer) before any swipe and ends with `AutoScanFailure.NotOnCardList` instead of swiping another screen. Recognition is
+  the grid (locator, else the recognizer) before any swipe, waiting up to `AutoScanSettings.gridWaitMillis` (5 minutes: the game opens on its landing
+  page and the player navigates to My Cards, so a short wait ended the scan before they got there) and then ends with `AutoScanFailure.NotOnCardList` instead of swiping another screen. Recognition is
   tested at 0.667x, 0.75x and 1.333x of the 1080 px screenshot.
 - Logs: tag `PocketDeckScan` (per-frame analysis time, skipped frames).
 
