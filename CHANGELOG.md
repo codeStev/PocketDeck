@@ -4,6 +4,22 @@ What changed in each release, newest first.
 
 ## [Unreleased]
 
+## [1.1.0]
+
+### Added
+- The scan pill always has a Stop button, and the scan notification has one too.
+- A warning on the Scan tab (and a disabled Start) when the game is not installed.
+- Settings has a Help section with *Copy diagnostics* and *Report a problem*.
+
+### Changed
+- The automatic scan waits up to five minutes for you to open My Cards instead of ending at once, and it can scan a complete
+  collection (the old limit of 400 screens was too low for about 4,300 cards).
+- PocketDeck no longer opens the game by itself after the screen-share choice.
+- The welcome tour no longer promises how long a scan takes.
+
+### Fixed
+- The Stop button wrapped onto two lines in German.
+
 ## [1.0.2]
 
 ### Added
