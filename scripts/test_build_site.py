@@ -50,6 +50,12 @@ class BuildSiteTest(unittest.TestCase):
         self.assertIn("## 1.0.0\n", shown)
         self.assertEqual(shown, build_site.public_changelog(shown))
 
+    def test_nested_bullets_become_a_list_inside_their_tile(self):
+        tiles = build_site.feature_tiles("## What it does\n- **Decks:**\n  - First entry\n  - Second\n    entry\n- **Next:** Text.\n")
+
+        self.assertIn("<h3>Decks</h3><ul><li>First entry</li><li>Second entry</li></ul>", tiles)
+        self.assertIn("<h3>Next</h3><p>Text.</p>", tiles)
+
     def test_the_site_has_three_pages_and_the_landing_page_leaves_out_the_build_instructions(self):
         with tempfile.TemporaryDirectory() as out:
             build_site.write(Path(out), "index.html", build_site.landing("1.0.1", FINGERPRINT))

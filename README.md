@@ -8,10 +8,18 @@ screen and suggests competitive decks you can build from the cards you own.
 
 ## What it does
 - **Scan:** Read your collection straight from the game's My Cards screen, with the scrolling done by you or by an optional auto-scroll.
-- **Decks:** See which recent tournament decks you can build, with stand-ins for cards you are missing. Build decks from your own cards, see
-  the opening odds of every deck, find out which cards to chase next, and optionally ask an AI service for ideas.
+- **Decks:**
+  - Recent tournament decks, ranked by how well you can build them, with stand-ins for missing cards
+  - Decks built from your own cards
+  - Opening odds for each deck
+  - "What to chase": the cards you lack that would finish the most decks
+  - Optional suggestions from an AI service you set up
 - **Import into the game:** Every deck comes with the game's import QR code, so you can load it into the game right away.
-- **Everything on your phone:** Use several accounts, in English or German, in a light or dark theme. Your data stays on your phone.
+- **Everything on your phone:**
+  - Several accounts
+  - English and German
+  - Light and dark theme
+  - Your collection and settings stay on your phone
 
 ## Install
 Releases are on the [releases page](https://github.com/codeStev/PocketDeck/releases) as signed APKs with their SHA-256 (`SHA256SUMS.txt`).

@@ -83,6 +83,7 @@ h3 { margin: 24px 0 8px; font: 600 20px/26px var(--display); }
 .tile { padding: 20px; border-radius: 20px; }
 .tile h3 { margin-top: 0; }
 .tile p { margin: 0; }
+.tile ul { margin: 0; padding-left: 1.2rem; } .tile li { margin: 4px 0; }
 .tile.orange { background: var(--orange); } .tile.blue { background: var(--blue); } .tile.green { background: var(--green); } .tile.purple { background: var(--purple); }
 .install { display: grid; gap: 16px 24px; grid-template-columns: 1fr; margin-top: 48px; padding: 24px; background: var(--card); border: 1px solid var(--line);
   border-radius: 28px; box-shadow: var(--shadow); }
@@ -140,16 +141,22 @@ def pretty(fingerprint):
     return " ".join(fingerprint[i : i + 2] for i in range(0, len(fingerprint), 2)).upper()
 
 
+def flat(text):
+    """A bullet that is wrapped over several lines as one line."""
+    return re.sub(r"\s*\n\s+", " ", text).strip()
+
+
 def feature_tiles(section):
     """The bullets of "What it does" as tinted tiles: the bold lead of a bullet is the title of its tile."""
     body = section.split("\n", 1)[1]
-    bullets = [re.sub(r"\s*\n\s+", " ", item).strip() for item in re.split(r"(?m)^- ", body)[1:]]
     tiles = []
-    for index, bullet in enumerate(bullets):
-        lead = re.match(r"\*\*(.+?)\*\*:?\s*(.*)", bullet, flags=re.S)
-        title, text = (lead.group(1).rstrip(":"), lead.group(2)) if lead else ("And more", bullet)
-        text = text[:1].upper() + text[1:]
-        tiles.append(f'<div class="tile {TINTS[index % len(TINTS)]}"><h3>{html.escape(title)}</h3><p>{inline(text)}</p></div>')
+    for index, item in enumerate(re.split(r"(?m)^- ", body)[1:]):
+        head, *entries = re.split(r"(?m)^\s+- ", item)
+        lead = re.match(r"\*\*(.+?)\*\*:?\s*(.*)", flat(head), flags=re.S)
+        title, text = (lead.group(1).rstrip(":"), lead.group(2)) if lead else ("And more", flat(head))
+        paragraph = f"<p>{inline(text[:1].upper() + text[1:])}</p>" if text else ""
+        points = "<ul>" + "".join(f"<li>{inline(flat(entry))}</li>" for entry in entries) + "</ul>" if entries else ""
+        tiles.append(f'<div class="tile {TINTS[index % len(TINTS)]}"><h3>{html.escape(title)}</h3>{paragraph}{points}</div>')
     return '<div class="features">' + "".join(tiles) + "</div>"
 
 
