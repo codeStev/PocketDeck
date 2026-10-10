@@ -186,6 +186,18 @@ class AutoScanServiceTest {
         }
 
     @Test
+    fun `scans a list as long as a complete collection with the default limits`() =
+        runTest {
+            val rows = 1_440 // 4,317 cards at three per row
+            val world = FakeGridWorld(contentHeight = rows * 10)
+
+            val outcome = service(world)()
+
+            (outcome is Outcome.Success) shouldBe true
+            world.rowsSeen() shouldBe (0 until rows).toSet()
+        }
+
+    @Test
     fun `sees every row although the list glides further than the swipe asked`() =
         runTest {
             val world = FakeGridWorld(contentHeight = 400, flingFactor = 1.8)
