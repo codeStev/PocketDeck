@@ -22,7 +22,8 @@ SITE = "https://codestev.github.io/PocketDeck"
 REPO_URL = "https://github.com/codeStev/PocketDeck"
 FONTS = ROOT / "designsystem" / "src" / "main" / "res" / "font"
 LICENCES = ROOT / "designsystem" / "licenses"
-LANDING_SECTIONS = ["Privacy", "Data and credits", "Licence"]
+SCREENSHOTS = ROOT / "fastlane" / "metadata" / "android" / "en-US" / "images" / "phoneScreenshots"
+LANDING_SECTIONS = ["Privacy", "Data and credits", "License"]
 LINKS = {
     "[PRIVACY.md](PRIVACY.md)": "[the privacy policy](privacy/index.html)",
     "(PRIVACY.md#auto-scroll)": "(privacy/index.html#auto-scroll)",
@@ -89,14 +90,21 @@ h3 { margin: 24px 0 8px; font: 600 20px/26px var(--display); }
 .tile p { margin: 0; }
 .tile ul { margin: 0; padding-left: 1.2rem; } .tile li { margin: 4px 0; }
 .tile.orange { background: var(--orange); } .tile.blue { background: var(--blue); } .tile.green { background: var(--green); } .tile.purple { background: var(--purple); }
-.install { display: grid; gap: 16px 24px; grid-template-columns: 1fr; margin-top: 48px; padding: 24px; background: var(--card); border: 1px solid var(--line);
-  border-radius: 28px; box-shadow: var(--shadow); }
-@media (min-width: 38rem) { .install { grid-template-columns: 11.5rem 1fr; } }
-.install h2 { margin: 0 0 8px; }
-.qr { width: 11.5rem; max-width: 100%; padding: 8px; background: #fff; border-radius: 14px; align-self: start; }
+.install { margin-top: 48px; padding: 24px; background: var(--card); border: 1px solid var(--line); border-radius: 28px; box-shadow: var(--shadow); }
+.install h2 { margin: 0 0 4px; } .install .lead-in { margin: 0 0 16px; color: var(--muted); }
+.options { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 46rem) { .options { grid-template-columns: 1fr 1fr; } }
+.option { padding: 16px 18px; border-radius: 20px; background: var(--page); border: 1px solid var(--line); }
+.option h3 { margin: 0 0 8px; } .option p { margin: 8px 0; }
+.tag { margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--on-accent-soft); font: 800 12px var(--text); vertical-align: middle; }
+.qr { width: 9.5rem; padding: 8px; background: #fff; border-radius: 14px; margin: 0 0 12px; }
 .qr svg { display: block; width: 100%; height: auto; }
-.install ol { margin: 8px 0 16px; padding-left: 1.2rem; }
-.install > .actions { grid-column: 1 / -1; margin-top: 8px; }
+.mobile-only { display: none; } @media (max-width: 45.99rem) { .desktop-only { display: none; } .mobile-only { display: block; } }
+.screens { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 40px -16px 0; padding: 4px 16px 16px; }
+.screens figure { flex: 0 0 13.5rem; margin: 0; scroll-snap-align: start; }
+.screens img { display: block; width: 100%; height: auto; border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--card); }
+.screens figcaption { margin-top: 8px; text-align: center; color: var(--muted); font-size: 14px; }
+@media (min-width: 46rem) { .screens { justify-content: center; overflow-x: visible; } }
 code { font: 600 .9em ui-monospace, "SFMono-Regular", Menlo, monospace; background: var(--sunken); padding: .15em .45em; border-radius: 6px; overflow-wrap: anywhere; }
 .fp { display: block; margin: 8px 0 16px; padding: 12px 14px; border-radius: 10px; letter-spacing: .02em; word-spacing: .15em; }
 section.prose h2:first-child { margin-top: 48px; }
@@ -166,24 +174,32 @@ def feature_tiles(section):
 
 
 def install_block(version, fingerprint):
-    """How to get the app: the F-Droid repository with its fingerprint and a QR code the client can read, or the APK."""
+    """How to get the app, as two options: the F-Droid repository (updates itself; its address, a QR code for wide screens, the
+    fingerprint to compare) or the signed APK (direct download, updated by hand)."""
     link = f"fdroidrepos://{SITE.split('//')[1]}/repo?fingerprint={fingerprint.upper()}"
     qr = segno.make(link, error="m").svg_inline(scale=4, border=1, dark="#000000", light="#ffffff")
+    downloads = f"{REPO_URL}/releases/download/v{version}"
     return f"""
 <section class="install" id="install">
-<div class="qr" role="img" aria-label="QR code that adds the F-Droid repository">{qr}</div>
-<div>
 <h2>Install</h2>
-<p>Version <strong>{html.escape(version)}</strong>. For automatic updates add the repository in F-Droid, Droid-ify or Neo Store:</p>
-<ol>
-<li>Add this address as a repository (or scan the code): <code class="fp">{breakable(SITE + "/repo")}</code></li>
-<li>Check that the fingerprint it shows is: <code class="fp">{pretty(fingerprint)}</code></li>
-<li>Install PocketDeck and let it update itself.</li>
-</ol>
-<p><a href="{link}">Open the repository link on your phone</a>, or download the signed APK, with its SHA-256, from the releases. A new APK installs
-over the old one and keeps your data. The app is not on the Play Store.</p>
+<p class="lead-in">Android only. Version <strong>{html.escape(version)}</strong>. Not on the Play Store.</p>
+<div class="options">
+<div class="option">
+<h3>F-Droid <span class="tag">updates itself</span></h3>
+<div class="qr desktop-only" role="img" aria-label="QR code that adds the F-Droid repository">{qr}</div>
+<p>Add this repository in F-Droid, Droid-ify or Neo Store<span class="desktop-only"> (or scan the code)</span>:</p>
+<code class="fp">{breakable(SITE + "/repo")}</code>
+<p>The client shows a fingerprint when you add it. It must be:</p>
+<code class="fp">{pretty(fingerprint)}</code>
+<p class="mobile-only"><a class="button" href="{link}">Open in F-Droid</a></p>
 </div>
-<div class="actions"><a class="button" href="{REPO_URL}/releases/latest">Latest release</a></div>
+<div class="option">
+<h3>APK <span class="tag">update by hand</span></h3>
+<p>Download the signed APK and open it. A newer APK installs over the old one and keeps your data.</p>
+<p><a class="button" href="{downloads}/PocketDeck-{html.escape(version)}.apk">Download APK</a></p>
+<p>Check it against <a href="{downloads}/SHA256SUMS.txt">SHA256SUMS.txt</a>. Older versions are on the <a href="{REPO_URL}/releases">releases page</a>.</p>
+</div>
+</div>
 </section>
 """
 
@@ -227,7 +243,7 @@ def hero():
     return f"""<div class="hero">
 <span class="icon">{ICON}</span>
 <h1>PocketDeck</h1>
-<p class="lead">Scan your Pokémon TCG Pocket collection and get competitive decks you can build from the cards you own.</p>
+<p class="lead">An unofficial Android companion for Pokémon TCG Pocket: scan your collection and get competitive decks you can build from the cards you own.</p>
 <div class="actions"><a class="button" href="#install">Install</a><a class="button secondary" href="{REPO_URL}">Source on GitHub</a></div>
 <p class="notice">{UNOFFICIAL} {AI_NOTE}</p>
 </div>"""
@@ -237,9 +253,9 @@ def landing(version, fingerprint):
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     parts = sections(readme)[1]
     kept = "\n".join(parts[name] for name in LANDING_SECTIONS if name in parts)
-    body = hero() + feature_tiles(parts["What it does"]) + install_block(version, fingerprint) + '<section class="prose">' + to_html(kept) + "</section>"
+    body = hero() + feature_tiles(parts["What it does"]) + screenshots() + install_block(version, fingerprint) + '<section class="prose">' + to_html(kept) + "</section>"
     description = "An unofficial Android companion for Pokémon TCG Pocket: scan your collection and get decks you can build."
-    return page("PocketDeck", body, description, "./", "install")
+    return page("PocketDeck", body, description, "./", "")
 
 
 def prose_page(title, markdown_text, description, key):
@@ -252,12 +268,32 @@ def write(out, relative, content):
     target.write_text(content, encoding="utf-8")
 
 
+def screenshots():
+    """The phone screenshots of the store listing (fastlane), as a row under the feature tiles; nothing if there are none.
+    The file name after the number is the caption: `2-decks.jpg` shows as "Decks"."""
+    shots = sorted(SCREENSHOTS.glob("*.jpg")) + sorted(SCREENSHOTS.glob("*.png"))
+    figures = "".join(
+        f'<figure><img src="assets/screens/{shot.name}" alt="PocketDeck: {html.escape(caption(shot))}" loading="lazy" width="270" height="543">'
+        f"<figcaption>{html.escape(caption(shot))}</figcaption></figure>"
+        for shot in shots
+    )
+    return f'<div class="screens" aria-label="Screenshots">{figures}</div>' if figures else ""
+
+
+def caption(shot):
+    return re.sub(r"^\d+[-_]?", "", shot.stem).replace("-", " ").replace("_", " ").strip().capitalize()
+
+
 def copy_assets(out):
     """The app's own fonts and their licences, so the pages look like the app and need no other site."""
     target = out / "assets" / "fonts"
     target.mkdir(parents=True, exist_ok=True)
     for source in [*FONTS.glob("*.ttf"), *LICENCES.glob("OFL-*.txt")]:
         shutil.copy(source, target / source.name)
+    shots = out / "assets" / "screens"
+    for source in [*SCREENSHOTS.glob("*.jpg"), *SCREENSHOTS.glob("*.png")]:
+        shots.mkdir(parents=True, exist_ok=True)
+        shutil.copy(source, shots / source.name)
 
 
 def main():

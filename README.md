@@ -55,6 +55,6 @@ Card data: [PocketDecks/pokemon-tcg-pocket-cards](https://github.com/PocketDecks
 from Limitless TCG; tournament decks: [Limitless TCG](https://play.limitlesstcg.com); card images and German names:
 [TCGdex](https://tcgdex.dev). Full list in `NOTICE.md`.
 
-## Licence
+## License
 GNU Affero General Public License v3.0 or later, see `LICENSE`. The bundled card dataset is AGPL-3.0-or-later, so the app as a whole is
 distributed under the same terms.

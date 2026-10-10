@@ -12,6 +12,7 @@ services below directly from your phone.
 
 ## Downloaded from other services
 Each of these sees your phone's IP address and the request itself:
+
 - **Limitless TCG** (`play.limitlesstcg.com`): the recent tournament decklists.
 - **TCGdex** (`assets.tcgdex.net`) and **GitHub** (`raw.githubusercontent.com`): card images. Images are kept on the phone after the
   first download.

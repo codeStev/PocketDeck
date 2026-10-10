@@ -67,6 +67,39 @@ class BuildSiteTest(unittest.TestCase):
         self.assertIn(build_site.AI_NOTE, privacy)
         self.assertEqual(2, landing.count(build_site.AI_NOTE))
 
+    def test_no_list_of_the_published_documents_is_left_as_plain_text(self):
+        for name in ["README.md", "PRIVACY.md", "CHANGELOG.md"]:
+            rendered = build_site.to_html((build_site.ROOT / name).read_text(encoding="utf-8"))
+
+            for paragraph in re.findall(r"<p>(.*?)</p>", rendered, flags=re.S):
+                self.assertIsNone(re.search(r"(?m)^- ", paragraph), f"a list in {name} renders as text: {paragraph[:80]}")
+
+    def test_the_install_card_offers_f_droid_and_a_direct_apk_download(self):
+        block = build_site.install_block("1.0.1", FINGERPRINT)
+
+        self.assertIn("releases/download/v1.0.1/PocketDeck-1.0.1.apk", block)
+        self.assertIn("releases/download/v1.0.1/SHA256SUMS.txt", block)
+        self.assertIn("Download APK", block)
+        self.assertIn("Open in F-Droid", block)
+        self.assertIn("Android only", block)
+        self.assertEqual(1, block.count('class="qr desktop-only"'))
+
+    def test_screenshots_are_captioned_from_their_file_names_and_left_out_when_there_are_none(self):
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            (folder / "2-deck-list.jpg").write_bytes(b"x")
+            original = build_site.SCREENSHOTS
+            build_site.SCREENSHOTS = folder
+            try:
+                shown = build_site.screenshots()
+                build_site.SCREENSHOTS = folder / "missing"
+                hidden = build_site.screenshots()
+            finally:
+                build_site.SCREENSHOTS = original
+
+        self.assertIn("<figcaption>Deck list</figcaption>", shown)
+        self.assertEqual("", hidden)
+
     def test_nested_bullets_become_a_list_inside_their_tile(self):
         tiles = build_site.feature_tiles("## What it does\n- **Decks:**\n  - First entry\n  - Second\n    entry\n- **Next:** Text.\n")
 
@@ -84,6 +117,7 @@ class BuildSiteTest(unittest.TestCase):
         self.assertIn("<h3>Scan</h3>", landing)
         for name in build_site.LANDING_SECTIONS:
             self.assertRegex(landing, rf"<h2[^>]*>{re.escape(name)}</h2>")
+        self.assertNotIn('aria-current', landing.split("</nav>")[0].split("brand")[1])
 
     def test_every_internal_link_of_the_site_points_at_a_file_that_exists(self):
         with tempfile.TemporaryDirectory() as directory:
