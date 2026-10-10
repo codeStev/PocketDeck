@@ -16,7 +16,7 @@ Data and formats used:
 - KevinGutowski/tcgp-deck-qr, MIT License (the deck code format)
 - Limitless (play.limitlesstcg.com) for tournament decklists
 
-Despite the similar name, PocketDeck is not affiliated with the GitHub account PocketDecks; it only uses the card data of that account's
+Despite the similar name, PocketDeck is not affiliated with the GitHub organization PocketDecks; it only uses the card data of that organization's
 repository named above.
 
 Open source libraries: Kotlin, AndroidX (Compose, Room, Lifecycle), Dagger Hilt, Ktor, kotlinx.serialization, Coil, ZXing,

@@ -34,7 +34,7 @@ LINKS = {
 TINTS = ["orange", "blue", "green", "purple"]
 UNOFFICIAL = (
     "Unofficial fan tool, not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA. "
-    'Despite the similar name, also not affiliated with the GitHub account <a href="https://github.com/PocketDecks">PocketDecks</a>, '
+    'Despite the similar name, also not affiliated with the GitHub organization <a href="https://github.com/PocketDecks">PocketDecks</a>, '
     "whose card data it uses."
 )
 AI_NOTE = 'Built with AI coding assistance (<a href="https://claude.com/claude-code">Claude Code</a>).'

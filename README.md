@@ -6,7 +6,7 @@ screen and suggests competitive decks you can build from the cards you own.
 > Unofficial fan tool. Not affiliated with or endorsed by The Pokémon Company, Nintendo, Creatures, GAME FREAK or DeNA. Pokémon,
 > Pokémon TCG Pocket, card names and artwork are trademarks and copyrights of their owners.
 >
-> Despite the similar name, PocketDeck is not affiliated with the GitHub account [PocketDecks](https://github.com/PocketDecks), whose card
+> Despite the similar name, PocketDeck is not affiliated with the GitHub organization [PocketDecks](https://github.com/PocketDecks), whose card
 > data repository it uses.
 
 ## What it does
