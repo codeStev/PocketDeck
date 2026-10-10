@@ -1,5 +1,6 @@
 """Tests for build-site.py. Run with `python3 -m unittest discover -s scripts -p 'test_*.py'` (needs `pip install markdown segno`)."""
 import importlib.util
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -22,7 +23,7 @@ class BuildSiteTest(unittest.TestCase):
     def test_markdown_links_to_files_of_the_repository_become_site_links(self):
         rendered = build_site.to_html("See [the policy](PRIVACY.md) and `NOTICE.md`.")
 
-        self.assertIn('href="privacy/"', rendered)
+        self.assertIn('href="privacy/index.html"', rendered)
         self.assertIn("blob/main/NOTICE.md", rendered)
 
     def test_the_install_block_shows_the_fingerprint_a_qr_code_and_the_repository_address(self):
@@ -48,6 +49,24 @@ class BuildSiteTest(unittest.TestCase):
         self.assertEqual(4, landing.count('class="tile '))
         self.assertNotIn("./gradlew", landing)
         self.assertIn("And more", landing)
+
+    def test_every_internal_link_of_the_site_points_at_a_file_that_exists(self):
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory)
+            build_site.write(out, "index.html", build_site.landing("1.0.1", FINGERPRINT))
+            build_site.write(out, "privacy/index.html", build_site.prose_page("Privacy", "# Privacy\n", "d", "privacy"))
+            build_site.write(out, "changelog/index.html", build_site.prose_page("Changelog", "# Changelog\n", "d", "changelog"))
+            build_site.copy_assets(out)
+
+            broken = []
+            for page in out.rglob("index.html"):
+                for target in re.findall(r'(?:href|src)="([^"#]+)', page.read_text(encoding="utf-8")):
+                    if re.match(r"^(https?|fdroidrepos|mailto):", target):
+                        continue
+                    if not (page.parent / target.split("?")[0]).resolve().is_file():
+                        broken.append(f"{page.relative_to(out)} -> {target}")
+
+        self.assertEqual([], broken)
 
 
 if __name__ == "__main__":

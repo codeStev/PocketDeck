@@ -6,7 +6,8 @@
 The release workflow runs it after it has rebuilt the F-Droid index, and writes the result to the root of the `gh-pages`
 branch next to `repo/`. Needs `markdown` and `segno` (pip). The pages are plain static HTML (the branch carries `.nojekyll`) in
 the look of the app: the Signal colours of `designsystem/.../SignalBrand.kt`, its two fonts (copied with their licences) and its
-corner scale. Every link is relative, so the pages also work from a folder on disk."""
+corner scale. Every internal link is relative and names the `index.html` file, so the pages also work from a folder on disk,
+where a link to a directory would show its listing."""
 import argparse
 import html
 import re
@@ -23,8 +24,8 @@ FONTS = ROOT / "designsystem" / "src" / "main" / "res" / "font"
 LICENCES = ROOT / "designsystem" / "licenses"
 LANDING_SECTIONS = ["Built with AI assistance", "Auto-scroll", "Privacy", "Data and credits", "Licence"]
 LINKS = {
-    "[PRIVACY.md](PRIVACY.md)": "[the privacy policy](privacy/)",
-    "(PRIVACY.md)": "(privacy/)",
+    "[PRIVACY.md](PRIVACY.md)": "[the privacy policy](privacy/index.html)",
+    "(PRIVACY.md)": "(privacy/index.html)",
     "`NOTICE.md`": f"[NOTICE.md]({REPO_URL}/blob/main/NOTICE.md)",
     "`LICENSE`": f"[LICENSE]({REPO_URL}/blob/main/LICENSE)",
 }
@@ -175,8 +176,8 @@ def nav(prefix, active):
         return f'<a class="link" href="{target}"{current}>{label}</a>'
 
     return f"""<nav class="pill-nav wrap" aria-label="Site">
-<a class="brand" href="{prefix}">{ICON}<span>PocketDeck</span></a>
-{link(prefix + "#install", "Install", "install")}{link(prefix + "privacy/", "Privacy", "privacy")}{link(prefix + "changelog/", "Changelog", "changelog")}<a class="link" href="{REPO_URL}">Source</a>
+<a class="brand" href="{prefix}index.html">{ICON}<span>PocketDeck</span></a>
+{link(prefix + "index.html#install", "Install", "install")}{link(prefix + "privacy/index.html", "Privacy", "privacy")}{link(prefix + "changelog/index.html", "Changelog", "changelog")}<a class="link" href="{REPO_URL}">Source</a>
 </nav>"""
 
 
