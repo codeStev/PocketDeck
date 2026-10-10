@@ -234,5 +234,6 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val SERVICE_CONNECT_WAIT_MILLIS = 1_000L
+        const val GAME_PACKAGE = "jp.pokemon.pokemontcgp"
     }
 }
