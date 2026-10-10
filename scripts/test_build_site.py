@@ -49,6 +49,8 @@ class BuildSiteTest(unittest.TestCase):
         self.assertEqual(4, landing.count('class="tile '))
         self.assertNotIn("./gradlew", landing)
         self.assertIn("And more", landing)
+        for name in build_site.LANDING_SECTIONS:
+            self.assertIn(f"<h2>{name}</h2>", landing)
 
     def test_every_internal_link_of_the_site_points_at_a_file_that_exists(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -22,7 +22,7 @@ SITE = "https://codestev.github.io/PocketDeck"
 REPO_URL = "https://github.com/codeStev/PocketDeck"
 FONTS = ROOT / "designsystem" / "src" / "main" / "res" / "font"
 LICENCES = ROOT / "designsystem" / "licenses"
-LANDING_SECTIONS = ["Built with AI assistance", "Auto-scroll", "Privacy", "Data and credits", "Licence"]
+LANDING_SECTIONS = ["Built with AI assistance", "Auto-scroll (optional)", "Privacy", "Data and credits", "Licence"]
 LINKS = {
     "[PRIVACY.md](PRIVACY.md)": "[the privacy policy](privacy/index.html)",
     "(PRIVACY.md)": "(privacy/index.html)",

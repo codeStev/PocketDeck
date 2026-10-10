@@ -22,10 +22,11 @@ APK over the old one; it updates in place and keeps your data. The app is not on
 ## Built with AI assistance
 PocketDeck was built with AI coding assistance ([Claude Code](https://claude.com/claude-code)).
 
-## Auto-scroll
-Auto-scroll is optional and off until you agree in the app. It uses an Android Accessibility service only to swipe the card list while
-a scan runs; it reads nothing on the screen. Automating input in a game may go against the game's terms of service, so you use it
-at your own risk. Without it you scroll yourself and the app still reads the screen.
+## Auto-scroll (optional)
+A scan reads your cards while the game's My Cards list moves past, so the list has to be scrolled from top to bottom. By default you
+do that yourself. If you switch on auto-scroll, PocketDeck swipes the list for you instead. It is off until you agree in the app, and it
+uses an Android Accessibility service only to swipe the card list while a scan runs; it reads nothing on the screen. Automating input in a
+game may go against the game's terms of service, so you use it at your own risk.
 
 ## Privacy
 No account, no analytics, no server of ours. See [PRIVACY.md](PRIVACY.md) for what stays on the phone, what is downloaded and what
