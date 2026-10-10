@@ -1,12 +1,11 @@
 # Changelog
 
-All notable changes, newest first. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
-[SemVer](https://semver.org/) (see `docs/BRANCHING.md`).
+What changed in each release, newest first.
 
 ## [Unreleased]
 
 ## [1.0.1]
-First public release (an earlier 1.0.0 build was never published).
+First public release.
 
 ### Added
 - Scan your collection from the game's My Cards screen while you scroll, or with the optional auto-scroll (accessibility service, opt-in).
@@ -17,10 +16,5 @@ First public release (an earlier 1.0.0 build was never published).
   suggestions from your own Claude, OpenAI or OpenRouter key or from a server of your own (Ollama, LM Studio, ...), opening odds, "What to chase", saved decks, import QR codes for the game.
 - Share a deck as text or as a branded image tinted by its energy type.
 - Export and import your collection as JSON or CSV; undo an import from the scan backup.
-- Welcome tour, About screen with credits and licences, diagnostics you can copy when reporting a problem.
+- Welcome tour, About screen with credits and licenses, diagnostics you can copy when reporting a problem.
 - English and German, light and dark theme.
-
-### Notes
-- Everything is stored on the phone; the only network calls are to Limitless TCG, TCGdex, GitHub (card images) and, if you set it up, your AI
-  service. See `PRIVACY.md`.
-- Tournament data is fetched politely: one tournament at a time, finished tournaments are kept on the phone, rate limits are honoured.

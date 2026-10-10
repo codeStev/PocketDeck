@@ -12,6 +12,7 @@ services below directly from your phone.
 
 ## Downloaded from other services
 Each of these sees your phone's IP address and the request itself:
+
 - **Limitless TCG** (`play.limitlesstcg.com`): the recent tournament decklists.
 - **TCGdex** (`assets.tcgdex.net`) and **GitHub** (`raw.githubusercontent.com`): card images. Images are kept on the phone after the
   first download.
@@ -32,8 +33,9 @@ An answer that is not a valid deck is sent back for correction (up to 3 tries), 
 your list is asked as well, so one request can send the card list more than once. Paid services charge for every token.
 
 ## Auto-scroll
-Auto-scroll uses Android's Accessibility service only to swipe the card list in the game while a scan runs. It reads nothing on the
-screen and collects nothing. It is off until you agree, and you can switch it off in the system's Accessibility settings at any time.
+Auto-scroll is an optional feature that swipes the game's card list for you while a scan runs, so you do not have to scroll by hand. It
+uses Android's Accessibility service only for that, reads nothing on the screen and collects nothing. It is off until you agree, and you can
+switch it off in the system's Accessibility settings at any time.
 Automating input in a game may go against that game's terms; you use it at your own risk.
 
 ## Contact

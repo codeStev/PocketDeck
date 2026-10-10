@@ -249,6 +249,9 @@ New way of driving the app => new driving adapter calling inbound ports.
 - Store metadata: `fastlane/metadata/android/<locale>/` (title, short and full description, `changelogs/<versionCode>.txt`) is the one source for the
   listing; the release workflow copies it into the F-Droid repository's metadata, so `fdroid/metadata/<id>.yml` holds only links, licence and
   anti-features. Add `changelogs/<versionCode>.txt` (<= 500 bytes) in both languages with every release; texts must not claim anything untrue.
+- Site: the release workflow's `fdroid` job also builds the GitHub Pages site at `https://codestev.github.io/PocketDeck/` (landing page with the F-Droid
+  repository address, QR code and fingerprint, privacy policy, changelog) from README.md, PRIVACY.md and CHANGELOG.md with `scripts/build-site.py`
+  (tests: `scripts/test_build_site.py`, needs `pip install markdown segno`). It writes next to `repo/` on `gh-pages`; a failing site step does not block the repository.
 - Releases: see `docs/RELEASE.md` (signing key outside the repo, R8, test copy `-Ppocketdeck.idSuffix=.rc`, licence blockers).
 
 ## Design system (`:designsystem`, package `dev.codestev.pocketdesign`)
