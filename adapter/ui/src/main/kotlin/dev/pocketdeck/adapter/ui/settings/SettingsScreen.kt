@@ -100,7 +100,7 @@ internal fun SettingsContent(
     state.modelPicker?.let { ModelPickerDialog(it, state.form, actions) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
     if (showAbout) {
-        AboutPanel(about.versionName, about.diagnostics, about.onOpenAccessibilitySettings, about.onShowWelcome) {
+        AboutPanel(about.versionName, about.onOpenAccessibilitySettings, about.onShowWelcome) {
             showAbout =
                 false
         }
@@ -143,6 +143,8 @@ private fun SettingsColumn(
         AiSection(state, actions)
         SectionBreak()
         CollectionFilesSection(files)
+        SectionBreak()
+        SupportSection(about.diagnostics)
         SectionBreak()
         val aboutTitle = stringResource(R.string.settings_about)
         val aboutValue = stringResource(R.string.settings_about_value, about.versionName)

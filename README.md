@@ -51,7 +51,7 @@ Needs JDK 25 (`JAVA_HOME=/usr/lib/jvm/java-25-openjdk` if your default is older)
 ```
 The architecture is hexagonal (ports and adapters), enforced by tests; see `CLAUDE.md` for the layout, the data tools in `tools/` and
 how the design system in `designsystem/` is used. Branches and versions (gitflow, SemVer) are in `docs/BRANCHING.md`, releasing in `docs/RELEASE.md`.
-Found a bug? Use *Report a problem* in the app (About), which opens the [issue tracker](https://github.com/codeStev/PocketDeck/issues).
+Found a bug? Use *Report a problem* in the app (Settings), which opens the [issue tracker](https://github.com/codeStev/PocketDeck/issues).
 
 ## Data and credits
 - **Card data:** [PocketDecks/pokemon-tcg-pocket-cards](https://github.com/PocketDecks/pokemon-tcg-pocket-cards) (AGPL-3.0-or-later), scraped from Limitless TCG
