@@ -4,6 +4,14 @@ What changed in each release, newest first.
 
 ## [Unreleased]
 
+## [1.0.2]
+
+### Added
+- A website with the privacy policy and the changelog at https://codestev.github.io/PocketDeck/, and screenshots in the store listing.
+
+### Changed
+- The About screen says that PocketDeck is not affiliated with the GitHub organization PocketDecks, whose card data it uses.
+
 ## [1.0.1]
 First public release.
 
