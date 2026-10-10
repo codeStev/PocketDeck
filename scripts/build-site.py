@@ -131,10 +131,8 @@ def breakable(address):
 
 
 def public_changelog(markdown_text):
-    """The changelog as visitors should read it: no notes for contributors (HTML comments), no empty "Unreleased"
-    heading, and versions without the format's brackets."""
-    visible = re.sub(r"<!--.*?-->\s*", "", markdown_text, flags=re.S)
-    without_empty = re.sub(r"(?m)^## \[Unreleased\]\s*\n(?=## \[)", "", visible)
+    """The changelog as visitors should read it: no empty "Unreleased" heading, and versions without the format's brackets."""
+    without_empty = re.sub(r"(?m)^## \[Unreleased\]\s*\n(?=## \[)", "", markdown_text)
     return re.sub(r"(?m)^## \[(.+?)\]", r"## \1", without_empty)
 
 

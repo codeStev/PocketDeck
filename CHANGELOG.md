@@ -2,9 +2,6 @@
 
 What changed in each release, newest first.
 
-<!-- For contributors: the format is Keep a Changelog (https://keepachangelog.com/en/1.1.0/) and the versions follow SemVer
-     (https://semver.org/), see docs/BRANCHING.md. Notes under [Unreleased] go to the next release. -->
-
 ## [Unreleased]
 
 ## [1.0.1]
