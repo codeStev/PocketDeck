@@ -19,8 +19,3 @@ First public release (an earlier 1.0.0 build was never published).
 - Export and import your collection as JSON or CSV; undo an import from the scan backup.
 - Welcome tour, About screen with credits and licences, diagnostics you can copy when reporting a problem.
 - English and German, light and dark theme.
-
-### Notes
-- Everything is stored on the phone; the only network calls are to Limitless TCG, TCGdex, GitHub (card images) and, if you set it up, your AI
-  service. See `PRIVACY.md`.
-- Tournament data is fetched politely: one tournament at a time, finished tournaments are kept on the phone, rate limits are honoured.
