@@ -7,7 +7,7 @@ screen and suggests competitive decks you can build from the cards you own.
 > Pokémon TCG Pocket, card names and artwork are trademarks and copyrights of their owners.
 
 ## What it does
-- **Scan:** Read your collection straight from the game's My Cards screen, with the scrolling done by you or by an optional auto-scroll.
+- **Scan:** Read your collection straight from the game's My Cards screen, with the scrolling done by you or by an optional auto-scroll ([details](PRIVACY.md#auto-scroll)).
 - **Decks:**
   - Recent tournament decks, ranked by how well you can build them, with stand-ins for missing cards
   - Decks built from your own cards

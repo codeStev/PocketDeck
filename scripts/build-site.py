@@ -22,9 +22,10 @@ SITE = "https://codestev.github.io/PocketDeck"
 REPO_URL = "https://github.com/codeStev/PocketDeck"
 FONTS = ROOT / "designsystem" / "src" / "main" / "res" / "font"
 LICENCES = ROOT / "designsystem" / "licenses"
-LANDING_SECTIONS = ["Built with AI assistance", "Auto-scroll (optional)", "Privacy", "Data and credits", "Licence"]
+LANDING_SECTIONS = ["Built with AI assistance", "Privacy", "Data and credits", "Licence"]
 LINKS = {
     "[PRIVACY.md](PRIVACY.md)": "[the privacy policy](privacy/index.html)",
+    "(PRIVACY.md#auto-scroll)": "(privacy/index.html#auto-scroll)",
     "(PRIVACY.md)": "(privacy/index.html)",
     "`NOTICE.md`": f"[NOTICE.md]({REPO_URL}/blob/main/NOTICE.md)",
     "`LICENSE`": f"[LICENSE]({REPO_URL}/blob/main/LICENSE)",
@@ -119,7 +120,7 @@ def sections(markdown_text):
 def to_html(markdown_text):
     for old, new in LINKS.items():
         markdown_text = markdown_text.replace(old, new)
-    return markdown.markdown(markdown_text, extensions=["fenced_code", "tables", "sane_lists"])
+    return markdown.markdown(markdown_text, extensions=["fenced_code", "tables", "sane_lists", "toc"])
 
 
 def inline(markdown_text):
