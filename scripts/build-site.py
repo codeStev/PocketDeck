@@ -92,6 +92,7 @@ h3 { margin: 24px 0 8px; font: 600 20px/26px var(--display); }
 .qr { width: 11.5rem; max-width: 100%; padding: 8px; background: #fff; border-radius: 14px; align-self: start; }
 .qr svg { display: block; width: 100%; height: auto; }
 .install ol { margin: 8px 0 16px; padding-left: 1.2rem; }
+.install > .actions { grid-column: 1 / -1; margin-top: 8px; }
 code { font: 600 .9em ui-monospace, "SFMono-Regular", Menlo, monospace; background: var(--sunken); padding: .15em .45em; border-radius: 6px; overflow-wrap: anywhere; }
 .fp { display: block; margin: 8px 0 16px; padding: 12px 14px; border-radius: 10px; letter-spacing: .02em; word-spacing: .15em; }
 section.prose h2:first-child { margin-top: 48px; }
@@ -177,8 +178,8 @@ def install_block(version, fingerprint):
 </ol>
 <p><a href="{link}">Open the repository link on your phone</a>, or download the signed APK, with its SHA-256, from the releases. A new APK installs
 over the old one and keeps your data. The app is not on the Play Store.</p>
-<div class="actions" style="justify-content: flex-start"><a class="button" href="{REPO_URL}/releases/latest">Latest release</a></div>
 </div>
+<div class="actions"><a class="button" href="{REPO_URL}/releases/latest">Latest release</a></div>
 </section>
 """
 
