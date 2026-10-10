@@ -118,7 +118,6 @@ class MainActivity : ComponentActivity() {
                     rememberLauncherForActivityResult(RequestScreenCapture()) { consent ->
                         if (consent != null) {
                             ScanCapture.start(this@MainActivity, consent, pendingAutomatic)
-                            openGame()
                         }
                     }
                 val notificationPermission =
@@ -230,13 +229,7 @@ class MainActivity : ComponentActivity() {
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
 
-    /** Brings the game to the front so the player can start scrolling right away. */
-    private fun openGame() {
-        packageManager.getLaunchIntentForPackage(GAME_PACKAGE)?.let(::startActivity)
-    }
-
     private companion object {
         const val SERVICE_CONNECT_WAIT_MILLIS = 1_000L
-        const val GAME_PACKAGE = "jp.pokemon.pokemontcgp"
     }
 }
