@@ -130,6 +130,14 @@ def breakable(address):
     return html.escape(address).replace("://", ":@@").replace("/", "/<wbr>").replace(":@@", "://")
 
 
+def public_changelog(markdown_text):
+    """The changelog as visitors should read it: no notes for contributors (HTML comments), no empty "Unreleased"
+    heading, and versions without the format's brackets."""
+    visible = re.sub(r"<!--.*?-->\s*", "", markdown_text, flags=re.S)
+    without_empty = re.sub(r"(?m)^## \[Unreleased\]\s*\n(?=## \[)", "", visible)
+    return re.sub(r"(?m)^## \[(.+?)\]", r"## \1", without_empty)
+
+
 def pretty(fingerprint):
     return " ".join(fingerprint[i : i + 2] for i in range(0, len(fingerprint), 2)).upper()
 
@@ -253,7 +261,7 @@ def main():
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     write(args.out, "index.html", landing(args.version, fingerprint))
     write(args.out, "privacy/index.html", prose_page("Privacy - PocketDeck", privacy, "What PocketDeck stores, downloads and sends.", "privacy"))
-    write(args.out, "changelog/index.html", prose_page("Changelog - PocketDeck", changelog, "What changed in each PocketDeck release.", "changelog"))
+    write(args.out, "changelog/index.html", prose_page("Changelog - PocketDeck", public_changelog(changelog), "What changed in each PocketDeck release.", "changelog"))
     copy_assets(args.out)
 
 

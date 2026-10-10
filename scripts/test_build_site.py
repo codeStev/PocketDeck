@@ -40,6 +40,17 @@ class BuildSiteTest(unittest.TestCase):
         self.assertIn("<h3>Scan</h3><p>Your cards.</p>", tiles)
         self.assertIn("<h3>And more</h3><p>Plain bullet.</p>", tiles)
 
+    def test_the_public_changelog_has_no_empty_unreleased_heading_and_no_format_brackets(self):
+        text = "# Changelog\n\n<!-- for contributors -->\n\n## [Unreleased]\n\n## [1.0.1]\nFirst.\n\n## [1.0.0]\nOlder.\n"
+
+        shown = build_site.public_changelog(text)
+
+        self.assertNotIn("Unreleased", shown)
+        self.assertNotIn("contributors", shown)
+        self.assertIn("## 1.0.1\n", shown)
+        self.assertIn("## 1.0.0\n", shown)
+        self.assertEqual(shown, build_site.public_changelog(shown))
+
     def test_the_site_has_three_pages_and_the_landing_page_leaves_out_the_build_instructions(self):
         with tempfile.TemporaryDirectory() as out:
             build_site.write(Path(out), "index.html", build_site.landing("1.0.1", FINGERPRINT))
