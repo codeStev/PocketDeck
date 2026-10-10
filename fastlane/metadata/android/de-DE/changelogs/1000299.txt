@@ -1,0 +1,1 @@
+Fügt eine Webseite mit Datenschutzerklärung und Screenshots zum Store-Eintrag hinzu und vermerkt im Bildschirm „Über PocketDeck“, dass PocketDeck nicht mit der GitHub-Organisation PocketDecks verbunden ist.

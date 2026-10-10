@@ -1,0 +1,1 @@
+Adds a website with the privacy policy and screenshots to the store listing, and notes in the About screen that PocketDeck is not affiliated with the GitHub organization PocketDecks.
