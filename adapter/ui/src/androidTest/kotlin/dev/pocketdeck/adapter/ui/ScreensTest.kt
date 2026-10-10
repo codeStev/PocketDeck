@@ -210,10 +210,36 @@ class ScreensTest {
         state: ScanUiState,
         serviceOn: Boolean,
         onStart: (Boolean) -> Unit = {},
+        gameInstalled: Boolean = true,
     ) = compose.setContent {
         PocketDeckTheme {
-            ScanContent(state, "Main", serviceOn, {}, {}, onStart, {}, { _, _ -> }, {}, {}, {}, {}, {}, {}, {})
+            ScanContent(
+                state,
+                "Main",
+                serviceOn,
+                gameInstalled,
+                {},
+                {},
+                onStart,
+                {},
+                { _, _ -> },
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+            )
         }
+    }
+
+    @Test
+    fun scanSaysTheGameIsNotInstalledAndKeepsStartDisabled() {
+        scan(ScanUiState(), serviceOn = true, gameInstalled = false)
+
+        compose.onNodeWithText(string(R.string.scan_game_missing)).assertExists()
+        compose.onNodeWithText(string(R.string.scan_start)).assertIsNotEnabled()
     }
 
     @Test

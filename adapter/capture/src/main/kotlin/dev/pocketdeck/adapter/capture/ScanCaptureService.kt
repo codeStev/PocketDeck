@@ -3,6 +3,7 @@ package dev.pocketdeck.adapter.capture
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -191,6 +192,14 @@ class ScanCaptureService : Service() {
         startActivity(launch)
     }
 
+    private fun stopIntent(): PendingIntent =
+        PendingIntent.getService(
+            this,
+            0,
+            Intent(this, ScanCaptureService::class.java).setAction(ScanCapture.ACTION_STOP),
+            PendingIntent.FLAG_IMMUTABLE,
+        )
+
     private fun notification(): Notification {
         val name = getString(R.string.scan_channel_name)
         val channel = NotificationChannel(CHANNEL_ID, name, NotificationManager.IMPORTANCE_LOW)
@@ -202,6 +211,8 @@ class ScanCaptureService : Service() {
             .setContentText(getString(R.string.scan_notification_text))
             .setColor(ACCENT_COLOR)
             .setOngoing(true)
+            // A second way to end the scan, whatever the pill on screen looks like.
+            .addAction(R.drawable.ic_scan, getString(R.string.scan_stop), stopIntent())
             .build()
     }
 

@@ -71,6 +71,7 @@
     <string name="scan_step_start">Tap Start, then open the game. A small button stays on screen.</string>
     <string name="scan_step_scroll">Scroll slowly and pause for a moment on every screen, so the numbers can appear.</string>
     <string name="scan_step_stop">Tap Stop on the small button. You can then check the result before it is saved.</string>
+    <string name="scan_game_missing">Pokémon TCG Pocket is not installed on this phone, so there is nothing to scan.</string>
     <string name="scan_start">Start scan</string>
     <plurals name="scan_running">
         <item quantity="one">A scan is running: %1$d card found so far.</item>

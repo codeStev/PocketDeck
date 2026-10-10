@@ -80,6 +80,7 @@ class MainActivity : ComponentActivity() {
     private var reviewRequests by mutableIntStateOf(0)
     private var reviewIsComplete = false
     private var autoScrollEnabled by mutableStateOf(false)
+    private var gameInstalled by mutableStateOf(true)
 
     private var pendingAutomatic = true
 
@@ -153,6 +154,7 @@ class MainActivity : ComponentActivity() {
                     selectedTab = selectedTab,
                     onTabSelected = { selectedTab = it },
                     autoScrollEnabled = autoScrollEnabled,
+                    gameInstalled = gameInstalled,
                     onOpenAccessibilitySettings = { startActivity(AutoScroll.settingsIntent()) },
                     about =
                         AboutActions(
@@ -186,6 +188,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // The player may just have switched the accessibility service on or off in the system settings.
         autoScrollEnabled = AutoScroll.isEnabled(this)
+        gameInstalled = packageManager.getLaunchIntentForPackage(GAME_PACKAGE) != null
         // Android connects a service that was just switched on a moment after we return here.
         window.decorView.postDelayed({ autoScrollEnabled = AutoScroll.isEnabled(this) }, SERVICE_CONNECT_WAIT_MILLIS)
     }
@@ -231,5 +234,6 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val SERVICE_CONNECT_WAIT_MILLIS = 1_000L
+        const val GAME_PACKAGE = "jp.pokemon.pokemontcgp"
     }
 }
