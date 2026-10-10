@@ -7,6 +7,7 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
+import android.text.Layout
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.MotionEvent
@@ -18,16 +19,19 @@ import android.widget.TextView
 import kotlin.math.abs
 
 /**
- * The most width the status text may take, so that the pill's padding, the dot, the Stop button and the margins at both sides
- * always fit on the screen. Without it a long status ("Open My Cards ...") took the whole width and the Stop button, laid out
- * last, ended up off screen where it could not be tapped.
+ * The most width the status text may take, so that the pill's padding, the dot, the Stop button ([stopWidthPx], as measured:
+ * it depends on the language and the font size) and the margins at both sides always fit on the screen. Without it a long
+ * status ("Open My Cards ...") took the whole width and the Stop button, laid out last, ended up off screen or squeezed so
+ * that its label broke.
  */
 internal fun statusMaxWidth(
     screenWidthPx: Int,
     density: Float,
-): Int = (screenWidthPx - RESERVED_DP * density).toInt().coerceAtLeast((MIN_STATUS_DP * density).toInt())
+    stopWidthPx: Int,
+): Int = (screenWidthPx - FIXED_DP * density - stopWidthPx).toInt().coerceAtLeast((MIN_STATUS_DP * density).toInt())
 
-private const val RESERVED_DP = 176
+/** The pill's padding (16 + 6), the dot with its gap (10 + 10), the gap before Stop (12) and a margin at both screen edges (2 x 20). */
+private const val FIXED_DP = 94
 private const val MIN_STATUS_DP = 96
 
 /**
@@ -74,7 +78,6 @@ class ScanOverlay(
         // A long status wraps instead of pushing the Stop button off the screen.
         status.maxLines = 2
         status.ellipsize = TextUtils.TruncateAt.END
-        status.maxWidth = statusMaxWidth(context.resources.displayMetrics.widthPixels, density)
         status.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         val dot =
             View(context).apply {
@@ -88,6 +91,9 @@ class ScanOverlay(
             Button(context).apply {
                 text = context.getString(R.string.scan_stop)
                 isAllCaps = false
+                // The word is never broken: with too little width, Android hyphenates a button label ("St-opp").
+                maxLines = 1
+                hyphenationFrequency = Layout.HYPHENATION_FREQUENCY_NONE
                 typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 setTextColor(ON_ACCENT)
                 stateListAnimator = null
@@ -101,6 +107,9 @@ class ScanOverlay(
                     }
                 setOnClickListener { onStop() }
             }
+        // The status gets what is left next to the real Stop button, which is wider in German or with a large font setting.
+        stop.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        status.maxWidth = statusMaxWidth(context.resources.displayMetrics.widthPixels, density, stop.measuredWidth)
         return LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
