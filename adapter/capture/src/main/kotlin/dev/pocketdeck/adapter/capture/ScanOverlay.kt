@@ -7,6 +7,7 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
+import android.text.TextUtils
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -15,6 +16,19 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import kotlin.math.abs
+
+/**
+ * The most width the status text may take, so that the pill's padding, the dot, the Stop button and the margins at both sides
+ * always fit on the screen. Without it a long status ("Open My Cards ...") took the whole width and the Stop button, laid out
+ * last, ended up off screen where it could not be tapped.
+ */
+internal fun statusMaxWidth(
+    screenWidthPx: Int,
+    density: Float,
+): Int = (screenWidthPx - RESERVED_DP * density).toInt().coerceAtLeast((MIN_STATUS_DP * density).toInt())
+
+private const val RESERVED_DP = 176
+private const val MIN_STATUS_DP = 96
 
 /**
  * The small draggable status pill with a Stop button, drawn over the game while a scan runs. It sits near the top
@@ -57,6 +71,10 @@ class ScanOverlay(
         fun dp(value: Int) = (value * density).toInt()
         status.setTextColor(INK_ON_PILL)
         status.textSize = STATUS_TEXT_SP
+        // A long status wraps instead of pushing the Stop button off the screen.
+        status.maxLines = 2
+        status.ellipsize = TextUtils.TruncateAt.END
+        status.maxWidth = statusMaxWidth(context.resources.displayMetrics.widthPixels, density)
         status.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         val dot =
             View(context).apply {

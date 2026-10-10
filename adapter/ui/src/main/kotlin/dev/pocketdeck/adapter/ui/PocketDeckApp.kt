@@ -48,6 +48,7 @@ fun PocketDeckApp(
     selectedTab: AppTab,
     onTabSelected: (AppTab) -> Unit,
     autoScrollEnabled: Boolean,
+    gameInstalled: Boolean,
     onOpenAccessibilitySettings: () -> Unit,
     onStartScan: (automatic: Boolean) -> Unit,
     about: AboutActions,
@@ -72,6 +73,7 @@ fun PocketDeckApp(
                             scanViewModel,
                             profilesViewModel,
                             autoScrollEnabled,
+                            gameInstalled,
                             onOpenAccessibilitySettings,
                             onStartScan,
                         )
@@ -91,6 +93,7 @@ private fun ScanTab(
     scanViewModel: ScanViewModel,
     profilesViewModel: ProfilesViewModel,
     autoScrollEnabled: Boolean,
+    gameInstalled: Boolean,
     onOpenAccessibilitySettings: () -> Unit,
     onStartScan: (automatic: Boolean) -> Unit,
 ) {
@@ -100,7 +103,7 @@ private fun ScanTab(
             ?.active
             ?.name
             ?.value
-    ScanScreen(scanViewModel, accountName, autoScrollEnabled, onOpenAccessibilitySettings, onStartScan)
+    ScanScreen(scanViewModel, accountName, autoScrollEnabled, gameInstalled, onOpenAccessibilitySettings, onStartScan)
 }
 
 /** Each tab owns a colour from the brand, so the player learns "green is scan" without reading. */
