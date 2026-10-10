@@ -1,0 +1,1 @@
+Auto-scan waits for you to open My Cards and can scan a complete collection, the scan pill and notification always have a Stop button, and the app warns when the game is not installed. Diagnostics and bug reports moved to Settings.
